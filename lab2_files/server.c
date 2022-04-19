@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
 					FD_SET(clientSocket, &activeFdSet);
 
 					for (int j; j < FD_SETSIZE; ++j){
-						if(i != clientSocket){
+						if(j != clientSocket){
 							char* message = "New client connected!";
 							writeMessage(i, message);
 						}
