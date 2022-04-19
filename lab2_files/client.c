@@ -67,7 +67,7 @@ int readMessageFromServer(int fileDescriptor) {
       return(-1);
     else {
       /* Data read */
-      printf(">Incoming reply: %s\n",  buffer);
+      printf("<From server: %s\n",  buffer);
     }
   return(0);
 }
