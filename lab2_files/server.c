@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
 					printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
 					FD_SET(clientSocket, &activeFdSet);
 
-					for (int j; j < FD_SETSIZE; ++j){
+					for (int j = 0; j < FD_SETSIZE; ++j){
 						if(j != clientSocket){
 							char* message = "New client connected!";
 							writeMessage(i, message);
