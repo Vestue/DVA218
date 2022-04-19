@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
 		  printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
 		  FD_SET(clientSocket, &activeFdSet);
 
+<<<<<<< HEAD
 
 		}
 		else {
@@ -148,4 +149,22 @@ int main(int argc, char *argv[]) {
 		  }
 	  }
 	}
+=======
+          for (int j; j < FD_SETSIZE; ++j){
+            if(i != clientSocket){
+              char* message = "New client connected!";
+              writeMessage(i, message);
+            }
+          }
+        }
+        else {
+          /* Data arriving on an already connected socket */
+          if(readMessageFromClient(i) < 0) {
+            close(i);
+            FD_CLR(i, &activeFdSet);
+	        }
+	      }
+      }
+    }
+>>>>>>> 8a547213c6d917cd71c34faae471bbd7e2a2f9b3
 }
