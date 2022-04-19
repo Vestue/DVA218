@@ -18,6 +18,8 @@
 #define hostNameLength 50
 #define messageLength  256
 
+int readMessageFromServer(int fileDescriptor);
+
 /* initSocketAddress
  * Initialises a sockaddr_in struct given a host name and a port.
  */
@@ -48,6 +50,26 @@ void writeMessage(int fileDescriptor, char *message) {
     perror("writeMessage - Could not write data\n");
     exit(EXIT_FAILURE);
   }
+}
+
+int readMessageFromServer(int fileDescriptor) {
+  char buffer[messageLength];
+  int nOfBytes;
+
+  nOfBytes = read(fileDescriptor, buffer, messageLength);
+  if(nOfBytes < 0) {
+    perror("Could not read data from server\n");
+    exit(EXIT_FAILURE);
+  }
+  else
+    if(nOfBytes == 0) 
+      /* End of file */
+      return(-1);
+    else {
+      /* Data read */
+      printf(">Incoming reply: %s\n",  buffer);
+    }
+  return(0);
 }
 
 int main(int argc, char *argv[]) {
@@ -92,5 +114,7 @@ int main(int argc, char *argv[]) {
       close(sock);
       exit(EXIT_SUCCESS);
     }
+
+    readMessageFromServer(sock);
   }
 }

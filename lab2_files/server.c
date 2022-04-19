@@ -12,9 +12,12 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <string.h>
 
 #define PORT 5555
 #define MAXMSG 512
+
+void writeMessage(int fileDescriptor);
 
 /* makeSocket
  * Creates and names a socket in the Internet
@@ -72,10 +75,23 @@ int readMessageFromClient(int fileDescriptor) {
     if(nOfBytes == 0) 
       /* End of file */
       return(-1);
-    else 
+    else {
       /* Data read */
       printf(">Incoming message: %s\n",  buffer);
+      writeMessage(fileDescriptor);
+    }
   return(0);
+}
+
+void writeMessage(int fileDescriptor) {
+  int nOfBytes;
+  char message[10] = "Received";
+
+  nOfBytes = write(fileDescriptor, message, strlen(message) + 1);
+  if(nOfBytes < 0) {
+    perror("writeMessage - Could not write data\n");
+    exit(EXIT_FAILURE);
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -110,27 +126,25 @@ int main(int argc, char *argv[]) {
     /* Service all the sockets with input pending */
     for(i = 0; i < FD_SETSIZE; ++i) 
       if(FD_ISSET(i, &readFdSet)) {
-	if(i == sock) {
-	  /* Connection request on original socket */
-	  size = sizeof(struct sockaddr_in);
-	  /* Accept the connection request from a client. */
-	  clientSocket = accept(sock, (struct sockaddr *)&clientName, (socklen_t *)&size); 
-	  if(clientSocket < 0) {
-	    perror("Could not accept connection\n");
-	    exit(EXIT_FAILURE);
-	  }
-	  printf("Server: Connect from client %s, port %d\n", 
-		 inet_ntoa(clientName.sin_addr), 
-		 ntohs(clientName.sin_port));
-	  FD_SET(clientSocket, &activeFdSet);
-	}
-	else {
-	  /* Data arriving on an already connected socket */
-	  if(readMessageFromClient(i) < 0) {
-	    close(i);
-	    FD_CLR(i, &activeFdSet);
-	  }
-	}
+        if(i == sock) {
+          /* Connection request on original socket */
+          size = sizeof(struct sockaddr_in);
+          /* Accept the connection request from a client. */
+          clientSocket = accept(sock, (struct sockaddr *)&clientName, (socklen_t *)&size); 
+          if(clientSocket < 0) {
+            perror("Could not accept connection\n");
+            exit(EXIT_FAILURE);
+          }
+          printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
+          FD_SET(clientSocket, &activeFdSet);
+        }
+        else {
+          /* Data arriving on an already connected socket */
+          if(readMessageFromClient(i) < 0) {
+            close(i);
+            FD_CLR(i, &activeFdSet);
+	        }
+	      }
       }
-  }
+    }
 }
