@@ -17,7 +17,7 @@
 #define PORT 5555
 #define MAXMSG 512
 
-void writeMessage(int fileDescriptor);
+void writeMessage(int fileDescriptor, char* message);
 
 /* makeSocket
  * Creates and names a socket in the Internet
@@ -78,14 +78,14 @@ int readMessageFromClient(int fileDescriptor) {
     else {
       /* Data read */
       printf(">Incoming message: %s\n",  buffer);
-      writeMessage(fileDescriptor);
+      char* message = "Received";
+      writeMessage(fileDescriptor, message);
     }
   return(0);
 }
 
-void writeMessage(int fileDescriptor) {
+void writeMessage(int fileDescriptor, char *message) {
   int nOfBytes;
-  char message[10] = "Received";
 
   nOfBytes = write(fileDescriptor, message, strlen(message) + 1);
   if(nOfBytes < 0) {
@@ -137,6 +137,8 @@ int main(int argc, char *argv[]) {
           }
           printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
           FD_SET(clientSocket, &activeFdSet);
+
+
         }
         else {
           /* Data arriving on an already connected socket */
