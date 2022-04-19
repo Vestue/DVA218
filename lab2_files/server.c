@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
 						exit(EXIT_FAILURE);
 					}
 					printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
-					connectedSockets[nextIndex++] = i;
+					connectedSockets[nextIndex++] = clientSocket;
 					FD_SET(clientSocket, &activeFdSet);
 					broadcast(connectedSockets);
 
