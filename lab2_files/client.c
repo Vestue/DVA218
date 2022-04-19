@@ -61,8 +61,7 @@ int readMessageFromServer(int fileDescriptor) {
     perror("Could not read data from server\n");
     exit(EXIT_FAILURE);
   }
-  else
-    if(nOfBytes == 0) 
+  else if(nOfBytes == 0) 
       /* End of file */
       return(-1);
     else {
