@@ -16,6 +16,7 @@
 
 #define PORT 5555
 #define MAXMSG 512
+#define EMPTY -1
 
 void writeMessage(int fileDescriptor, char* message);
 
@@ -93,14 +94,31 @@ void writeMessage(int fileDescriptor, char *message) {
 	}
 }
 
+int getLength(int* array){
+	int i = 0;
+	for (; array[i] == EMPTY; i++);
+	return i;
+	
+}
+
+void broadcast(int* array){
+	int len = getLength(array);
+	char* message = "New client connected!";
+	for (int i = 0; i < len; i++){
+		writeMessage(array[i], message);
+	}
+}
+
 int main(int argc, char *argv[]) {
 	int sock;
 	int clientSocket;
-	int i;
+	int i, nextIndex = 0;
 	fd_set activeFdSet, readFdSet; /* Used by select */
 	struct sockaddr_in clientName;
 	socklen_t size;
   
+	int connectedSockets[FD_SETSIZE] = {EMPTY};
+	printf("%d", connectedSockets[58]);
  
 	/* Create a socket and set it up to accept connections */
 	sock = makeSocket(PORT);
@@ -136,14 +154,15 @@ int main(int argc, char *argv[]) {
 						exit(EXIT_FAILURE);
 					}
 					printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
+					connectedSockets[nextIndex++] = clientSocket;
 					FD_SET(clientSocket, &activeFdSet);
 
-					for (int j = 0; j < FD_SETSIZE; ++j){
-						if(j != clientSocket){
-							char* message = "New client connected!";
-							writeMessage(i, message);
-						}
-					}
+					// for (int j = 0; j < FD_SETSIZE; ++j){
+					// 	if(j != clientSocket){
+					// 		char* message = "New client connected!";
+					// 		writeMessage(i, message);
+					// 	}
+					// }
 					}
 					else {
 						/* Data arriving on an already connected socket */
