@@ -130,11 +130,10 @@ int main(int argc, char *argv[]) {
     fd_set readSet;
     FD_ZERO(&readSet);
     
-    //char bufferChar;
+    char bufferChar = '\0';
     int tagPrinted = 0;
 
     while (1) {
-        //bufferChar = '';
 
         FD_SET(0, &readSet);
         FD_SET(sock, &readSet);
@@ -155,7 +154,7 @@ int main(int argc, char *argv[]) {
 
         bufferChar = getchar();
         printf("%c", bufferChar);
-        if (!feof(stdin)){
+        if (bufferChar == '\0') {
             fgets(messageString, messageLength, stdin);
             messageString[messageLength - 1] = '\0';
             tagPrinted = 1;
