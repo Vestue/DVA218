@@ -136,16 +136,17 @@ int main(int argc, char *argv[]) {
     //FD_SET(0, &clientSet);
 
     while(1) {
-        printf("\n>");
-        printf("%d", getc(stdin));
-        while(getc(stdin) == NULL){
+        printf("\nPress enter to start typing");
+        while(getchar() != '\n'){
             if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
             {
                 //while (readMessageFromServer(sock) != -1);
                 readMessageFromServer(sock);
             }
         }
+        printf("\n>");
         fgets(messageString, messageLength, stdin);
+        fflush(stdout);
 
         /*char input;
         while (scanf("%c", &input) != 1) {
