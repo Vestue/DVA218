@@ -65,8 +65,13 @@ int readMessageFromServer(int fileDescriptor) {
         /* End of file */
         return(-1);
     else {
+        if (buffer[0] == '1'){
+            buffer[0] = '';
+            readMessageFromServer(fileDescriptor);
+        }
         /* Data read */
         printf("<From server: %s\n",  buffer);
+            
     }
     return(0);
 }
