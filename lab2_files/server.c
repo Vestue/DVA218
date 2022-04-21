@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
+#include <sys/time.h>
 
 #define PORT 5555
 #define MAXMSG 512
@@ -105,12 +106,14 @@ int getLength(int* array){
 void broadcast(fd_set activeFdSet, int serverSock){
 	char* broadcastMessage = "A new client has connected!";
 	fd_set writeFdSet = activeFdSet;
-	struct timeval timeout = 15;
+	struct timeval *timeout;
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 500000;
 	for (int i = 0; i < FD_SETSIZE; i++)
 	{
 		if (FD_ISSET(i, &activeFdSet) && (i != serverSock))
 		{
-			if (select(FD_SETSIZE, NULL, &writeFdSet, NULL, timeout) < 0) {
+			if (select(FD_SETSIZE, NULL, &writeFdSet, NULL, &timeout) < 0) {
 				perror("Select failed\n");
 				exit(EXIT_FAILURE);
 			}
