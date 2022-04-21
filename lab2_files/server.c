@@ -87,7 +87,7 @@ int readMessageFromClient(int fileDescriptor) {
 void writeMessage(int fileDescriptor, char *message) {
 	int nOfBytes;
 	
-	nOfBytes = write(fileDescriptor, message, strlen(message) + 1)) < 0);
+	nOfBytes = write(fileDescriptor, message, strlen(message) + 1);
 	if(nOfBytes < 0) {
 		perror("writeMessage - Could not write data\n");
 		exit(EXIT_FAILURE);
@@ -105,7 +105,7 @@ void broadcast(fd_set activeFdSet, int serverSock){
 	char* broadcastMessage = "A new client has connected!"
 	for (int i = 0; i < FD_SETSIZE; i++)
 	{
-		if (FD_ISSET(i, &activeFdSet && i != serverSock))
+		if (FD_ISSET(i, &activeFdSet) && (i != serverSock))
 		{
 			writeMessage(i, broadcastMessage);
 		}
