@@ -41,13 +41,14 @@ void initSocketAddress(struct sockaddr_in *name, char *hostName, unsigned short 
  * denoted by fileDescriptor.
  */
 void writeMessage(int fileDescriptor, char *message) {
-    int nOfBytes;
-
+    int nOfBytes = 0;
+    //printf("%s", message);
     nOfBytes = write(fileDescriptor, message, strlen(message) + 1);
     if(nOfBytes < 0) {
         perror("writeMessage - Could not write data\n");
         exit(EXIT_FAILURE);
     }
+    memset(message, '\0', messageLength);
 }
 
 int readMessageFromServer(int fileDescriptor) {
@@ -63,33 +64,13 @@ int readMessageFromServer(int fileDescriptor) {
         /* End of file */
         return(-1);
     else {
-        if (buffer[0] == '1'){
-            buffer[0] = ' ';
+            /*if (buffer[0] == '1'){
+                buffer[0] = ' ';
             readMessageFromServer(fileDescriptor);
-        }
+        }*/
         /* Data read */
         printf("<From server: %s\n",  buffer);
             
-    }
-    return(0);
-}
-
-int readStdin(int fileDescriptor, char* messageString) {
-    char buffer[messageLength];
-    int nOfBytes;
-
-    nOfBytes = read(fileDescriptor, buffer, messageLength);
-    if(nOfBytes < 0) {
-        perror("Could not read data from server\n");
-        exit(EXIT_FAILURE);
-    }
-    else if(nOfBytes == 0) 
-        /* End of file */
-        return(-1);
-    else {
-        /* Data read */
-        //printf("<From server: %s\n",  buffer);
-        strcpy(messageString, buffer);
     }
     return(0);
 }
@@ -99,7 +80,7 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in serverName;
     char hostName[hostNameLength];
     char messageString[messageLength] = {'\0'};
-
+  
     /* Check arguments */
     if(argv[1] == NULL) {
         perror("Usage: client [host name]\n");
@@ -129,52 +110,38 @@ int main(int argc, char *argv[]) {
 
     fd_set readSet;
     FD_ZERO(&readSet);
-    
-    char bufferChar = '\0';
-    int tagPrinted = 0;
-
+    FD_SET(STDIN_FILENO, &readSet);
+    FD_SET(sock, &readSet);
     while (1) {
-
-        FD_SET(0, &readSet);
-        FD_SET(sock, &readSet);
-        if (select(sock + 1, &readSet, NULL, NULL, NULL) == -1)
+        fd_set testSet = readSet;
+        memset(messageString, '\0', messageLength);
+        if (select(sock + 1, &testSet, NULL, NULL, NULL) == -1)
         {
             printf("Select error");
             exit(EXIT_FAILURE);
         }
-        if (FD_ISSET(sock, &readSet))
+        for (int i = 0; i < FD_SETSIZE; ++i)
         {
-            readMessageFromServer(sock);
-            tagPrinted = 0;
+            if (!FD_ISSET(i, &testSet)) continue;
+            if (i == STDIN_FILENO)
+            {
+                printf("\n>");
+                fgets(messageString, messageLength, stdin);
+                messageString[messageLength - 1] = '\0';
+                if (strncmp(messageString, "quit\n", messageLength) != 0 || messageString[0] != '\0'){
+                    writeMessage(sock, messageString);
+                }
+                    
+                else {
+                    close(sock);
+                    exit(EXIT_SUCCESS);
+                }
+            }
+            else if (i == sock)
+            {
+                readMessageFromServer(sock);
+            }
         }
-        if (FD_ISSET(0, &readSet))
-        {
-            printf("\n>");
-            fgets(messageString, messageLength, stdin);
-            messageString[messageLength - 1] = '\0';
-        }
-        if (tagPrinted == 0){
-            printf("\n>");
-        }       
-
-        bufferChar = getchar();
-        printf("%c", bufferChar);
-        if (bufferChar != '\0') {
-            fgets(messageString, messageLength, stdin);
-            messageString[messageLength - 1] = '\0';
-            tagPrinted = 1;
-        }
-        printf("Down here!");
-        // char input;
-        //while (scanf(&char, %c))
-       
-        if (strncmp(messageString, "quit\n", messageLength) != 0)
-            writeMessage(sock, messageString);
-        else {
-            close(sock);
-            exit(EXIT_SUCCESS);
-        }
-
-        
+        fflush(stdout);
     }
 }
