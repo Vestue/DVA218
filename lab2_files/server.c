@@ -33,7 +33,7 @@ void writeMessage(int fileDescriptor, char* message);
 int makeSocket(unsigned short int port) {
 	int sock;
 	struct sockaddr_in name;
-
+	
 	/* Create a socket. */
 	sock = socket(PF_INET, SOCK_STREAM, 0);
 	if(sock < 0) {
@@ -86,8 +86,8 @@ int readMessageFromClient(int fileDescriptor) {
 
 void writeMessage(int fileDescriptor, char *message) {
 	int nOfBytes;
-
-	nOfBytes = write(fileDescriptor, message, strlen(message) + 1);
+	
+	nOfBytes = write(fileDescriptor, message, strlen(message) + 1)) < 0);
 	if(nOfBytes < 0) {
 		perror("writeMessage - Could not write data\n");
 		exit(EXIT_FAILURE);
@@ -101,11 +101,14 @@ int getLength(int* array){
 	
 }
 
-void broadcast(int* array){
-	int len = getLength(array);
-	char* message = "New client connected!";
-	for (int i = 0; i < len; i++){
-		writeMessage(array[i], message);
+void broadcast(fd_set activeFdSet, int serverSock){
+	char* broadcastMessage = "A new client has connected!"
+	for (int i = 0; i < FD_SETSIZE; i++)
+	{
+		if (FD_ISSET(i, &activeFdSet && i != serverSock))
+		{
+			writeMessage(i, broadcastMessage);
+		}
 	}
 }
 
@@ -154,9 +157,10 @@ int main(int argc, char *argv[]) {
 						exit(EXIT_FAILURE);
 					}
 					printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
-					connectedSockets[nextIndex++] = clientSocket;
+					//! OLD SHIT connectedSockets[nextIndex++] = clientSocket;
+					
 					FD_SET(clientSocket, &activeFdSet);
-					broadcast(connectedSockets);
+					broadcast(activeFdSet, sock);
 
 					// for (int j = 0; j < FD_SETSIZE; ++j){
 					// 	if(j != clientSocket){
@@ -164,12 +168,12 @@ int main(int argc, char *argv[]) {
 					// 		writeMessage(i, message);
 					// 	}
 					// }
-					}
-					else {
-						/* Data arriving on an already connected socket */
-						if(readMessageFromClient(i) < 0) {
-							close(i);
-							FD_CLR(i, &activeFdSet);
+				}
+				else {
+					/* Data arriving on an already connected socket */
+					if (readMessageFromClient(i) < 0) {
+						close(i);
+						FD_CLR(i, &activeFdSet);
 					}
 				}
 			}

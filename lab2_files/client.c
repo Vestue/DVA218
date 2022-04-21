@@ -26,11 +26,11 @@ int readMessageFromServer(int fileDescriptor);
 void initSocketAddress(struct sockaddr_in *name, char *hostName, unsigned short int port) {
     struct hostent *hostInfo; /* Contains info about the host */
     /* Socket address format set to AF_INET for Internet use. */
-    name->sin_family = AF_INET;     
+    name->sin_family = AF_INET;
     /* Set port number. The function htons converts from host byte order to network byte order.*/
-    name->sin_port = htons(port);   
+    name->sin_port = htons(port);
     /* Get info about host. */
-    hostInfo = gethostbyname(hostName); 
+    hostInfo = gethostbyname(hostName);
     if(hostInfo == NULL) {
         fprintf(stderr, "initSocketAddress - Unknown host %s\n",hostName);
         exit(EXIT_FAILURE);
