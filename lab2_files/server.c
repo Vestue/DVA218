@@ -106,7 +106,7 @@ int getLength(int* array){
 void broadcast(fd_set activeFdSet, int serverSock){
 	char* broadcastMessage = "A new client has connected!";
 	fd_set writeFdSet = activeFdSet;
-	timeval timeout;
+	struct timeval timeout;
 	timeout->tv_sec = 1;
 	timeout->tv_usec = 500000;
 	for (int i = 0; i < FD_SETSIZE; i++)
