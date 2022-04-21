@@ -102,7 +102,7 @@ int getLength(int* array){
 }
 
 void broadcast(fd_set activeFdSet, int serverSock){
-	char* broadcastMessage = "A new client has connected!"
+	char* broadcastMessage = "A new client has connected!";
 	for (int i = 0; i < FD_SETSIZE; i++)
 	{
 		if (FD_ISSET(i, &activeFdSet) && (i != serverSock))
