@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
         
         // char input;
         //while (scanf(&char, %c))
-
+        readMessageFromServer(sock);
         fgets(messageString, messageLength, stdin);
         messageString[messageLength - 1] = '\0';
         if(strncmp(messageString,"quit\n",messageLength) != 0)
