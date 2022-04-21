@@ -163,12 +163,14 @@ int main(int argc, char *argv[]) {
 
         //(void)readStdin(0, messageString);
 
+        //! PUT BACK
+        /*
         if(strncmp(messageString,"quit\n",messageLength) != 0)
             writeMessage(sock, messageString);
         else {  
             close(sock);
             exit(EXIT_SUCCESS);
-        }
+        }*/
 
         
     }
