@@ -133,18 +133,24 @@ int main(int argc, char *argv[]) {
     fd_set clientSet;
     FD_ZERO(&clientSet);
     FD_SET(sock, &clientSet);
-    FD_SET(0, &clientSet);
-
+    fd_set stdinSet;
+    FD_ZERO(&stdinSet);
+    FD_SET(0, &stdinSet);
+    
     while(1) {
         
         if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
         {
-            //while (readMessageFromServer(sock) != -1);
             readMessageFromServer(sock);
         }
-        fflush(stdin);
-        printf("\n>");
-        fgets(messageString, messageLength, stdin);
+        if (select(FD_SETSIZE, &stdinSet, NULL, NULL, NULL) != -1)
+        {
+            printf("\n>");
+            fgets(messageString, messageLength, stdin);
+            messageString[messageLength - 1] = '\0';
+        }
+       
+        
 
         /*char input;
         while (scanf("%c", &input) != 1) {
@@ -156,7 +162,6 @@ int main(int argc, char *argv[]) {
 
         //(void)readStdin(0, messageString);
 
-        messageString[messageLength - 1] = '\0';
         if(strncmp(messageString,"quit\n",messageLength) != 0)
             writeMessage(sock, messageString);
         else {  
