@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
             {
                 fgets(messageString, messageLength, stdin);
                 messageString[messageLength - 1] = '\0';
-                if (strncmp(messageString, "quit\n", messageLength) != 0 || messageString[0] != '\0'){
+                if (strncmp(messageString, "quit\n", messageLength) != 0){
                     writeMessage(sock, messageString);
                 }
                     
