@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
 	int sock;
 	int clientSocket;
 	int i;
+	char* welcomeMessage = "HELLO!";
 	fd_set activeFdSet, readFdSet; /* Used by select */
 	struct sockaddr_in clientName;
 	socklen_t size;
@@ -169,11 +170,12 @@ int main(int argc, char *argv[]) {
 						perror("Could not accept connection\n");
 						exit(EXIT_FAILURE);
 					}
-					broadcast(activeFdSet, sock);
+					writeMessage(clientSocket, welcomeMessage);
 					printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
 					//! OLD SHIT connectedSockets[nextIndex++] = clientSocket;
-					
+					broadcast(activeFdSet, sock);
 					FD_SET(clientSocket, &activeFdSet);
+					
 					
 
 					// for (int j = 0; j < FD_SETSIZE; ++j){
