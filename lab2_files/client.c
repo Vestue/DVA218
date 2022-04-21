@@ -136,15 +136,16 @@ int main(int argc, char *argv[]) {
     FD_SET(0, &clientSet);
 
     while(1) {
-        if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
-        {
-            //while (readMessageFromServer(sock) != -1);
-            readMessageFromServer(sock);
-            printf("\n>");
-            fgets(messageString, messageLength, stdin);
+        printf("\n>");
+        while(getc(stdin) == -1){
+            if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
+            {
+                //while (readMessageFromServer(sock) != -1);
+                readMessageFromServer(sock);
+            }
         }
-        
-        
+        fgets(messageString, messageLength, stdin);
+
         /*char input;
         while (scanf("%c", &input) != 1) {
             readMessageFromServer(sock);
