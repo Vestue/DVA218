@@ -105,11 +105,12 @@ int getLength(int* array){
 void broadcast(fd_set activeFdSet, int serverSock){
 	char* broadcastMessage = "A new client has connected!";
 	fd_set writeFdSet = activeFdSet;
+	timeval timeout = 15;
 	for (int i = 0; i < FD_SETSIZE; i++)
 	{
 		if (FD_ISSET(i, &activeFdSet) && (i != serverSock))
 		{
-			if (select(FD_SETSIZE, NULL, &writeFdSet, NULL, NULL) < 0) {
+			if (select(FD_SETSIZE, NULL, &writeFdSet, NULL, timeout) < 0) {
 				perror("Select failed\n");
 				exit(EXIT_FAILURE);
 			}
