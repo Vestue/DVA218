@@ -86,7 +86,7 @@ int readStdin(int fileDescriptor, char* messageString) {
     else {
         /* Data read */
         //printf("<From server: %s\n",  buffer);
-        strncpy(messageString, buffer);
+        strcpy(messageString, buffer);
     }
     return(0);
 }
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     fd_set clientSet;
     FD_ZERO(&clientSet);
     FD_SET(sock, &clientSet);
-    FD_SET(stdin, &clientSet);
+    FD_SET(0, &clientSet);
 
     while(1) {
         if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
         printf("\n>");
         //fgets(messageString, messageLength, stdin);
 
-        (void)readStdin(stdin, messageString);
+        (void)readStdin(0, messageString);
 
         messageString[messageLength - 1] = '\0';
         if(strncmp(messageString,"quit\n",messageLength) != 0)
