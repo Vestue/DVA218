@@ -103,11 +103,18 @@ int main(int argc, char *argv[]) {
     printf("\nType something and press [RETURN] to send it to the server.\n");
     printf("Type 'quit' to nuke this program.\n");
     fflush(stdin);
+
+
+    fd_set clientSet;
+    FD_ZERO(&clientSet);
+    FD_SET(sock, &clientSet);
+
     while(1) {
-        select(FD_SETSIZE, &sock, NULL, NULL, NULL);
+        select(FD_SETSIZE, &clientSet, NULL, NULL, NULL);
         printf("\n>");
         
-        //while (scanf())
+        // char input;
+        //while (scanf(&char, %c))
 
         fgets(messageString, messageLength, stdin);
         messageString[messageLength - 1] = '\0';
