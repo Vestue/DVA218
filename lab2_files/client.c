@@ -135,6 +135,8 @@ int main(int argc, char *argv[]) {
         {
             //while (readMessageFromServer(sock) != -1);
             readMessageFromServer(sock);
+            printf("\n>");
+            fgets(messageString, messageLength, stdin);
         }
         
         
@@ -144,10 +146,9 @@ int main(int argc, char *argv[]) {
         }
         fgets(messageString, messageLength, stdin);
         */
-        printf("\n>");
-        //fgets(messageString, messageLength, stdin);
+        
 
-        (void)readStdin(0, messageString);
+        //(void)readStdin(0, messageString);
 
         messageString[messageLength - 1] = '\0';
         if(strncmp(messageString,"quit\n",messageLength) != 0)
