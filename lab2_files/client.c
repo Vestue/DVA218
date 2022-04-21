@@ -113,9 +113,13 @@ int main(int argc, char *argv[]) {
         select(FD_SETSIZE, &clientSet, NULL, NULL, NULL);
         printf("\n>");
         
-        // char input;
-        //while (scanf(&char, %c))
-        if (readMessageFromServer(sock) < 0)
+        /*
+        char input;
+        while (scanf(&char, %c) != 1){
+            readMessageFromServer(sock);
+        }*/
+
+        if (readMessageFromServer(sock) == 0)
             fgets(messageString, messageLength, stdin);
         messageString[messageLength - 1] = '\0';
         if(strncmp(messageString,"quit\n",messageLength) != 0)
