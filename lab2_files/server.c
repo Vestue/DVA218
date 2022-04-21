@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
 					clientSocket = accept(sock, (struct sockaddr *)&clientName, (socklen_t *)&size); 
 					
 					// Added || for part 4
-					if(clientSocket < 0 || strcmp(inet_ntoa(clientName.sin_addr), "194.160.0.1")) {
+					if(clientSocket < 0 || strcmp(inet_ntoa(clientName.sin_addr), "194.160.0.1") == 0) {
 						perror("Could not accept connection\n");
 						exit(EXIT_FAILURE);
 					}

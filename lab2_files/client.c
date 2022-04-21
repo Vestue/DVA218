@@ -18,8 +18,6 @@
 #define hostNameLength 50
 #define messageLength  256
 
-int readMessageFromServer(int fileDescriptor);
-
 /* initSocketAddress
  * Initialises a sockaddr_in struct given a host name and a port.
  */
@@ -100,7 +98,7 @@ int main(int argc, char *argv[]) {
     int sock;
     struct sockaddr_in serverName;
     char hostName[hostNameLength];
-    char messageString[messageLength];
+    char messageString[messageLength] = {'\0'};
 
     /* Check arguments */
     if(argv[1] == NULL) {
@@ -129,22 +127,40 @@ int main(int argc, char *argv[]) {
     printf("Type 'quit' to nuke this program.\n");
     fflush(stdin);
 
-    fd_set clientSet, testSet;
-    FD_ZERO(&clientSet);
-    FD_SET(sock, &clientSet);
-    FD_SET(0, &clientSet);
+    fd_set readSet;
+    FD_ZERO(&readSet);
     
+    //char bufferChar;
+    int tagPrinted = 0;
+
     while (1) {
-        testSet = clientSet;
-        if (select(FD_SETSIZE, &testSet, NULL, NULL, NULL) != -1)
+        //bufferChar = '';
+
+        FD_SET(0, &readSet);
+        FD_SET(sock, &readSet);
+        if (select(sock + 1, &readSet, NULL, NULL, NULL) == -1)
+        {
+            printf("Select error");
+            exit(EXIT_FAILURE);
+        }
+        if (FD_ISSET(sock, &readSet))
         {
             readMessageFromServer(sock);
+            tagPrinted = 0;
+        }
+
+        if (tagPrinted == 0){
             printf("\n>");
+        }       
+
+        bufferChar = getchar();
+        printf("%c", bufferChar);
+        if (!feof(stdin)){
             fgets(messageString, messageLength, stdin);
             messageString[messageLength - 1] = '\0';
+            tagPrinted = 1;
         }
-       
-
+        printf("Down here!");
         // char input;
         //while (scanf(&char, %c))
        
