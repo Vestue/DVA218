@@ -66,7 +66,7 @@ int readMessageFromServer(int fileDescriptor) {
         return(-1);
     else {
         if (buffer[0] == '1'){
-            buffer[0] = '';
+            buffer[0] = ' ';
             readMessageFromServer(fileDescriptor);
         }
         /* Data read */
