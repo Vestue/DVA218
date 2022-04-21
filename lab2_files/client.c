@@ -137,11 +137,15 @@ int main(int argc, char *argv[]) {
 
     while(1) {
         printf("\n(Press enter to start typing)");
-        while(getchar() != '\n'){
+        int runloop = 1;
+        while (runloop){
             if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
             {
                 //while (readMessageFromServer(sock) != -1);
                 readMessageFromServer(sock);
+            }
+            if (getchar() == '\n'){
+                runloop = 0;
             }
         }
         printf("\n>");
