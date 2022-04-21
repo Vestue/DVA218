@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
     //FD_SET(0, &clientSet);
 
     while(1) {
-        printf("\nPress enter to start typing");
+        printf("\n(Press enter to start typing)");
         while(getchar() != '\n'){
             if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
             {
