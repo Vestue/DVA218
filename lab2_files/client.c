@@ -112,7 +112,8 @@ int main(int argc, char *argv[]) {
     while(1) {
         if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
         {
-            readMessageFromServer(sock);
+            while (readMessageFromServer(sock) != -1);
+            //readMessageFromServer(sock);
         }
         
         
