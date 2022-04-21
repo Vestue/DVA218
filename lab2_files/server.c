@@ -94,20 +94,27 @@ void writeMessage(int fileDescriptor, char *message) {
 	}
 }
 
+// OLD
+/* 
 int getLength(int* array){
 	int i = 0;
 	for (; array[i] == EMPTY; i++);
 	return i;
-	
-}
+}*/
 
 void broadcast(fd_set activeFdSet, int serverSock){
 	char* broadcastMessage = "A new client has connected!";
+	fd_set writeFdSet = activeFdSet;
 	for (int i = 0; i < FD_SETSIZE; i++)
 	{
 		if (FD_ISSET(i, &activeFdSet) && (i != serverSock))
 		{
+			if (select(FD_SETSIZE, NULL, &writeFdSet, NULL, NULL) < 0) {
+				perror("Select failed\n");
+				exit(EXIT_FAILURE);
+			}
 			writeMessage(i, broadcastMessage);
+			printf("Broadcasting...%d", i);
 		}
 	}
 }
@@ -115,13 +122,13 @@ void broadcast(fd_set activeFdSet, int serverSock){
 int main(int argc, char *argv[]) {
 	int sock;
 	int clientSocket;
-	int i, nextIndex = 0;
+	int i;
 	fd_set activeFdSet, readFdSet; /* Used by select */
 	struct sockaddr_in clientName;
 	socklen_t size;
   
-	int connectedSockets[FD_SETSIZE] = {EMPTY};
-	printf("%d", connectedSockets[58]);
+	//int connectedSockets[FD_SETSIZE] = {EMPTY};
+	//printf("%d", connectedSockets[58]); nextIndex = 0
  
 	/* Create a socket and set it up to accept connections */
 	sock = makeSocket(PORT);
