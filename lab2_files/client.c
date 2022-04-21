@@ -64,11 +64,11 @@ int readMessageFromServer(int fileDescriptor) {
     else if(nOfBytes == 0) 
         /* End of file */
         return(-1);
-    else {
+    else {/*
         if (buffer[0] == '1'){
             buffer[0] = ' ';
             readMessageFromServer(fileDescriptor);
-        }
+        }*/
         /* Data read */
         printf("<From server: %s\n",  buffer);
             
@@ -139,10 +139,11 @@ int main(int argc, char *argv[]) {
     
     while(1) {
         
+        readMessageFromServer(sock);/*
         if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
         {
             readMessageFromServer(sock);
-        }
+        }*/
         if (select(FD_SETSIZE, &stdinSet, NULL, NULL, NULL) != -1)
         {
             printf("\n>");
