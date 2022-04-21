@@ -114,12 +114,11 @@ void broadcast(fd_set activeFdSet, int serverSock){
 	{
 		if (FD_ISSET(i, &activeFdSet) && (i != serverSock))
 		{
-			if (select(FD_SETSIZE, &readFdSet, &writeFdSet, NULL, NULL) < 0) {
+			if (select(FD_SETSIZE, NULL, &writeFdSet, NULL, NULL) < 0) {
 				perror("Select failed\n");
 				exit(EXIT_FAILURE);
 			}
 			writeMessage(i, broadcastMessage);
-			printf("Broadcasting...%d", i);
 		}
 	}
 }
