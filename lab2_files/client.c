@@ -122,12 +122,8 @@ int main(int argc, char *argv[]) {
         }
         fgets(messageString, messageLength, stdin);
         */
-        
-        if (readMessageFromServer(sock) == 0) 
-        {
-            printf("\n>");
-            fgets(messageString, messageLength, stdin);
-        }
+        printf("\n>");
+        fgets(messageString, messageLength, stdin);
         messageString[messageLength - 1] = '\0';
         if(strncmp(messageString,"quit\n",messageLength) != 0)
             writeMessage(sock, messageString);
