@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
 
     while(1) {
         printf("\n>");
+        printf("%d", getc(stdin));
         while(getc(stdin) == -1){
             if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
             {
