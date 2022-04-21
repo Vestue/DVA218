@@ -56,7 +56,7 @@ int readMessageFromServer(int fileDescriptor) {
     char buffer[messageLength];
     int nOfBytes;
 
-    nOfBytes = recv(fileDescriptor, buffer, messageLength);
+    nOfBytes = read(fileDescriptor, buffer, messageLength);
     if(nOfBytes < 0) {
         perror("Could not read data from server\n");
         exit(EXIT_FAILURE);
