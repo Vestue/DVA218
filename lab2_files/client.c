@@ -130,26 +130,40 @@ int main(int argc, char *argv[]) {
     fflush(stdin);
 
 
-    fd_set clientSet;
+    fd_set clientSet, testSet;
     FD_ZERO(&clientSet);
     FD_SET(sock, &clientSet);
-    fd_set stdinSet;
-    FD_ZERO(&stdinSet);
-    FD_SET(0, &stdinSet);
+    FD_SET(0, &clientSet);
     
     while(1) {
-        
-        readMessageFromServer(sock);/*
-        if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
+        testSet = clientSet;
+        if (select(FD_SETSIZE, &testSet, NULL, NULL, NULL) == -1)
         {
-            readMessageFromServer(sock);
-        }*/
-        if (select(FD_SETSIZE, &stdinSet, NULL, NULL, NULL) != -1)
-        {
-            printf("\n>");
-            fgets(messageString, messageLength, stdin);
-            messageString[messageLength - 1] = '\0';
+            perror("Select error");
+            exit(EXIT_FAILURE);
         }
+        for (int fd = 0; fd < FD_SETSIZE; fd++)
+        {
+            if (fd == sock)
+            {
+                readMessageFromServer(sock);
+            }
+            else if (fd == 0)
+            {
+                printf("\n>");
+                fgets(messageString, messageLength, stdin);
+                messageString[messageLength - 1] = '\0';
+            }
+        }
+        //
+        //if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
+        //{
+        //    readMessageFromServer(sock);
+        //}
+        //if (select(FD_SETSIZE, &stdinSet, NULL, NULL, NULL) != -1)
+        //{
+        //    
+        //}
        
         
 
@@ -163,14 +177,13 @@ int main(int argc, char *argv[]) {
 
         //(void)readStdin(0, messageString);
 
-        //! PUT BACK
-        /*
+        
         if(strncmp(messageString,"quit\n",messageLength) != 0)
             writeMessage(sock, messageString);
         else {  
             close(sock);
             exit(EXIT_SUCCESS);
-        }*/
+        }
 
         
     }
