@@ -142,14 +142,16 @@ int main(int argc, char *argv[]) {
             perror("Select error");
             exit(EXIT_FAILURE);
         }
-        for (int fd = 0; fd < FD_SETSIZE; fd++)
+        for (int fd = FD_SIZE; fd > 0; fd--)
         {
             if (fd == sock)
             {
-                readMessageFromServer(sock);
+                printf("Client read");
+                while (readMessageFromServer(sock) != -1);
             }
             else if (fd == 0)
             {
+
                 printf("\n>");
                 fgets(messageString, messageLength, stdin);
                 messageString[messageLength - 1] = '\0';
