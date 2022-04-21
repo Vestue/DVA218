@@ -158,16 +158,18 @@ int main(int argc, char *argv[]) {
 					/* Connection request on original socket */
 					size = sizeof(struct sockaddr_in);
 					/* Accept the connection request from a client. */
+					
 					clientSocket = accept(sock, (struct sockaddr *)&clientName, (socklen_t *)&size); 
 					if(clientSocket < 0) {
 						perror("Could not accept connection\n");
 						exit(EXIT_FAILURE);
 					}
+					broadcast(activeFdSet, sock);
 					printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
 					//! OLD SHIT connectedSockets[nextIndex++] = clientSocket;
 					
 					FD_SET(clientSocket, &activeFdSet);
-					broadcast(activeFdSet, sock);
+					
 
 					// for (int j = 0; j < FD_SETSIZE; ++j){
 					// 	if(j != clientSocket){
