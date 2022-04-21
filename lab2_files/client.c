@@ -58,18 +58,17 @@ int readMessageFromServer(int fileDescriptor) {
 
     nOfBytes = read(fileDescriptor, buffer, messageLength);
     if(nOfBytes < 0) {
-        return -1;
-        //perror("Could not read data from server\n");
-        //exit(EXIT_FAILURE);
+        perror("Could not read data from server\n");
+        exit(EXIT_FAILURE);
     }
     else if(nOfBytes == 0) 
         /* End of file */
         return(-1);
-    else {/*
+    else {
         if (buffer[0] == '1'){
             buffer[0] = ' ';
             readMessageFromServer(fileDescriptor);
-        }*/
+        }
         /* Data read */
         printf("<From server: %s\n",  buffer);
             
@@ -130,62 +129,28 @@ int main(int argc, char *argv[]) {
     printf("Type 'quit' to nuke this program.\n");
     fflush(stdin);
 
-
     fd_set clientSet, testSet;
     FD_ZERO(&clientSet);
     FD_SET(sock, &clientSet);
     FD_SET(0, &clientSet);
     
-    while(1) {
+    while (1) {
         testSet = clientSet;
-        if (select(FD_SETSIZE, &testSet, NULL, NULL, NULL) == -1)
+        if (select(FD_SETSIZE, &testSet, NULL, NULL, NULL) != -1)
         {
-            perror("Select error");
-            exit(EXIT_FAILURE);
-        }
-        for (int fd = 1024; fd >= 0; fd--)
-        {
-            if (fd == sock)
-            {
-                printf("Client read");
-                while (readMessageFromServer(sock) != -1){
-                    printf("%d", readMessageFromServer(sock));
-                }
-            }
-            else if (fd == 0)
-            {
-
-                printf("\n>");
-                fgets(messageString, messageLength, stdin);
-                messageString[messageLength - 1] = '\0';
-            }
-        }
-        //
-        //if (select(FD_SETSIZE, &clientSet, NULL, NULL, NULL) != -1)
-        //{
-        //    readMessageFromServer(sock);
-        //}
-        //if (select(FD_SETSIZE, &stdinSet, NULL, NULL, NULL) != -1)
-        //{
-        //    
-        //}
-       
-        
-
-        /*char input;
-        while (scanf("%c", &input) != 1) {
             readMessageFromServer(sock);
+            printf("\n>");
+            fgets(messageString, messageLength, stdin);
+            messageString[messageLength - 1] = '\0';
         }
-        fgets(messageString, messageLength, stdin);
-        */
-        
+       
 
-        //(void)readStdin(0, messageString);
-
-        
-        if(strncmp(messageString,"quit\n",messageLength) != 0)
+        // char input;
+        //while (scanf(&char, %c))
+       
+        if (strncmp(messageString, "quit\n", messageLength) != 0)
             writeMessage(sock, messageString);
-        else {  
+        else {
             close(sock);
             exit(EXIT_SUCCESS);
         }
