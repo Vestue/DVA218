@@ -125,7 +125,6 @@ int main(int argc, char *argv[]) {
             if (!FD_ISSET(i, &testSet)) continue;
             if (i == STDIN_FILENO)
             {
-                printf("\n>");
                 fgets(messageString, messageLength, stdin);
                 messageString[messageLength - 1] = '\0';
                 if (strncmp(messageString, "quit\n", messageLength) != 0 || messageString[0] != '\0'){
@@ -139,7 +138,8 @@ int main(int argc, char *argv[]) {
             }
             else if (i == sock)
             {
-                readMessageFromServer(sock);
+                if(readMessageFromServer(sock) == -1) exit(EXIT_SUCCESS);
+                printf("\n>");
             }
         }
         fflush(stdout);
