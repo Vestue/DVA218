@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
     fd_set clientSet;
     FD_ZERO(&clientSet);
     FD_SET(sock, &clientSet);
-    FD_SET(0, &clientSet);
+    //FD_SET(0, &clientSet);
 
     while(1) {
         printf("\n>");
