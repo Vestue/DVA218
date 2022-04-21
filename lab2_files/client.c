@@ -56,7 +56,7 @@ int readMessageFromServer(int fileDescriptor) {
     char buffer[messageLength];
     int nOfBytes;
 
-    nOfBytes = read(fileDescriptor, buffer, messageLength);
+    nOfBytes = recv(fileDescriptor, buffer, messageLength);
     if(nOfBytes < 0) {
         perror("Could not read data from server\n");
         exit(EXIT_FAILURE);
@@ -104,8 +104,11 @@ int main(int argc, char *argv[]) {
     printf("Type 'quit' to nuke this program.\n");
     fflush(stdin);
     while(1) {
+        select(FD_SETSIZE, &sock, NULL, NULL, NULL);
         printf("\n>");
-        readMessageFromServer(sock);
+        
+        //while (scanf())
+
         fgets(messageString, messageLength, stdin);
         messageString[messageLength - 1] = '\0';
         if(strncmp(messageString,"quit\n",messageLength) != 0)
