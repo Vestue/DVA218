@@ -111,16 +111,19 @@ int main(int argc, char *argv[]) {
 
     while(1) {
         select(FD_SETSIZE, &clientSet, NULL, NULL, NULL);
-        printf("\n>");
+        
+        char input;
+        while (scanf(&input, %c) != 1){
+            readMessageFromServer(sock);
+        }
+        fgets(messageString, messageLength, stdin);
         
         /*
-        char input;
-        while (scanf(&char, %c) != 1){
-            readMessageFromServer(sock);
-        }*/
-
-        if (readMessageFromServer(sock) == 0)
+        if (readMessageFromServer(sock) == 0) 
+        {
+            printf("\n>");
             fgets(messageString, messageLength, stdin);
+        }*/
         messageString[messageLength - 1] = '\0';
         if(strncmp(messageString,"quit\n",messageLength) != 0)
             writeMessage(sock, messageString);
