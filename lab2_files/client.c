@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
             perror("Select error");
             exit(EXIT_FAILURE);
         }
-        for (int fd = FD_SIZE; fd > 0; fd--)
+        for (int fd = 1024; fd >= 0; fd--)
         {
             if (fd == sock)
             {
