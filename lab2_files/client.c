@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
         select(FD_SETSIZE, &clientSet, NULL, NULL, NULL);
         
         char input;
-        while (scanf(&input, %c) != 1){
+        while (scanf("%c", &input) != 1) {
             readMessageFromServer(sock);
         }
         fgets(messageString, messageLength, stdin);
