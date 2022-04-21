@@ -58,8 +58,9 @@ int readMessageFromServer(int fileDescriptor) {
 
     nOfBytes = read(fileDescriptor, buffer, messageLength);
     if(nOfBytes < 0) {
-        perror("Could not read data from server\n");
-        exit(EXIT_FAILURE);
+        return -1;
+        //perror("Could not read data from server\n");
+        //exit(EXIT_FAILURE);
     }
     else if(nOfBytes == 0) 
         /* End of file */
@@ -147,7 +148,9 @@ int main(int argc, char *argv[]) {
             if (fd == sock)
             {
                 printf("Client read");
-                while (readMessageFromServer(sock) != -1);
+                while (readMessageFromServer(sock) != -1){
+                    printf("%d", readMessageFromServer(sock));
+                }
             }
             else if (fd == 0)
             {
