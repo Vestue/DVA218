@@ -147,14 +147,19 @@ int main(int argc, char *argv[]) {
             readMessageFromServer(sock);
             tagPrinted = 0;
         }
-
+        if (FD_ISSET(0, &readSet))
+        {
+            printf("\n>");
+            fgets(messageString, messageLength, stdin);
+            messageString[messageLength - 1] = '\0';
+        }
         if (tagPrinted == 0){
             printf("\n>");
         }       
 
         bufferChar = getchar();
         printf("%c", bufferChar);
-        if (bufferChar == '\0') {
+        if (bufferChar != '\0') {
             fgets(messageString, messageLength, stdin);
             messageString[messageLength - 1] = '\0';
             tagPrinted = 1;
