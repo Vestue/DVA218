@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
 
         // We do this as we don't want to be able to get stuck in a fgets
         // as the client can't readMessages while fgets is waiting for '\n'.
-        for (int i = 0; i < FD_SETSIZE; ++i)
+        for (int i = 0; i < sock + 1; ++i)
         {
             if (i == STDIN_FILENO && FD_ISSET(i, &testSet))
             {
