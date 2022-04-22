@@ -2,6 +2,15 @@
  * Trying out socket communication between processes using the Internet protocol family.
  */
 
+/****************************************************************
+ *  - DVA218 - Lab 2    -
+ *  - Group B3          -
+ *  
+ * - Fredrik Nygårds
+ * - Oscar Einarsson
+ * - Ragnar Winblad von Walter
+ ****************************************************************/ 
+
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -79,6 +88,10 @@ int readMessageFromClient(int fileDescriptor) {
 	else {
 		/* Data read */
 		printf(">Incoming message: %s\n",  buffer);
+
+		// Reply to the client.
+		// The same fileDescriptor is used as the socket can
+		// be used for both writing and reading.
 		char* message = "Received";
 		writeMessage(fileDescriptor, message);
 	}
@@ -94,14 +107,6 @@ void writeMessage(int fileDescriptor, char *message) {
 		exit(EXIT_FAILURE);
 	}
 }
-
-// OLD
-/* 
-int getLength(int* array){
-	int i = 0;
-	for (; array[i] == EMPTY; i++);
-	return i;
-}*/
 
 void broadcast(fd_set activeFdSet, int serverSock){
 	char* broadcastMessage = "A new client has connected!";
@@ -128,9 +133,6 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in clientName;
 	socklen_t size;
   
-	//int connectedSockets[FD_SETSIZE] = {EMPTY};
-	//printf("%d", connectedSockets[58]); nextIndex = 0
- 
 	/* Create a socket and set it up to accept connections */
 	sock = makeSocket(PORT);
 	/* Listen for connection requests from clients */
@@ -162,25 +164,18 @@ int main(int argc, char *argv[]) {
 					
 					clientSocket = accept(sock, (struct sockaddr *)&clientName, (socklen_t *)&size); 
 					
-					// Added || for part 4
+					// Check if the ip-address is a blacklisted address.
 					if(clientSocket < 0 || strcmp(inet_ntoa(clientName.sin_addr), "127.0.0.5") == 0) {
 						perror("Could not accept connection\n");
 						exit(EXIT_FAILURE);
 					}
 					writeMessage(clientSocket, welcomeMessage);
 					printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
-					//! OLD SHIT connectedSockets[nextIndex++] = clientSocket;
+					
+					// Sends a message to all connected clients in the FdSet.
+					// This is done before setting the new client to only broadcast to other clients.
 					broadcast(activeFdSet, sock);
 					FD_SET(clientSocket, &activeFdSet);
-					
-					
-
-					// for (int j = 0; j < FD_SETSIZE; ++j){
-					// 	if(j != clientSocket){
-					// 		char* message = "New client connected!";
-					// 		writeMessage(i, message);
-					// 	}
-					// }
 				}
 				else {
 					/* Data arriving on an already connected socket */

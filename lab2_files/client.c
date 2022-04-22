@@ -4,6 +4,15 @@
  * then type 'client lab1-6.idt.mdh.se' and follow the on-screen instructions.
  */
 
+/****************************************************************
+ *  - DVA218 - Lab 2    -
+ *  - Group B3          -
+ *  
+ * - Fredrik Nygårds
+ * - Oscar Einarsson
+ * - Ragnar Winblad von Walter
+ ****************************************************************/ 
+
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -48,7 +57,6 @@ void writeMessage(int fileDescriptor, char *message) {
         perror("writeMessage - Could not write data\n");
         exit(EXIT_FAILURE);
     }
-    memset(message, '\0', messageLength);
 }
 
 int readMessageFromServer(int fileDescriptor) {
@@ -60,17 +68,13 @@ int readMessageFromServer(int fileDescriptor) {
         perror("Could not read data from server\n");
         exit(EXIT_FAILURE);
     }
-    else if(nOfBytes == 0) 
+    else if(nOfBytes == 0) {
         /* End of file */
         return(-1);
+    }
     else {
-            /*if (buffer[0] == '1'){
-                buffer[0] = ' ';
-            readMessageFromServer(fileDescriptor);
-        }*/
         /* Data read */
         printf("\nFrom server: %s\n",  buffer);
-            
     }
     return(0);
 }
@@ -114,29 +118,33 @@ int main(int argc, char *argv[]) {
     FD_SET(sock, &readSet);
     while (1) {
         fd_set testSet = readSet;
-        memset(messageString, '\0', messageLength);
+
         if (select(sock + 1, &testSet, NULL, NULL, NULL) == -1)
         {
             printf("Select error");
             exit(EXIT_FAILURE);
         }
+
+        // Go through the sockets and check if information
+        // is coming from our listening socket or stdin.
+
+        // We do this as we don't want to be able to get stuck in a fgets
+        // as the client can't readMessages while fgets is waiting for '\n'.
         for (int i = 0; i < FD_SETSIZE; ++i)
         {
-            if (!FD_ISSET(i, &testSet)) continue;
-            if (i == STDIN_FILENO)
+            if (i == STDIN_FILENO && FD_ISSET(i, &testSet))
             {
                 fgets(messageString, messageLength, stdin);
                 messageString[messageLength - 1] = '\0';
                 if (strncmp(messageString, "quit\n", messageLength) != 0){
                     writeMessage(sock, messageString);
                 }
-                    
                 else {
                     close(sock);
                     exit(EXIT_SUCCESS);
                 }
             }
-            else if (i == sock)
+            else if (i == sock && FD_ISSET(i, &testSet))
             {
                 if(readMessageFromServer(sock) == -1) exit(EXIT_SUCCESS);
                 printf("\n>");
