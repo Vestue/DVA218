@@ -51,7 +51,6 @@ void initSocketAddress(struct sockaddr_in *name, char *hostName, unsigned short 
  */
 void writeMessage(int fileDescriptor, char *message) {
     int nOfBytes = 0;
-    //printf("%s", message);
     nOfBytes = write(fileDescriptor, message, strlen(message) + 1);
     if(nOfBytes < 0) {
         perror("writeMessage - Could not write data\n");
