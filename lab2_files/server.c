@@ -29,6 +29,7 @@
 #define EMPTY -1
 
 void writeMessage(int fileDescriptor, char* message);
+int blackListed (char* IpAddr);
 
 /* makeSocket
  * Creates and names a socket in the Internet
@@ -132,6 +133,8 @@ int main(int argc, char *argv[]) {
 	fd_set activeFdSet, readFdSet; /* Used by select */
 	struct sockaddr_in clientName;
 	socklen_t size;
+
+	char* connectionRefusedMessage = "Connection refused.";
   
 	/* Create a socket and set it up to accept connections */
 	sock = makeSocket(PORT);
@@ -165,17 +168,25 @@ int main(int argc, char *argv[]) {
 					clientSocket = accept(sock, (struct sockaddr *)&clientName, (socklen_t *)&size); 
 					
 					// Check if the ip-address is a blacklisted address.
-					if(clientSocket < 0 || strcmp(inet_ntoa(clientName.sin_addr), "127.0.0.5") == 0) {
+					if(clientSocket < 0) {
 						perror("Could not accept connection\n");
 						exit(EXIT_FAILURE);
 					}
-					writeMessage(clientSocket, welcomeMessage);
-					printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
+
+					if (blackListed(inet_ntoa(clientName.sin_addr))) {
+						writeMessage(clientSocket, connectionRefusedMessage);
+						close(i);
+						FD_CLR(i, &activeFdSet);
+					}
+					else {
+						writeMessage(clientSocket, welcomeMessage);
+						printf("Server: Connect from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
 					
-					// Sends a message to all connected clients in the FdSet.
-					// This is done before setting the new client to only broadcast to other clients.
-					broadcast(activeFdSet, sock);
-					FD_SET(clientSocket, &activeFdSet);
+						// Sends a message to all connected clients in the FdSet.
+						// This is done before setting the new client to only broadcast to other clients.
+						broadcast(activeFdSet, sock);
+						FD_SET(clientSocket, &activeFdSet);
+					}
 				}
 				else {
 					/* Data arriving on an already connected socket */
@@ -187,4 +198,13 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
+}
+
+int blackListed (char* IpAddr){
+	char list[4][50] = { "127.0.03", "192.150.28.1", "128.0.0.2", "127.0.0.1"};
+
+	for (int i = 0; i < 4; i++){
+		if (strcmp(IpAddr, list[i]) == 0) return 1;
+	}
+	return 0;
 }
