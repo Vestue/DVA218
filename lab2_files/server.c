@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
 }
 
 int blackListed (char* IpAddr){
-	char list[4][50] = { "127.0.03", "192.150.28.1", "128.0.0.2", "127.0.0.1"};
+	char list[4][50] = { "127.0.03", "192.150.28.1", "128.0.0.2", "127.0.0.3"};
 
 	for (int i = 0; i < 4; i++){
 		if (strcmp(IpAddr, list[i]) == 0) return 1;
