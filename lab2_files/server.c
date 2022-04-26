@@ -177,6 +177,7 @@ int main(int argc, char *argv[]) {
 						writeMessage(clientSocket, connectionRefusedMessage);
 						printf("Server: Refused connection from client %s, port %d\n", inet_ntoa(clientName.sin_addr), ntohs(clientName.sin_port));
 						close(i);
+						FD_CLR(i, &readFdSet);
 					}
 					else {
 						writeMessage(clientSocket, welcomeMessage);
