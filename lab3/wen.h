@@ -140,8 +140,20 @@ Datagram packACK(Datagram messageToSend, Datagram receivedMessage);
 ?   In one single step instead of needing to setDefaultMessage and then change flags
 ?   in the server or client itself.
 
-*   Datagram types as paramtetersare used to increase abstraction for client and server.
+*   Datagram types as paramters are used to increase abstraction for client and server.
 */
 
+/*
+    Make the message get default values and then set the SYN flag.
+    Return altered datagram.
+*/
+Datagram packSYN(Datagram messageToSend);
+
+//* Following packs are similar to the last one
+//* as they will only restore the message to a default condition
+//* and then set their flag.
+//? Note that these functions are mostly used for abstraction.
+Datagram packFIN(Datagram messageToSend);
+Datagram packSYNACK(Datagram messageToSend);
 
 #endif
