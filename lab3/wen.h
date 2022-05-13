@@ -1,5 +1,5 @@
-#ifndef DATAGRAM_H
-#define DATAGRAM_H
+#ifndef WEN_H
+#define WEN_H
 
 struct Header {
     int windowSize;
