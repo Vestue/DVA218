@@ -27,11 +27,9 @@
     as they otherwise cause issues with the enums using in the
     packet header.
 */
-#define GBN 0;
-#define SR	1;
-#define SYN 2;
-#define ACK 3;
-#define FIN 4;
+#define SYN 1;
+#define ACK 2;
+#define FIN 3;
 
 int recvMessage(int sock, Datagram receivedMessage)
 {

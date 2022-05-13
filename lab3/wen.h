@@ -17,25 +17,38 @@
 #define WINDOWSIZE 64
 #define MAXSEQNUM 128
 
+/*
+    Set if Go-Back-N or Selective Repeat should
+    be used as the method for sliding windows.
+
+    Go-Back-N = 0
+    Selective Repeat = 1
+*/
+#define SWMETHOD 0
+
 /* Enums */
 enum slidingWindowMethods { GBN = 0, SR = 1 };
 
 //! Enum itself can't be used as variable.
 //! Remove comment when everyone has read.
-enum flag{ GBN=0, SR=1, SYN=2, ACK=3, FIN=4, SYNACK=5 };
+enum flag { UNSET=0, SYN=1, ACK=2, SYNACK=3, FIN=4 };
 
-/* Struct and typedef definitions */
+/* Struct definitions */
 
-struct Header {
+struct Header 
+{
     int windowSize;
     int sequence;
     int flag;
 };
 
-struct Packet {
+struct Packet 
+{
     struct Header header;
     char* message;
 };
+
+/* Typedefs */
 
 typedef struct Packet *Datagram;
 
