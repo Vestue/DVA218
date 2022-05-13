@@ -1,7 +1,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "wen.h"
+#include "wen.c"
 
 /*Defined values*/
 #define SYN 1;

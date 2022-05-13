@@ -1,7 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "wen.h"
+#include "wen.c"
 
 /*Defined values here*/
 #define PORT 5555
@@ -16,14 +16,9 @@ struct ClientInfo
 
 /*Declared functions here*/
 
-/* Creates a new socket, binds it and returns the socket */
-int createSocket(void);
-
 int recvMessageFromClient(int socket, Datagram);
 
 int unpackMessage(Datagram);
-
-void setDefaultHeader(Datagram messageToSend)
 
 int sendTimeout();
 

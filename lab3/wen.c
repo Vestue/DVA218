@@ -22,9 +22,11 @@
 #include <sys/time.h>
 #include "wen.h"
 
-#define MAXLENGTH 1024
-#define WINDOWSIZE 64
-#define MAXSEQNUM 128
+/*
+    These macros need to be here instead of in the header
+    as they otherwise cause issues with the enums using in the
+    packet header.
+*/
 #define GBN 0;
 #define SR	1;
 #define SYN 2;
@@ -50,7 +52,7 @@ int recvMessage(int sock, Datagram receivedMessage)
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-    
+
 }
 
 void setDefaultHeader(Datagram messageToSend)

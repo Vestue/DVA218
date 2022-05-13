@@ -7,7 +7,6 @@
  * - Ragnar Winblad von Walter
  ****************************************************************/ 
 
-#include "wen.c"
 #include "client.h"
 
 #define MAXLENGTH 512
