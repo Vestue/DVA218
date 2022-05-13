@@ -8,8 +8,10 @@
 #define MAXLENGTH 1024
 #define WINDOWSIZE 64
 #define MAXSEQNUM 128
-#define SYN 1;
-#define ACK 2;
+#define GBN 0;
+#define SR	1;
+#define SYN 2;
+#define ACK 3;
 #define FIN 4;
 
 /*Declared functions here*/
@@ -22,5 +24,7 @@ int sendMessageToClient(int socket);
 int recvMessageFromClient(int socket, Datagram receivedMessage);
 
 int unpackMessage(Datagram messageToUnpack);
+
+int timeoutCounter(int milliseconds);
 
 #endif

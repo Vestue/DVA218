@@ -10,7 +10,9 @@
 // Declarations
 
 int sendMessageToServer(int socket);
+
 int recvMessageFromServer(int socket, Datagram receivedMessage);
 
+int timeoutCounter(int milliseconds);
 
 #endif

@@ -6,7 +6,7 @@
 struct Header {
     int windowSize;
     int sequence;
-    enum flag{GBN=0, SER=1, SYN=2, ACK=3, FIN=4, SYNACK=5};
+    enum flag{GBN=0, SR=1, SYN=2, ACK=3, FIN=4, SYNACK=5};
 };
 
 struct Packet {

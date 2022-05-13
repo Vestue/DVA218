@@ -30,18 +30,17 @@ int main()
 	memset(receivedMessage, 0, sizeof(receivedMessage));
 	memset(messageToSend, 0, sizeof(messageToSend));
 
-	// Add default info to messageToSend
-
-
 	while (1) 
 	{
+		defaultiseMessage(messageToSend);
+
 		if (recvMessageFromClient(sock, receivedMessage)) 
 		{
 			switch (receivedMessage->header.flag)
 			{
 				case SYN:
 					// Send flag SYN+ACK
-					messageToSend->header.flag = SYNACK;
+					messageToSend->header.flag = SYN + ACK;
 
 					break;
 				case ACK:
@@ -53,6 +52,8 @@ int main()
 				default:
 					/*Destroy and ACK old packages*/
 					/*Normal packet*/
+					messageToSend->header.flag = ACK;
+					messageToSend->header.sequence = receivedMessage->header.sequence + 1;
 					break;
 			}
 		}
@@ -101,7 +102,7 @@ int recvMessageFromClient(int sock, Datagram receivedMessage)
 
 // TODO: Fix checksum function
 
-int interpretPack(Datagram packet)
+void interpretPack(Datagram packet)
 {
 	if (packet->header.flag == GBN) 
 	{
@@ -111,7 +112,10 @@ int interpretPack(Datagram packet)
 		// SR
 }
 
-void defaultMessageToSend(Datagram messageToSend)
+void defaultiseMessage(Datagram messageToSend)
 {
-
+	messageToSend->header.windowSize = WINDOWSIZE;
+	messageToSend->header.sequence = 1;
+	messageToSend->header.flag = GBN;
+	messageToSend->message = '\0';
 }
