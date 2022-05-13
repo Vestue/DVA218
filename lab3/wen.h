@@ -48,9 +48,17 @@ struct Packet
     char* message;
 };
 
+struct ConnectionInfo
+{
+    struct sockaddr_in addr;
+    int expectedSeqNum;
+    int FIN_SET;
+};
+
 /* Typedefs */
 
 typedef struct Packet *Datagram;
+typedef struct ClientList *ConnectionInfo;
 
 /* Declared functions and descriptions */
 
@@ -98,23 +106,35 @@ Todo: For example, resend a timed out package or close connection.
 ?   These parameters will have to be changed as i have no idea
 ?   what paramters need to be used.
 */
-void startTimer(int sock, struct sockaddr_in addr, int seqNum);
+void startTimer(int sock, Datagram timedConnection);
 
 /*
     Use provided adress to stop timer for certain sequence number.
 */
-void stopTimer(struct sockaddr_in addr, int seqNum);
+void stopTimer(Datagram timedConnection, int seqNum);
 
 /*
     Use provided adress to restart timer for certain sequence number.
 */
-void restartTimer(struct sockaddr_in addr, int seqNum);
+void restartTimer(Datagram timedConnection, int seqNum);
 
 /*
     Return the expected sequence number from a certain sockaddr.
 
-?   Parameters should be changed to include an array of clients
+    Pointer is used to be able to get from either only one connection or
+    multiple connections (if its sent as the typedeffed ClientList) 
 */
-int getExpectedSeq(struct sockaddr_in addr);
+int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* clientList);
+
+/*
+    Make the message ready to be sent as an ACK using the sequence number
+    within the received message.
+
+    messageToSend should first get default values and then get the seq++
+    and ACK flag.
+
+*   Datagram types are used to increase abstraction for client and server.
+*/
+Datagram packACK(Datagram messageToSend, Datagram receivedMessage);
 
 #endif
