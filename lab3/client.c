@@ -16,6 +16,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "client.h"
+
+#define MAXLENGTH 512
+#define PORT 5555
 
 int main()
 {
@@ -24,4 +28,18 @@ int main()
         perror("Could not create a socket\n");
 		exit(EXIT_FAILURE);
     }
+
+    return 0;
+}
+
+sendMessageToServer(int sock)
+{
+
+    return 1;
+}
+
+recvMessageFromServer
+{
+
+    return 1;
 }

@@ -19,14 +19,99 @@
 #include <netdb.h>
 #include <string.h>
 #include <sys/time.h>
+#include "server.h"
 
-#define PORT 5555
-#define MAXLENGTH 1024
+int main() 
+{
+	int sock = createSocket();
+	int sequenceNumber = 0;
+	Datagram receivedMessage;
+	Datagram messageToSend;
+	memset(receivedMessage, 0, sizeof(receivedMessage));
+	memset(messageToSend, 0, sizeof(messageToSend));
 
-int main() {
-    int sock;
-    if (sock = socket(AF_INET, SOCK_DGRAM, 0) < 0){
-        perror("Could not create a socket\n");
+	// Add default info to messageToSend
+
+
+	while (1) 
+	{
+		if (recvMessageFromClient(sock, receivedMessage)) 
+		{
+			switch (receivedMessage->header.flag)
+			{
+				case SYN:
+					// Send flag SYN+ACK
+					messageToSend->header.flag = SYNACK;
+
+					break;
+				case ACK:
+					// Chill timer
+				break;
+				case FIN:
+					/*kill*/
+					break;
+				default:
+					/*Destroy and ACK old packages*/
+					/*Normal packet*/
+					break;
+			}
+		}
+
+
+		if (sequenceNumber >= MAXSEQNUM)
+			sequenceNumber = 0;
+	}
+
+	return 0;
+}
+    
+int createSocket()
+{
+	int sock;
+	struct sockaddr_in addr;
+
+	if (sock = socket(AF_INET, SOCK_DGRAM, 0) < 0)
+	{
+		perror("Could not create a socket\n");
 		exit(EXIT_FAILURE);
-    }
+	}
+	
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(PORT);
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	
+	if (bind(sock, (struct sockaddr_in*)&addr, sizeof(addr)) < 0)
+	{
+	   perror("Could not bind socket!");
+	   exit(EXIT_FAILURE);
+	}
+	return sock;
+}
+
+int sendMessageToClient(int sock, Datagram messageToSend)
+{
+
+	return 1;
+}
+int recvMessageFromClient(int sock, Datagram receivedMessage)
+{
+
+	return 1;
+}
+
+// TODO: Fix checksum function
+
+int interpretPack(Datagram packet)
+{
+	if (packet->header.flag == GBN) 
+	{
+		// GBN
+	}
+	else 
+		// SR
+}
+
+void defaultMessageToSend(Datagram messageToSend)
+{
+
 }
