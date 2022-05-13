@@ -86,6 +86,33 @@ int createSocket(int port);
     Otherwise print error and exit program.
 */
 
+int connect(int sock, Datagram connectionReq);
+/*
+    Tries to connect to the server
+    returns 1 if successfull
+
+
+
+*/
+
+int acceptConnection(int sock, Datagram connectionReq);
+/*
+    Accepts the connectionrequests
+    returns 1 if succesfull
+
+
+*/
+
+
+void connectionTimeout(int sock, Datagram connectionReq);
+/*
+    Executes when a timeout has occured
+    Not sure it works might get removed
+
+
+*/
+
+
 void setDefaultHeader(Datagram messageToSend);
 /*
     Fill datagram with default information about
