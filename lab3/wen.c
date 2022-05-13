@@ -57,7 +57,7 @@ void setDefaultHeader(Datagram messageToSend)
 {
 	messageToSend->header.windowSize = WINDOWSIZE;
 	messageToSend->header.sequence = 1;
-	messageToSend->header.flag = GBN;
+	messageToSend->header.flag = UNSET;
 	messageToSend->message = '\0';
 }
 

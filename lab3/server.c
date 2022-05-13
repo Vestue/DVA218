@@ -7,7 +7,6 @@
  * - Ragnar Winblad von Walter
  ****************************************************************/ 
 
-#include "wen.c"
 #include "server.h"
 
 int main() 

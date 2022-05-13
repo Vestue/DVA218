@@ -15,11 +15,11 @@
 int main()
 {
     int sock = createSocket();
-	int sequenceNumber = 0;
+	int currentSeq = 0;
 	Datagram receivedMessage;
 	Datagram messageToSend;
 	setDefaultHeader(messageToSend);
-    sockaddr_in destAddr;
+    struct sockaddr_in destAddr;
 
     if (sock = socket(AF_INET, SOCK_DGRAM, 0) < 0)
     {
@@ -85,11 +85,4 @@ int sendMessageToServer(int sock, Datagram toSend, sockaddr_in destAddr)
 int recvMessageFromServer(int socket, Datagram receivedMessage)
 {
     return 1;
-}
-void setDefaultHeader(Datagram messageToSend)
-{
-	messageToSend->header.windowSize = WINDOWSIZE;
-	messageToSend->header.sequence = 1;
-	messageToSend->header.flag = GBN;
-	messageToSend->message = '\0';
 }

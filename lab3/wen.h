@@ -81,8 +81,40 @@ int createSocket(int port);
 /*
     Fill datagram with default information about
     window size, sequence number.
-    Should also get a flag for either GBN or SR.
+    Set flag to UNSET and set message to '\0'.
 */
-void setDefaultHeader(Datagram);
+void setDefaultHeader(Datagram messageToSend);
+
+/*
+    Set a timer for a certain sequence number.
+
+Todo: The timer needs to be able to be connected to a certain 
+Todo: package from a certain sockaddr.
+
+Todo: It also needs to be able to call diffrent functions as handles
+Todo: depending on the need upon time.
+Todo: For example, resend a timed out package or close connection.
+
+?   These parameters will have to be changed as i have no idea
+?   what paramters need to be used.
+*/
+void startTimer(int sock, struct sockaddr_in addr, int seqNum);
+
+/*
+    Use provided adress to stop timer for certain sequence number.
+*/
+void stopTimer(struct sockaddr_in addr, int seqNum);
+
+/*
+    Use provided adress to restart timer for certain sequence number.
+*/
+void restartTimer(struct sockaddr_in addr, int seqNum);
+
+/*
+    Return the expected sequence number from a certain sockaddr.
+
+?   Parameters should be changed to include an array of clients
+*/
+int getExpectedSeq(struct sockaddr_in addr);
 
 #endif
