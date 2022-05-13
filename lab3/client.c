@@ -7,16 +7,7 @@
  * - Ragnar Winblad von Walter
  ****************************************************************/ 
 
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <timer.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
+#include "wen.c"
 #include "client.h"
 
 #define MAXLENGTH 512
@@ -24,8 +15,15 @@
 
 int main()
 {
-    int sock;
-    if (sock = socket(AF_INET, SOCK_DGRAM, 0) < 0){
+    int sock = createSocket();
+	int sequenceNumber = 0;
+	Datagram receivedMessage;
+	Datagram messageToSend;
+	setDefaultHeader(messageToSend);
+    sockaddr_in destAddr;
+
+    if (sock = socket(AF_INET, SOCK_DGRAM, 0) < 0)
+    {
         perror("Could not create a socket\n");
 		exit(EXIT_FAILURE);
     }
@@ -33,14 +31,66 @@ int main()
     return 0;
 }
 
-sendMessageToServer(int sock)
+int connectToServer(int sock, Datagram connectionReq)
 {
 
-    return 1;
+    //sätter flaggan till SYN och skickar, startar timer på 2 sek
+    connectionReq->header.flag = SYN;
+    if(sendMessageToServer(sock, connectionReq) < 0)
+    {
+        perror("Could not send message to server");
+        exit(EXIT_FAILURE);
+    }
+
+    while(1)
+    {
+
+        signal(SIGALRM, timeoutConnection(sock, connectionReq));
+        alarm(2);
+        if(connectionReq->header.flag = SYNACK)
+        {      
+            connectionReq->header.flag = ACK;
+            if(sendMessageToServer(sock, connectionReq) < 0)
+                {
+                    perror("Could not send message to server");
+                    exit(EXIT_FAILURE);
+                }
+            printf("Connection established");
+
+            return 1;
+        } 
+    }
+
+    return 0;
 }
 
-recvMessageFromServer
+void timeoutConnection(int sock, Datagram connectionReq)
+
+connectionReq->header.flag = SYN;
+{
+    if(sendMessageToServer(sock, connectionReq) < 0)
+    {
+        perror(Could not send message to server);
+        exit(EXIT_FAILURE);
+    }
+    
+
+}
+
+int sendMessageToServer(int sock, Datagram toSend, sockaddr_in destAddr)
 {
 
+	sendto(sock, (Datagram)&toSend, sizeof(toSend), 0, )
     return 1;
+}
+int recvMessageFromServer(int socket, Datagram receivedMessage)
+{
+    return 1;
+}
+void setDefaultHeader(Datagram messageToSend)
+{
+	messageToSend->header.windowSize = WINDOWSIZE;
+	messageToSend->header.sequence = 1;
+	messageToSend->header.flag = GBN;
+	messageToSend->message = '\0';
 }

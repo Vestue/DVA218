@@ -13,6 +13,6 @@ int sendMessageToServer(int socket);
 
 int recvMessageFromServer(int socket, Datagram receivedMessage);
 
-int timeoutCounter(int milliseconds);
+void setDefaultHeader(Datagram messageToSend)
 
 #endif

@@ -5,26 +5,28 @@
 
 /*Defined values here*/
 #define PORT 5555
-#define MAXLENGTH 1024
-#define WINDOWSIZE 64
-#define MAXSEQNUM 128
-#define GBN 0;
-#define SR	1;
-#define SYN 2;
-#define ACK 3;
-#define FIN 4;
+
+/*Defined structs and typedefs*/
+struct ClientInfo
+{
+    struct sockaddr_in addr;
+    int expectedSeqNum;
+    int FIN_SET;
+};
 
 /*Declared functions here*/
 
 /* Creates a new socket, binds it and returns the socket */
 int createSocket(void);
 
-int sendMessageToClient(int socket);
+int recvMessageFromClient(int socket, Datagram);
 
-int recvMessageFromClient(int socket, Datagram receivedMessage);
+int unpackMessage(Datagram);
 
-int unpackMessage(Datagram messageToUnpack);
+void setDefaultHeader(Datagram messageToSend)
 
-int timeoutCounter(int milliseconds);
+int sendTimeout();
+
+
 
 #endif
