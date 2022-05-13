@@ -135,6 +135,6 @@ int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* clientList);
 
 *   Datagram types are used to increase abstraction for client and server.
 */
-Datagram packACK(Datagram messageToSend, Datagram receivedMessage);
+void packACK(Datagram messageToSend, Datagram receivedMessage);
 
 #endif
