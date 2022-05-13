@@ -17,6 +17,7 @@
 #define WINDOWSIZE 64
 #define MAXSEQNUM 128
 
+#define SWMETHOD 0
 /*
     Set if Go-Back-N or Selective Repeat should
     be used as the method for sliding windows.
@@ -24,7 +25,6 @@
     Go-Back-N = 0
     Selective Repeat = 1
 */
-#define SWMETHOD 0
 
 /* Enums */
 enum slidingWindowMethods { GBN = 0, SR = 1 };
@@ -62,6 +62,7 @@ typedef struct ClientList *ConnectionInfo;
 
 /* Declared functions and descriptions */
 
+int recvMessage(int sock, Datagram receivedMessage);
 /*
     Attempt to read data from chosen socket.
     If there is no data to read function should return 0.
@@ -69,30 +70,30 @@ typedef struct ClientList *ConnectionInfo;
     Otherwise, the data should be added to sent Datagram
     and then return 1.
 */
-int recvMessage(int sock, Datagram receivedMessage);
 
 
+int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destinationAddr);
 /*
     Send Datagram to chosen socket by using the provided sockaddr.
 
     Return 1 if successful and 0 if not.
 */
-int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destinationAddr);
 
+int createSocket(int port);
 /*
     Create socket using chosen port.
     Return created socket if successful.
     Otherwise print error and exit program.
 */
-int createSocket(int port);
 
+void setDefaultHeader(Datagram messageToSend);
 /*
     Fill datagram with default information about
     window size, sequence number.
     Set flag to UNSET and set message to '\0'.
 */
-void setDefaultHeader(Datagram messageToSend);
 
+void startTimer(int sock, Datagram timedConnection);
 /*
     Set a timer for a certain sequence number.
 
@@ -106,35 +107,41 @@ Todo: For example, resend a timed out package or close connection.
 ?   These parameters will have to be changed as i have no idea
 ?   what paramters need to be used.
 */
-void startTimer(int sock, Datagram timedConnection);
 
+
+void stopTimer(Datagram timedConnection, int seqNum);
 /*
     Use provided adress to stop timer for certain sequence number.
 */
-void stopTimer(Datagram timedConnection, int seqNum);
 
+void restartTimer(Datagram timedConnection, int seqNum);
 /*
     Use provided adress to restart timer for certain sequence number.
 */
-void restartTimer(Datagram timedConnection, int seqNum);
 
+int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* clientList);
 /*
     Return the expected sequence number from a certain sockaddr.
 
     Pointer is used to be able to get from either only one connection or
     multiple connections (if its sent as the typedeffed ClientList) 
 */
-int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* clientList);
 
+Datagram packACK(Datagram messageToSend, Datagram receivedMessage);
 /*
     Make the message ready to be sent as an ACK using the sequence number
     within the received message.
-
     messageToSend should first get default values and then get the seq++
     and ACK flag.
 
-*   Datagram types are used to increase abstraction for client and server.
+*    Function returns the prepared datagram.
+?    The use of this is to be able to do things like:
+?        sendMessage(sock, packACK(messageToSend, receivedMessage), destinationAddr);
+?   In one single step instead of needing to setDefaultMessage and then change flags
+?   in the server or client itself.
+
+*   Datagram types as paramtetersare used to increase abstraction for client and server.
 */
-void packACK(Datagram messageToSend, Datagram receivedMessage);
+
 
 #endif
