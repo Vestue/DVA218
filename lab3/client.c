@@ -20,7 +20,11 @@ int main()
     int currentSeq = 0;
     //Datagram receivedMessage;
 	Datagram messageToSend;
+<<<<<<< HEAD
     memset(&messageToSend, 0, sizeof(*messageToSend));
+=======
+    memset(&messageToSend, 0, sizeof(Datagram));
+>>>>>>> c743b5bae25c931f49859e38ebb05620adfb3bd9
     printf("Before setDefaultHeader");
     char* msg = "Banana";
     // setDefaultHeader(&messageToSend);
@@ -29,7 +33,7 @@ int main()
     struct sockaddr_in destAddr;
     struct hostent *hostInfo;
     char *hostName;
-    memset(&hostName, 0, sizeof(hostName));
+    memset(&hostName, 0, sizeof(char));
     printf("Just before argv\n");
 
     //if (argv[1] == NULL) 
