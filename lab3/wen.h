@@ -115,7 +115,7 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 	Executes when a timeout has occured
 	Not sure it works might get removed
 */
-void connectionTimeout(int sock, Datagram connRequest, struct sockaddr_in dest);
+void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 
 
