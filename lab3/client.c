@@ -24,11 +24,13 @@ int main(int argc, char* argv[])
     struct sockaddr_in destAddr;
     struct hostent *hostInfo;
     char *hostName;
-	if (argv[1] == NULL)
-	{
-		perror("Usage: client [host name]\n");
+    printf("Just before argv\n");
+    if (argv[1] == NULL) 
+    {
+        perror("Usage: client [host name]\n");
         exit(EXIT_FAILURE);
     }
+    printf("Made it through argv \n");
     strncpy(hostName, argv[1], 50);
 	hostName[50-1] = '\0';
     hostInfo = gethostbyname(hostName);
