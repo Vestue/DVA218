@@ -26,6 +26,13 @@ int initClientList(ClientList* list);
 */
 int addToClientList(ClientList *list, struct ConnectionInfo info);
 
+/*
+    Check if the sockaddr exists in the list.
+
+    Return 1 if it does, 0 if it doesn't.
+*/
+int isInClientList(ClientList *list, struct sockaddr_in addr)
+
 //! Old declarations below
 
 int recvMessageFromClient(int socket, Datagram);
