@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 
 int sendMessageToServer(int sock, Datagram toSend, struct sockaddr_in destAddr)
 {
-    sendto(sock, (Datagram)&toSend, sizeof(toSend), 0, (struct sockaddr*)&destAddr, sizeof(destAddr));
+    sendMessage(sock, toSend, destAddr);
     return 1;
 }
 int recvMessageFromServer(int socket, Datagram receivedMessage)

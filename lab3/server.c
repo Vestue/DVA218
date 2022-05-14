@@ -20,8 +20,6 @@ int main()
 
 	while (1) 
 	{
-        defaultiseMessage(messageToSend);
-
 		if (recvMessageFromClient(sock, receivedMessage)) 
 		{
 			puts(receivedMessage->message);
@@ -62,7 +60,7 @@ int main()
 
 int sendMessageToClient(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-	signal(SIGALRM, sendTimeout());
+	signal(SIGALRM, sendTimeout);
 	alarm(2);
 	// om paketet skickas reseta timern genom att calla alarm(5) igen
 	
@@ -104,5 +102,5 @@ void interpretPack(int sock, Datagram packet, Datagram messageToSend)
 
 void sendTimeout()
 {
-printf("Timeout!");
+    printf("Timeout!");
 }

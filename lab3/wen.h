@@ -103,19 +103,19 @@ int createSocket(int port);
 	Tries to connect to the server
 	returns 1 if successfull
 */
-int connect(int sock, Datagram connectionReq, struct sockaddr_in dest);
+int connect(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 /*
 	Accepts the connectionrequests
 	returns 1 if succesfull
 */
-int acceptConnection(int sock, Datagram connectionReq, struct sockaddr_in dest);
+int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 /*
 	Executes when a timeout has occured
 	Not sure it works might get removed
 */
-void connectionTimeout(int sock, Datagram connectionReq, struct sockaddr_in dest);
+void connectionTimeout(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 
 

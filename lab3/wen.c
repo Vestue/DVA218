@@ -24,9 +24,9 @@
 #include "wen.h"
 
 /*
-    These macros need to be here instead of in the header
-    as they otherwise cause issues with the enums using in the
-    packet header.
+	These macros need to be here instead of in the header
+	as they otherwise cause issues with the enums using in the
+	packet header.
 */
 #define SYN 1
 #define ACK 2
@@ -35,30 +35,33 @@
 int recvMessage(int sock, Datagram receivedMessage)
 {
 	struct sockaddr_in addr;
-    unsigned int addrlen = sizeof(addr);
-    int msgLength;
+	unsigned int addrlen = sizeof(addr);
+	int msgLength;
 
-    if (msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage),
-        0, (struct sockaddr*)&addr, &addrlen < 0))
+	if (msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage),
+		0, (struct sockaddr*)&addr, &addrlen < 0))
 	{
 		perror("Error receiving message!");
 		exit(EXIT_FAILURE);
 	}
 	else if (msgLength == 0)
 		return 0;
-    return 1;
+	return 1;
 }
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-
+	/*	TODO 
+		Pack packet with right flags and then send it
+	*/
+	sendto(sock, (Datagram)&messageToSend, sizeof(messageToSend),
+	0, (struct sockaddr *)&destAddr, sizeof(destAddr));
 }
 
 void setDefaultHeader(Datagram messageToSend)
 {
-	messageToSend->header.windowSize = WINDOWSIZE;
-	messageToSend->header.sequence = 1;
-	messageToSend->header.flag = UNSET;
+	struct Header defaultHeader = { WINDOWSIZE, 1, UNSET };
+    messageToSend->header = defaultHeader;
 	messageToSend->message = '\0';
 }
 
@@ -85,97 +88,65 @@ int createSocket(int port)
 	return sock;
 }
 
-int connect(int sock, Datagram connectionReq, struct sockaddr_in dest)
+int connect(int sock, Datagram connRequest, struct sockaddr_in dest)
 {
 
-    //sätter flaggan till SYN och skickar, startar timer på 2 sek
-    connectionReq->header.flag = SYN;
-    if(sendMessageToServer(sock, connectionReq) < 0)
-    {
-        perror("Could not send message to server");
-        exit(EXIT_FAILURE);
-    }
+	//sätter flaggan till SYN och skickar, startar timer på 2 sek
+	connRequest->header.flag = SYN;
+	if(sendMessage(sock, connRequest, dest) < 0)
+	{
+		perror("Could not send message to server");
+		exit(EXIT_FAILURE);
+	}
 
-    while(1)
-    {
-        signal(SIGALRM, timeoutConnection(sock, connectionReq, dest));
-        alarm(2);
-        if(connectionReq->header.flag = SYNACK)
-        {      
-            connectionReq->header.flag = ACK;
-            if(sendMessageToServer(sock, connectionReq, dest) < 0)
-            {
-                perror("Could not send message to server");
-                exit(EXIT_FAILURE);
-            }
-            printf("Connection established");
+	while(1)
+	{
+		signal(SIGALRM, timeoutTest);
+		alarm(2);
+		if(connRequest->header.flag = SYNACK)
+		{
+			connRequest->header.flag = ACK;
+			if(sendMessageToServer(sock, connRequest, dest) < 0)
+			{
+				perror("Could not send message to server");
+				exit(EXIT_FAILURE);
+			}
+			printf("Connection established");
 
-            return 1;
-        } 
-    }
+			return 1;
+		}
+	}
 
-    return 0;
+	return 0;
 }
 
-, struct sockaddr_in destint connect(int sock, Datagram connectionReq)
-, struct sockaddr_in dest{
-
-    //sätter flaggan till SYN och skickar, startar timer på 2 sek
-    connectionReq->header.flag = SYN;
-, dest(sendMessageToServer(sock, connectionReq) < 0), dest
-    {
-        perror("Could not send message to server");
-        exit(EXIT_FAILURE);
-    }
-
-    while(1)
-    {
-      signal(SIGALRM, timeoutConnection(sock,cconnectionReq, dest));
-        alarm(2);
-        if(connectionReq->header.flag = SYNACK)
-        {      
-            connectionReq->header.flag = ACK;
-            if(sendMessageToServer(sock, connectionReq, dest) < 0)
-                {
-                    perror("Could not send message to server");
-                    exit(EXIT_FAILURE);
-                }
-            printf("Connection established");
-
-            return 1;
-        } 
-    }
-
-    return 0;
-}
-
-, struct sockaddr_in destn, Datagram connectionReq)
-, struct sockaddr_in dest{
+int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
+{
 	
-    while(1)
-    {
+	while(1)
+	{
+		if (connRequest->header.flag == SYN)
+		{
+			connRequest->header.flag = SYNACK;
+			signal(SIGALRM, timeoutTest);
+			alarm(2);
+		}
+	}
 
-        switch(connectionReq->header.flag)
-
-connec            cas
-      connectioe SYN:nReq->header.flag; 
-            e SYN: sendMessageToServer(sock,tionReq, dest ;
-            caseignal(SIGALRM, timeout); alarm( connec2); break;
-)
-            case ACK: printf("Connection Established"); return 1;)
-
-    }
-
-
-    return 0;}
-
-void timeoutConnection(int sock, Datagram connectionReq)
+}
+	
+void timeoutTest()
 {
-, Datastruct sockaddr_in dest, struct sockaddr_in dest    connectioReq->header.flag = SYN;
+    print("Timed out");
+}
 
-    if(sendMessageToServer(sock, connect, destionReq) < 0)
+void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
+{
+	connRequest->header.flag = SYN;
+
+    if(sendMessage(sock, connRequest, dest) < 0)
     {
-, dest        perror("Could not ssage to server");
+        perror("Could not send message to server");
         exit(EXIT_FAILURE);
     }
-}void timeoutAccept(){}return 1;    printf()""Connection established;    printf()""COnneconnection established;return 1;
+}
