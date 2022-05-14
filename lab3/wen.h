@@ -103,7 +103,7 @@ int createSocket(int port);
 	Tries to connect to the server
 	returns 1 if successfull
 */
-int connect(int sock, Datagram connRequest, struct sockaddr_in dest);
+int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 /*
 	Accepts the connectionrequests

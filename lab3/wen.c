@@ -88,7 +88,7 @@ int createSocket(int port)
 	return sock;
 }
 
-int connect(int sock, Datagram connRequest, struct sockaddr_in dest)
+int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 {
 
 	//sätter flaggan till SYN och skickar, startar timer på 2 sek
@@ -131,14 +131,22 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
 			signal(SIGALRM, timeoutTest);
 			alarm(2);
 		}
+        else if(connRequest->header.flag == ACK)
+        {
+            printf("Connection established");
+            return 1;
+        }
 	}
 
 }
-	
+
+
 void timeoutTest()
 {
     print("Timed out");
-}
+
+} 
+
 
 void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
 {
