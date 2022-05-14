@@ -106,7 +106,7 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 		if(connRequest->header.flag = SYNACK)
 		{
 			connRequest->header.flag = ACK;
-			if(sendMessageToServer(sock, connRequest, dest) < 0)
+			if(sendMessage(sock, connRequest, dest) < 0)
 			{
 				perror("Could not send message to server");
 				exit(EXIT_FAILURE);

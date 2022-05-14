@@ -62,7 +62,7 @@ int sendMessageToClient(int sock, Datagram messageToSend, struct sockaddr_in des
 {
 	signal(SIGALRM, sendTimeout);
 	alarm(2);
-	// om paketet skickas reseta timern genom att calla alarm(5) igen
+	// om paketet skickas reseta timern genom att calla alarm(2) igen
 	
 
 	return 1;
