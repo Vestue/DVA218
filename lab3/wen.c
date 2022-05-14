@@ -37,15 +37,12 @@ int recvMessage(int sock, Datagram receivedMessage)
 	struct sockaddr_in addr;
 	unsigned int addrlen = sizeof(addr);
 	int msgLength;
-
-	if (msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage),
-		0, (struct sockaddr*)&addr, (unsigned int)&addrlen) < 0)
-	{
-		perror("Error receiving message!");
+    msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage), 0, (struct sockaddr *)&addr, (unsigned int*)&addrlen);
+    if (msgLength < 0) {
+        perror("Error receiving message!");
 		exit(EXIT_FAILURE);
-	}
-	else if (msgLength == 0)
-		return 0;
+    } else if (msgLength == 0)
+        return 0;
 	return 1;
 }
 
