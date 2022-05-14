@@ -14,9 +14,14 @@
 
 int main(int argc, char* argv[])
 {
-	int sock = createSocket(PORT);
-	int currentSeq = 0;
-	Datagram receivedMessage;
+    int sock;
+    if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    {
+		perror("Could not create a socket\n");
+		exit(EXIT_FAILURE);
+	}
+    int currentSeq = 0;
+    Datagram receivedMessage;
 	Datagram messageToSend;
 	setDefaultHeader(messageToSend);
     messageToSend->message = "Banana";
