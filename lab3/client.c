@@ -20,7 +20,7 @@ int main()
     int currentSeq = 0;
     //Datagram receivedMessage;
 	Datagram messageToSend;
-    memset(&messageToSend, 0, sizeof(messageToSend));
+    memset(&messageToSend, 0, sizeof(Datagram));
     printf("Before setDefaultHeader");
 
     setDefaultHeader(messageToSend);
