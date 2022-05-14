@@ -24,30 +24,31 @@ int main()
 
 		if (recvMessageFromClient(sock, receivedMessage)) 
 		{
-            switch (receivedMessage->header.flag)
-			{
-				case SYN:
-					// Send flag SYN+ACK
-					messageToSend->header.flag = SYN + ACK;
-                    sendMessageToClient(sock, messageToSend);
-					// TODO Start timer
-                    break;
-				//! Can recieve ACKs, FINs, or data 
-				//! before connection even has been attempted
-				//? Check if client_addr is in client addr
-                case ACK:
-					// TODO Chill timer
-					break;
-				case FIN:
-					/*kill*/
-					break;
-				default:
-					/*Destroy and ACK old packages*/
-					/*Normal packet*/
-					messageToSend->header.flag = ACK;
-					messageToSend->header.sequence = receivedMessage->header.sequence + 1;
-					break;
-			}
+			puts(receivedMessage->message);
+   //         switch (receivedMessage->header.flag)
+			//{
+			//	case SYN:
+			//		// Send flag SYN+ACK
+			//		messageToSend->header.flag = SYN + ACK;
+   //                 //sendMessageToClient(sock, messageToSend);
+			//		// TODO Start timer
+   //                 break;
+			//	//! Can recieve ACKs, FINs, or data 
+			//	//! before connection even has been attempted
+			//	//? Check if client_addr is in client addr
+   //             case ACK:
+			//		// TODO Chill timer
+			//		break;
+			//	case FIN:
+			//		/*kill*/
+			//		break;
+			//	default:
+			//		/*Destroy and ACK old packages*/
+			//		/*Normal packet*/
+			//		messageToSend->header.flag = ACK;
+			//		messageToSend->header.sequence = receivedMessage->header.sequence + 1;
+			//		break;
+			//}
 			// TODO: if SYN_timer_timeout
         }
 
@@ -59,9 +60,9 @@ int main()
 	return 0;
 }
 
-int sendMessageToClient(int sock, Datagram messageToSend, sockaddr_in destAddr)
+int sendMessageToClient(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-	signal(SIGALRM, timeoutSend);
+	signal(SIGALRM, sendTimeout());
 	alarm(2);
 	// om paketet skickas reseta timern genom att calla alarm(5) igen
 	

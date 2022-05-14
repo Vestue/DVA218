@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -27,9 +28,9 @@
     as they otherwise cause issues with the enums using in the
     packet header.
 */
-#define SYN 1;
-#define ACK 2;
-#define FIN 3;
+#define SYN 1
+#define ACK 2
+#define FIN 3
 
 int recvMessage(int sock, Datagram receivedMessage)
 {
@@ -84,7 +85,7 @@ int createSocket(int port)
 	return sock;
 }
 
-int connect(int sock, Datagram connectionReq)
+int connect(int sock, Datagram connectionReq, struct sockaddr_in dest)
 {
 
     //sätter flaggan till SYN och skickar, startar timer på 2 sek
@@ -97,12 +98,44 @@ int connect(int sock, Datagram connectionReq)
 
     while(1)
     {
-      signal(SIGALRM, timeoutConnection(sock, connectionReq));
+        signal(SIGALRM, timeoutConnection(sock, connectionReq, dest));
         alarm(2);
         if(connectionReq->header.flag = SYNACK)
         {      
             connectionReq->header.flag = ACK;
-            if(sendMessageToServer(sock, connectionReq) < 0)
+            if(sendMessageToServer(sock, connectionReq, dest) < 0)
+            {
+                perror("Could not send message to server");
+                exit(EXIT_FAILURE);
+            }
+            printf("Connection established");
+
+            return 1;
+        } 
+    }
+
+    return 0;
+}
+
+, struct sockaddr_in destint connect(int sock, Datagram connectionReq)
+, struct sockaddr_in dest{
+
+    //sätter flaggan till SYN och skickar, startar timer på 2 sek
+    connectionReq->header.flag = SYN;
+, dest(sendMessageToServer(sock, connectionReq) < 0), dest
+    {
+        perror("Could not send message to server");
+        exit(EXIT_FAILURE);
+    }
+
+    while(1)
+    {
+      signal(SIGALRM, timeoutConnection(sock,cconnectionReq, dest));
+        alarm(2);
+        if(connectionReq->header.flag = SYNACK)
+        {      
+            connectionReq->header.flag = ACK;
+            if(sendMessageToServer(sock, connectionReq, dest) < 0)
                 {
                     perror("Could not send message to server");
                     exit(EXIT_FAILURE);
@@ -116,18 +149,33 @@ int connect(int sock, Datagram connectionReq)
     return 0;
 }
 
-int acceptConnection(int sock, Datagram connectionReq)
-{
-	//! Needs a listen()
-}
+, struct sockaddr_in destn, Datagram connectionReq)
+, struct sockaddr_in dest{
+	
+    while(1)
+    {
+
+        switch(connectionReq->header.flag)
+
+connec            cas
+      connectioe SYN:nReq->header.flag; 
+            e SYN: sendMessageToServer(sock,tionReq, dest ;
+            caseignal(SIGALRM, timeout); alarm( connec2); break;
+)
+            case ACK: printf("Connection Established"); return 1;)
+
+    }
+
+
+    return 0;}
 
 void timeoutConnection(int sock, Datagram connectionReq)
-
-connectionReq->header.flag = SYN;
 {
-    if(sendMessageToServer(sock, connectionReq) < 0)
+, Datastruct sockaddr_in dest, struct sockaddr_in dest    connectioReq->header.flag = SYN;
+
+    if(sendMessageToServer(sock, connect, destionReq) < 0)
     {
-        perror(Could not send message to server);
+, dest        perror("Could not ssage to server");
         exit(EXIT_FAILURE);
     }
-}
+}void timeoutAccept(){}return 1;    printf()""Connection established;    printf()""COnneconnection established;return 1;
