@@ -145,8 +145,8 @@ void stopTimer(Datagram timedConnection, int seqNum);
 */
 void restartTimer(Datagram timedConnection, int seqNum);
 
-
-
+//!  Test, delete later
+void timeoutTest();
 
 /*
 	Return the expected sequence number from a certain sockaddr.
