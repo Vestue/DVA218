@@ -20,11 +20,11 @@ int main()
     int currentSeq = 0;
     //Datagram receivedMessage;
 	Datagram messageToSend;
-    memset(&messageToSend, 0, sizeof(messageToSend));
+    memset(&messageToSend, 0, sizeof(*messageToSend));
     printf("Before setDefaultHeader");
-
-    setDefaultHeader(messageToSend);
-    messageToSend->message = "Banana";
+    char* msg = "Banana";
+    // setDefaultHeader(&messageToSend);
+    
     messageToSend->header.flag = SYN;
     struct sockaddr_in destAddr;
     struct hostent *hostInfo;

@@ -183,7 +183,7 @@ int FINisSet(struct sockaddr_in addr, struct ConnectionInfo *connections);
 	window size, sequence number.
 	Set flag to UNSET and set message to '\0'.
 */
-void setDefaultHeader(Datagram messageToSend);
+void setDefaultHeader(Datagram* messageToSend);
 
 /*
 	Make the message ready to be sent as an ACK using the sequence number.

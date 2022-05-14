@@ -55,12 +55,12 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 	0, (struct sockaddr *)&destAddr, sizeof(destAddr));
 }
 
-void setDefaultHeader(Datagram messageToSend)
+void setDefaultHeader(Datagram* messageToSend)
 {
-	messageToSend->header.windowSize = WINDOWSIZE;
-	messageToSend->header.sequence = 1;
-	messageToSend->header.flag = UNSET;
-	messageToSend->message = '\0';
+	(*messageToSend)->header.windowSize = WINDOWSIZE;
+	(*messageToSend)->header.sequence = 1;
+	(*messageToSend)->header.flag = UNSET;
+	// messageToSend->message = '\0';
 }
 
 int createSocket(int port)
