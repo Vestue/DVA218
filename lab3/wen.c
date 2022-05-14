@@ -77,7 +77,7 @@ int createSocket(int port)
 	}
 	
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
+	addr.sin_port = port;
 	addr.sin_addr.s_addr = INADDR_ANY;
 	
 	if (bind(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0)
