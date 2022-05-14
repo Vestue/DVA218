@@ -147,7 +147,26 @@ void restartTimer(Datagram timedConnection, int seqNum);
     Pointer is used to be able to get from either only one connection or
     multiple connections (if its sent as the typedeffed ClientList) 
 */
-int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* clientList);
+int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* connections);
+
+/*
+    Set base sequense number of chosen connection to 
+    sequence number sent as argument.
+*/
+void setBaseSeq(int seqToSet, struct sockaddr_in addr, struct ConnectionInfo *connections);
+
+/*
+    Set that FIN has been received from connection.
+    FIN_SET = 1
+*/
+void setFIN(struct sockaddr_in addr, struct ConnectionInfo *connections);
+
+/*
+    Read FIN_SET in chosen connection.
+    Return 1 if the FIN state is set,
+    0 if it isn't.
+*/
+int FINisSet(struct sockaddr_in addr, struct ConnectionInfo *connections);
 
 
 
