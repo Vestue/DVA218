@@ -62,7 +62,6 @@ typedef struct ClientList *ConnectionInfo;
 
 /* Declared functions and descriptions */
 
-int recvMessage(int sock, Datagram receivedMessage);
 /*
     Attempt to read data from chosen socket.
     If there is no data to read function should return 0.
@@ -70,57 +69,47 @@ int recvMessage(int sock, Datagram receivedMessage);
     Otherwise, the data should be added to sent Datagram
     and then return 1.
 */
+int recvMessage(int sock, Datagram receivedMessage);
 
-
-int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destinationAddr);
 /*
     Send Datagram to chosen socket by using the provided sockaddr.
 
     Return 1 if successful and 0 if not.
 */
+int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destinationAddr);
 
-int createSocket(int port);
 /*
     Create socket using chosen port.
     Return created socket if successful.
     Otherwise print error and exit program.
 */
+int createSocket(int port);
 
-int connect(int sock, Datagram connectionReq);
 /*
     Tries to connect to the server
     returns 1 if successfull
-
-
-
 */
+int connect(int sock, Datagram connectionReq);
 
-int acceptConnection(int sock, Datagram connectionReq);
 /*
     Accepts the connectionrequests
     returns 1 if succesfull
-
-
 */
+int acceptConnection(int sock, Datagram connectionReq);
 
-
-void connectionTimeout(int sock, Datagram connectionReq);
 /*
     Executes when a timeout has occured
     Not sure it works might get removed
-
-
 */
+void connectionTimeout(int sock, Datagram connectionReq);
 
-
-void setDefaultHeader(Datagram messageToSend);
 /*
     Fill datagram with default information about
     window size, sequence number.
     Set flag to UNSET and set message to '\0'.
 */
+void setDefaultHeader(Datagram messageToSend);
 
-void startTimer(int sock, Datagram timedConnection);
 /*
     Set a timer for a certain sequence number.
 
@@ -134,27 +123,26 @@ Todo: For example, resend a timed out package or close connection.
 ?   These parameters will have to be changed as i have no idea
 ?   what paramters need to be used.
 */
+void startTimer(int sock, Datagram timedConnection);
 
-
-void stopTimer(Datagram timedConnection, int seqNum);
 /*
     Use provided adress to stop timer for certain sequence number.
 */
+void stopTimer(Datagram timedConnection, int seqNum);
 
-void restartTimer(Datagram timedConnection, int seqNum);
 /*
     Use provided adress to restart timer for certain sequence number.
 */
+void restartTimer(Datagram timedConnection, int seqNum);
 
-int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* clientList);
 /*
     Return the expected sequence number from a certain sockaddr.
 
     Pointer is used to be able to get from either only one connection or
     multiple connections (if its sent as the typedeffed ClientList) 
 */
+int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* clientList);
 
-Datagram packACK(Datagram messageToSend, int nextSeqNum);
 /*
     Make the message ready to be sent as an ACK using the sequence number.
     messageToSend should first get default values and then get the seq++
@@ -168,6 +156,7 @@ Datagram packACK(Datagram messageToSend, int nextSeqNum);
 
 *   Datagram types as paramters are used to increase abstraction for client and server.
 */
+Datagram packACK(Datagram messageToSend, int nextSeqNum);
 
 /*
     Make the message get default values and then set the SYN flag.
