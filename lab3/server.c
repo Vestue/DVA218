@@ -15,13 +15,12 @@ int main()
 	int sequenceNumber = 0;
 	Datagram receivedMessage;
 	Datagram messageToSend;
-	memset(receivedMessage, 0, sizeof(receivedMessage));
-	memset(messageToSend, 0, sizeof(messageToSend));
+	memset(&receivedMessage, 0, sizeof(receivedMessage));
+	memset(&messageToSend, 0, sizeof(messageToSend));
 
     printf("Just before loop");
 	while (1) 
 	{
-        printf("In loop");
 		if (recvMessageFromClient(sock, receivedMessage)) 
 		{
 			puts(receivedMessage->message);
