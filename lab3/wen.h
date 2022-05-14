@@ -33,6 +33,7 @@ enum slidingWindowMethods { GBN = 0, SR = 1 };
 //! Remove comment when everyone has read.
 enum flag { UNSET=0, SYN=1, ACK=2, SYNACK=3, FIN=4 };
 
+
 /* Struct definitions */
 
 struct Header 
@@ -51,14 +52,16 @@ struct Packet
 struct ConnectionInfo
 {
     struct sockaddr_in addr;
-    int expectedSeqNum;
+    int baseSeqNum;
     int FIN_SET;
 };
+
 
 /* Typedefs */
 
 typedef struct Packet *Datagram;
-typedef struct ClientList *ConnectionInfo;
+typedef struct ConnectionInfo *ClientList;
+
 
 /* Declared functions and descriptions */
 
@@ -77,6 +80,10 @@ int recvMessage(int sock, Datagram receivedMessage);
     Return 1 if successful and 0 if not.
 */
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destinationAddr);
+
+
+
+
 
 /*
     Create socket using chosen port.
@@ -103,12 +110,8 @@ int acceptConnection(int sock, Datagram connectionReq);
 */
 void connectionTimeout(int sock, Datagram connectionReq);
 
-/*
-    Fill datagram with default information about
-    window size, sequence number.
-    Set flag to UNSET and set message to '\0'.
-*/
-void setDefaultHeader(Datagram messageToSend);
+
+
 
 /*
     Set a timer for a certain sequence number.
@@ -135,6 +138,9 @@ void stopTimer(Datagram timedConnection, int seqNum);
 */
 void restartTimer(Datagram timedConnection, int seqNum);
 
+
+
+
 /*
     Return the expected sequence number from a certain sockaddr.
 
@@ -142,6 +148,16 @@ void restartTimer(Datagram timedConnection, int seqNum);
     multiple connections (if its sent as the typedeffed ClientList) 
 */
 int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* clientList);
+
+
+
+
+/*
+    Fill datagram with default information about
+    window size, sequence number.
+    Set flag to UNSET and set message to '\0'.
+*/
+void setDefaultHeader(Datagram messageToSend);
 
 /*
     Make the message ready to be sent as an ACK using the sequence number.
