@@ -15,11 +15,6 @@
 int main(int argc, char* argv[])
 {
     int sock;
-    if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-    {
-		perror("Could not create a socket\n");
-		exit(EXIT_FAILURE);
-	}
     int currentSeq = 0;
     Datagram receivedMessage;
 	Datagram messageToSend;
@@ -37,15 +32,18 @@ int main(int argc, char* argv[])
     strncpy(hostName, argv[1], 50);
 	hostName[50-1] = '\0';
     hostInfo = gethostbyname(hostName);
+    printf("Made it to destAddr :)\n");
     destAddr.sin_family = AF_INET;
     destAddr.sin_port = htons(PORT);
     destAddr.sin_addr = *(struct in_addr *)hostInfo->h_addr;
+    printf("Made it through destAddr :)\n");
 
     if (sock = socket(AF_INET, SOCK_DGRAM, 0) < 0)
 	{
 		perror("Could not create a socket\n");
 		exit(EXIT_FAILURE);
 	}
+    printf("Just before sending message :)\n");
     sendMessageToServer(sock, messageToSend, destAddr);
     return 0;
 }
