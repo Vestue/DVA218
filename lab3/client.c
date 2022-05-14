@@ -19,6 +19,7 @@ int main(int argc, char* argv[])
 	Datagram receivedMessage;
 	Datagram messageToSend;
 	setDefaultHeader(messageToSend);
+    messageToSend->message = "Banana";
     messageToSend->header.flag = SYN;
     struct sockaddr_in destAddr;
     struct hostent *hostInfo;
