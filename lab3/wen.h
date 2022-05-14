@@ -154,16 +154,15 @@ int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* clientList);
     multiple connections (if its sent as the typedeffed ClientList) 
 */
 
-Datagram packACK(Datagram messageToSend, Datagram receivedMessage);
+Datagram packACK(Datagram messageToSend, int nextSeqNum);
 /*
-    Make the message ready to be sent as an ACK using the sequence number
-    within the received message.
+    Make the message ready to be sent as an ACK using the sequence number.
     messageToSend should first get default values and then get the seq++
     and ACK flag.
 
 *    Function returns the prepared datagram.
 ?    The use of this is to be able to do things like:
-?        sendMessage(sock, packACK(messageToSend, receivedMessage), destinationAddr);
+?        sendMessage(sock, packACK(messageToSend, nextSeqNum), destinationAddr);
 ?   In one single step instead of needing to setDefaultMessage and then change flags
 ?   in the server or client itself.
 
@@ -172,15 +171,28 @@ Datagram packACK(Datagram messageToSend, Datagram receivedMessage);
 
 /*
     Make the message get default values and then set the SYN flag.
-    Return altered datagram.
+    Returns altered datagram.
 */
 Datagram packSYN(Datagram messageToSend);
 
-//* Following packs are similar to the last one
-//* as they will only restore the message to a default condition
-//* and then set their flag.
-//? Note that these functions are mostly used for abstraction.
+/*
+    Make the message get default values and then set the SYN+ACK flag.
+    Then set a starting point for sequence number to be used.
+    Returns altered datagram.
+*/
+Datagram packSYNACK(Datagram messageToSend, int startingSeq);
+
+/*
+    Make the message get default values and then set the FIN flag.
+    Returns altered datagram.
+*/
 Datagram packFIN(Datagram messageToSend);
-Datagram packSYNACK(Datagram messageToSend);
+
+/*
+    Make message get default values and then add a string and
+    the next sequence number to it.
+    Returns altered datagram.
+*/
+Datagram packData(Datagram messageToSend, char *dataToPack, int nextSeqNum);
 
 #endif
