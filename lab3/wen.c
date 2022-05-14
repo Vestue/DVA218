@@ -143,7 +143,7 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
 
 void timeoutTest()
 {
-    print("Timed out");
+    printf("Timed out");
 
 } 
 

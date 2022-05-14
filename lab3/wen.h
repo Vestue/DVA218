@@ -131,7 +131,7 @@ Todo: depending on the need upon time.
 Todo: For example, resend a timed out package or close connection.
 
 ?   These parameters will have to be changed as i have no idea
-?   what paramters need to be used.
+?   what parameters need to be used.
 */
 void startTimer(int sock, Datagram timedConnection);
 
