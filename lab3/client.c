@@ -9,7 +9,7 @@
 
 #include "client.h"
 
-#define MAXLENGTH 512
+//#define MAXLENGTH 512
 #define PORT 5555
 
 int main()
@@ -18,26 +18,32 @@ int main()
     
     int sock;
     int currentSeq = 0;
-    Datagram receivedMessage;
+    //Datagram receivedMessage;
 	Datagram messageToSend;
+    memset(&messageToSend, 0, sizeof(messageToSend));
     printf("Before setDefaultHeader");
+
     setDefaultHeader(messageToSend);
     messageToSend->message = "Banana";
     messageToSend->header.flag = SYN;
     struct sockaddr_in destAddr;
     struct hostent *hostInfo;
     char *hostName;
+    memset(&hostName, 0, sizeof(hostName));
     printf("Just before argv\n");
+
     //if (argv[1] == NULL) 
     //{
     //    perror("Usage: client [host name]\n");
     //    exit(EXIT_FAILURE);
     //}
     printf("Made it through argv \n");
+
     strncpy(hostName, "localhost", 50);
 	hostName[50-1] = '\0';
     hostInfo = gethostbyname(hostName);
     printf("Made it to destAddr :)\n");
+    
     destAddr.sin_family = AF_INET;
     destAddr.sin_port = htons(PORT);
     destAddr.sin_addr = *(struct in_addr *)hostInfo->h_addr;
@@ -49,6 +55,7 @@ int main()
 		exit(EXIT_FAILURE);
 	}
     printf("Just before sending message :)\n");
+
     sendMessageToServer(sock, messageToSend, destAddr);
     return 0;
 }
