@@ -70,7 +70,7 @@ int createSocket(int port)
 	int sock;
 	struct sockaddr_in addr;
 
-	if (sock = socket(PF_INET, SOCK_DGRAM, 0) < 0)
+	if (sock = socket(AF_INET, SOCK_DGRAM, 0) < 0)
 	{
 		perror("Could not create a socket\n");
 		exit(EXIT_FAILURE);
@@ -78,7 +78,7 @@ int createSocket(int port)
 	
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_addr.s_addr = INADDR_ANY;
 	
 	if (bind(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0)
 	{

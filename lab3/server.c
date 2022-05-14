@@ -11,7 +11,7 @@
 
 int main() 
 {
-	int sock = createSocket(PORT);
+	int sock = createSocket(5555);
 	int sequenceNumber = 0;
 	Datagram receivedMessage;
 	Datagram messageToSend;
@@ -23,31 +23,32 @@ int main()
 		if (recvMessageFromClient(sock, receivedMessage)) 
 		{
 			puts(receivedMessage->message);
-   //         switch (receivedMessage->header.flag)
-			//{
-			//	case SYN:
-			//		// Send flag SYN+ACK
-			//		messageToSend->header.flag = SYN + ACK;
-   //                 //sendMessageToClient(sock, messageToSend);
-			//		// TODO Start timer
-   //                 break;
-			//	//! Can recieve ACKs, FINs, or data 
-			//	//! before connection even has been attempted
-			//	//? Check if client_addr is in client addr
-   //             case ACK:
-			//		// TODO Chill timer
-			//		break;
-			//	case FIN:
-			//		/*kill*/
-			//		break;
-			//	default:
-			//		/*Destroy and ACK old packages*/
-			//		/*Normal packet*/
-			//		messageToSend->header.flag = ACK;
-			//		messageToSend->header.sequence = receivedMessage->header.sequence + 1;
-			//		break;
-			//}
-			// TODO: if SYN_timer_timeout
+            puts(receivedMessage->header.flag);
+            //         switch (receivedMessage->header.flag)
+            //{
+            //	case SYN:
+            //		// Send flag SYN+ACK
+            //		messageToSend->header.flag = SYN + ACK;
+            //                 //sendMessageToClient(sock, messageToSend);
+            //		// TODO Start timer
+            //                 break;
+            //	//! Can recieve ACKs, FINs, or data
+            //	//! before connection even has been attempted
+            //	//? Check if client_addr is in client addr
+            //             case ACK:
+            //		// TODO Chill timer
+            //		break;
+            //	case FIN:
+            //		/*kill*/
+            //		break;
+            //	default:
+            //		/*Destroy and ACK old packages*/
+            //		/*Normal packet*/
+            //		messageToSend->header.flag = ACK;
+            //		messageToSend->header.sequence = receivedMessage->header.sequence + 1;
+            //		break;
+            //}
+            // TODO: if SYN_timer_timeout
         }
 
 
