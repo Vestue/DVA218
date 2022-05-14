@@ -75,10 +75,10 @@ int createSocket(int port)
 		perror("Could not create a socket\n");
 		exit(EXIT_FAILURE);
 	}
-	
-	addr.sin_family = AF_INET;
-	addr.sin_port = port;
-	addr.sin_addr.s_addr = INADDR_ANY;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	
 	if (bind(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0)
 	{
