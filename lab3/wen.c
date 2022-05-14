@@ -57,8 +57,9 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 
 void setDefaultHeader(Datagram messageToSend)
 {
-	struct Header defaultHeader = { WINDOWSIZE, 1, UNSET };
-    messageToSend->header = defaultHeader;
+	messageToSend->header.flag = UNSET;
+    messageToSend->header.sequence = 1;
+    
 	messageToSend->message = '\0';
 }
 
