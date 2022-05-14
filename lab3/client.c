@@ -14,11 +14,14 @@
 
 int main(int argc, char* argv[])
 {
+    printf("Yoo begin client");
+    
     int sock;
     int currentSeq = 0;
     Datagram receivedMessage;
 	Datagram messageToSend;
-	setDefaultHeader(messageToSend);
+    printf("Before setDefaultHeader");
+    setDefaultHeader(messageToSend);
     messageToSend->message = "Banana";
     messageToSend->header.flag = SYN;
     struct sockaddr_in destAddr;
