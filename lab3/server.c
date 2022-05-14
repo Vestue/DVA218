@@ -18,8 +18,10 @@ int main()
 	memset(receivedMessage, 0, sizeof(receivedMessage));
 	memset(messageToSend, 0, sizeof(messageToSend));
 
+    printf("Just before loop");
 	while (1) 
 	{
+        printf("In loop");
 		if (recvMessageFromClient(sock, receivedMessage)) 
 		{
 			puts(receivedMessage->message);
@@ -73,15 +75,14 @@ int recvMessageFromClient(int sock, Datagram receivedMessage)
 	struct sockaddr_in addr;
     unsigned int addrlen = sizeof(addr);
     int msgLength;
-
+    printf("I am in messageclient now\n");
     if (msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage),
-        0, (struct sockaddr*)&addr, &addrlen < 0))
-	{
-		perror("Error receiving message!");
+        0, (struct sockaddr *)&addr, &addrlen < 0)) 
+    {
+        perror("Error receiving message!");
 		exit(EXIT_FAILURE);
-	}
-	else if (msgLength == 0)
-		return 0;
+    } else if (msgLength == 0)
+        return 0;
     return 1;
 }
 
