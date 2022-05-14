@@ -29,7 +29,7 @@ int main()
     struct sockaddr_in destAddr;
     struct hostent *hostInfo;
     char *hostName;
-    memset(&hostName, 0, sizeof(hostName));
+    memset(&hostName, 0, sizeof(char));
     printf("Just before argv\n");
 
     //if (argv[1] == NULL) 
