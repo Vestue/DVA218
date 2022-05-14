@@ -12,7 +12,7 @@
 #define MAXLENGTH 512
 #define PORT 5555
 
-int main(int argc, char* argv[])
+int main()
 {
     printf("Yoo begin client");
     
@@ -28,13 +28,13 @@ int main(int argc, char* argv[])
     struct hostent *hostInfo;
     char *hostName;
     printf("Just before argv\n");
-    if (argv[1] == NULL) 
-    {
-        perror("Usage: client [host name]\n");
-        exit(EXIT_FAILURE);
-    }
+    //if (argv[1] == NULL) 
+    //{
+    //    perror("Usage: client [host name]\n");
+    //    exit(EXIT_FAILURE);
+    //}
     printf("Made it through argv \n");
-    strncpy(hostName, argv[1], 50);
+    strncpy(hostName, "localhost", 50);
 	hostName[50-1] = '\0';
     hostInfo = gethostbyname(hostName);
     printf("Made it to destAddr :)\n");
