@@ -20,11 +20,13 @@ int main()
     int currentSeq = 0;
     //Datagram receivedMessage;
 	Datagram messageToSend;
-<<<<<<< HEAD
-    memset(&messageToSend, 0, sizeof(*messageToSend));
-=======
-    memset(&messageToSend, 0, sizeof(Datagram));
->>>>>>> c743b5bae25c931f49859e38ebb05620adfb3bd9
+    Datagram temp = (Datagram)calloc(1 , sizeof(Datagram));
+    if (temp == NULL)
+    {
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
+    }
+    messageToSend = temp;
     printf("Before setDefaultHeader");
     char* msg = "Banana";
     // setDefaultHeader(&messageToSend);

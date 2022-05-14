@@ -24,7 +24,7 @@ int main()
 		if (recvMessageFromClient(sock, receivedMessage)) 
 		{
 			puts(receivedMessage->message);
-            puts(receivedMessage->header.flag);
+            printf("%d", messageToSend->header.flag);
             //         switch (receivedMessage->header.flag)
             //{
             //	case SYN:
@@ -76,7 +76,7 @@ int recvMessageFromClient(int sock, Datagram receivedMessage)
     int msgLength;
     printf("I am in messageclient now\n");
     if (msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage),
-        0, (struct sockaddr *)&addr, &addrlen < 0)) 
+        0, (struct sockaddr *)&addr, &addrlen) < 0) 
     {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
