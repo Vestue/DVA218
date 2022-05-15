@@ -46,12 +46,12 @@ int recvMessage(int sock, Datagram receivedMessage)
 	return 1;
 }
 
-int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
+int sendMessage(int sock, struct Packet* messageToSend, struct sockaddr_in destAddr)
 {
 	/*	TODO 
 		Pack packet with right flags and then send it
 	*/
-	sendto(sock, (Datagram)&messageToSend, sizeof(messageToSend),
+	sendto(sock, (struct Packet*)&messageToSend, sizeof(messageToSend),
 	0, (struct sockaddr *)&destAddr, sizeof(destAddr));
 }
 

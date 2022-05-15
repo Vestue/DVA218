@@ -75,7 +75,7 @@ int recvMessageFromClient(int sock, Datagram receivedMessage)
     unsigned int addrlen = sizeof(addr);
     int msgLength;
     printf("I am in messageclient now\n");
-    if (msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage),
+    if (msgLength = recvfrom(sock, receivedMessage, MAXLENGTH,
         0, (struct sockaddr *)&addr, &addrlen) < 0) 
     {
         perror("Error receiving message!");
