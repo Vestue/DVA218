@@ -49,11 +49,15 @@ int main(int argc, char *argv[])
     destAddr.sin_addr = *(struct in_addr *)hostInfo->h_addr;
     printf("Made it through destAddr :)\n");
 
+    /*
     if (sock = socket(AF_INET, SOCK_DGRAM, 0) < 0)
 	{
 		perror("Could not create a socket\n");
 		exit(EXIT_FAILURE);
-	}
+	}*/
+
+    // Binding to port 0 lets OS choose port
+    sock = createSocket(0);
 
     sendMessageToServer(sock, messageToSend, destAddr);
     printf("Message sent\n");

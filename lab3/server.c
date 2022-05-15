@@ -73,12 +73,15 @@ int sendMessageToClient(int sock, Datagram messageToSend, struct sockaddr_in des
 }
 int recvMessageFromClient(int sock, Datagram receivedMessage)
 {
-	struct sockaddr_in addr;
-    unsigned int addrlen = sizeof(addr);
+    // TODO This variable needs to be returned somehow
+    // As we need to store the address of the client
+	struct sockaddr_in recvAddr;
+
+    unsigned int addrlen;
     int msgLength;
     printf("I am in messageclient now\n");
-    if (msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage),
-        0, (struct sockaddr *)&addr, &addrlen) < 0) 
+    if (msgLength = recvfrom(sock, (Datagram)&receivedMessage, sizeof(receivedMessage),
+        0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
     {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
