@@ -13,23 +13,35 @@ int main()
 {
 	int sock = createSocket(PORT);
 	int sequenceNumber = 0;
-	Datagram receivedMessage = initDatagram();
+	// Datagram receivedMessage = initDatagram();
+    Datagram receivedMessage = (Datagram)calloc(1, sizeof(Datagram));
+    struct sockaddr_in servAddr;
+    if (receivedMessage == NULL)
+    {
+        perror("Failed to allocate memory\n");
+        exit(EXIT_FAILURE);
+    }
 	Datagram messageToSend = initDatagram();
 
-    printf("Just before loop");
+    printf("Just before loop\n");
 	while (1) 
 	{
-		if (recvMessageFromClient(sock, receivedMessage)) 
-		{
-            printf("I received!");
-
+        if (recvMessage(sock, receivedMessage, &servAddr) < 0)
+        {
+            printf("I received flag %d!\n", receivedMessage->header.flag);
+            
 			puts(receivedMessage->message);
             printf("%d", receivedMessage->header.flag);
         }
+		// if (recvMessageFromClient(sock, receivedMessage))
+		// {
+        //     printf("I received flag %d!\n", receivedMessage->header.flag);
+            
+		// 	puts(receivedMessage->message);
+        //     printf("%d", receivedMessage->header.flag);
+        // }
 
-
-		if (sequenceNumber >= MAXSEQNUM)
-			sequenceNumber = 0;
+		if (sequenceNumber >= MAXSEQNUM) sequenceNumber = 0;
 	}
 
 	return 0;
@@ -50,21 +62,20 @@ int recvMessageFromClient(int sock, Datagram receivedMessage)
     // As we need to store the address of the client
 	struct sockaddr_in recvAddr;
 
-    unsigned int addrlen;
+    unsigned int* addrlen = sizeof(recvAddr);
     int msgLength;
     printf("I am in messageclient now\n");
-<<<<<<< HEAD
-    if (msgLength = recvfrom(sock, receivedMessage, MAXLENGTH,
-        0, (struct sockaddr *)&addr, &addrlen) < 0) 
-=======
-    if (msgLength = recvfrom(sock, (Datagram)&receivedMessage, sizeof(receivedMessage),
-        0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
->>>>>>> 8e7ad501a3bcc089fdc36fcb84dc34871c932eb3
+    if (msgLength = recvfrom(sock, (Datagram)&receivedMessage, sizeof(struct Packet),
+        0, (struct sockaddr *)&recvAddr, &addrlen) < 0)
     {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
     } else if (msgLength == 0)
+    {
+        printf("message length is %d", msgLength);
         return 0;
+    }
+    printf("Got a message longer than 0!\n");
     return 1;
 }
 

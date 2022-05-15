@@ -53,7 +53,12 @@ struct Header
 struct Packet
 {
 	struct Header header;
-	char message[MAXLENGTH];
+	char message[100];
+};
+struct incPacket
+{
+	struct Header header;
+	char message[200];
 };
 
 struct ConnectionInfo
@@ -67,6 +72,7 @@ struct ConnectionInfo
 /* Typedefs */
 
 typedef struct Packet *Datagram;
+typedef struct incPacket *incDatagram;
 typedef struct ConnectionInfo *ClientList;
 
 
