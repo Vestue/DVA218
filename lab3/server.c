@@ -13,8 +13,8 @@ int main()
 {
 	int sock = createSocket(PORT);
 	int sequenceNumber = 0;
-	// Datagram receivedMessage = initDatagram();
-    Datagram receivedMessage = (Datagram)calloc(1, sizeof(Datagram));
+	Datagram receivedMessage = initDatagram();
+    //Datagram receivedMessage = (Datagram)calloc(1, sizeof(Datagram));
     struct sockaddr_in servAddr;
     if (receivedMessage == NULL)
     {
@@ -47,15 +47,6 @@ int main()
 	return 0;
 }
 
-int sendMessageToClient(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
-{
-	signal(SIGALRM, sendTimeout);
-	alarm(2);
-	// om paketet skickas reseta timern genom att calla alarm(2) igen
-	
-
-	return 1;
-}
 int recvMessageFromClient(int sock, Datagram receivedMessage)
 {
     // TODO This variable needs to be returned somehow

@@ -29,8 +29,6 @@
 /* Enums */
 enum slidingWindowMethods { GBN = 0, SR = 1 };
 
-//! Enum itself can't be used as variable.
-//! Remove comment when everyone has read.
 typedef enum 
 { 
 	UNSET=0,

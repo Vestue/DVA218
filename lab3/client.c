@@ -40,18 +40,8 @@ int main(int argc, char *argv[])
     printf("Made it through destAddr :)\n");
 
     sock = createSocket(PORT);
-    sendMessageToServer(sock, messageToSend, destAddr);
+    sendMessage(sock, messageToSend, destAddr);
     printf("Message sent\n");
     scanf("Press enter to continue...");
     return 0;
-}
-
-int sendMessageToServer(int sock, Datagram toSend, struct sockaddr_in destAddr)
-{
-    sendMessage(sock, toSend, destAddr);
-    return 1;
-}
-int recvMessageFromServer(int socket, Datagram receivedMessage)
-{
-	return 1;
 }

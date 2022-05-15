@@ -35,13 +35,17 @@
 int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAddr)
 {
     unsigned int addrlen;
-    int msgLength = recvfrom(sock, (Datagram)&receivedMessage, sizeof(*receivedMessage),
-                        0, (struct sockaddr *)&receivedAddr, (unsigned int*)&addrlen);
+    int msgLength = recvfrom(sock, (Datagram)&receivedMessage, sizeof(receivedMessage),
+                        0, (struct sockaddr *)&receivedAddr, 0);
     if (msgLength < 0) {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
     } else if (msgLength == 0)
-        return 0;
+    {
+        printf("Received empty message");
+         return 0;
+    }
+    printf("Received message!");
 	return 1;
 }
 
@@ -53,7 +57,7 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
         !R: Pack should be done before sendMessage is called so no need to pack here.
 	*/
 
-	if (sendto(sock, (Datagram)&messageToSend, sizeof(*messageToSend),
+	if (sendto(sock, (Datagram)&messageToSend, sizeof(messageToSend),
 	0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
         perror("Failed to send message");
