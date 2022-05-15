@@ -51,8 +51,14 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 	/*	TODO 
 		Pack packet with right flags and then send it
 	*/
-	sendto(sock, (Datagram)&messageToSend, sizeof(messageToSend),
-	0, (struct sockaddr *)&destAddr, sizeof(destAddr));
+
+	if (sendto(sock, (Datagram)&messageToSend, sizeof(messageToSend),
+	0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
+    {
+        perror("Failed to send message");
+        return 0;
+    }
+    return 1;
 }
 
 void setDefaultHeader(Datagram* messageToSend)

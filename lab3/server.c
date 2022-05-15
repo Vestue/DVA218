@@ -23,6 +23,8 @@ int main()
 	{
 		if (recvMessageFromClient(sock, receivedMessage)) 
 		{
+            printf("I received!");
+
 			puts(receivedMessage->message);
             printf("%d", messageToSend->header.flag);
             //         switch (receivedMessage->header.flag)
