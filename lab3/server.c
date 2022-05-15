@@ -26,32 +26,7 @@ int main()
             printf("I received!");
 
 			puts(receivedMessage->message);
-            printf("%d", messageToSend->header.flag);
-            //         switch (receivedMessage->header.flag)
-            //{
-            //	case SYN:
-            //		// Send flag SYN+ACK
-            //		messageToSend->header.flag = SYN + ACK;
-            //                 //sendMessageToClient(sock, messageToSend);
-            //		// TODO Start timer
-            //                 break;
-            //	//! Can recieve ACKs, FINs, or data
-            //	//! before connection even has been attempted
-            //	//? Check if client_addr is in client addr
-            //             case ACK:
-            //		// TODO Chill timer
-            //		break;
-            //	case FIN:
-            //		/*kill*/
-            //		break;
-            //	default:
-            //		/*Destroy and ACK old packages*/
-            //		/*Normal packet*/
-            //		messageToSend->header.flag = ACK;
-            //		messageToSend->header.sequence = receivedMessage->header.sequence + 1;
-            //		break;
-            //}
-            // TODO: if SYN_timer_timeout
+            printf("%d", receivedMessage->header.flag);
         }
 
 

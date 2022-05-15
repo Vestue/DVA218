@@ -32,12 +32,10 @@
 #define ACK 2
 #define FIN 3
 
-int recvMessage(int sock, Datagram receivedMessage)
+int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAddr)
 {
-	struct sockaddr_in addr;
-	unsigned int addrlen = sizeof(addr);
-	int msgLength;
-    msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage), 0, (struct sockaddr *)&addr, (unsigned int*)&addrlen);
+    int msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage), 
+                        0, (struct sockaddr *)&receivedAddr, sizeof(receivedAddr));
     if (msgLength < 0) {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
@@ -50,6 +48,8 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
 	/*	TODO 
 		Pack packet with right flags and then send it
+
+        !R: Pack should be done before sendMessage is called so no need to pack here.
 	*/
 
 	if (sendto(sock, (Datagram)&messageToSend, sizeof(messageToSend),
@@ -61,12 +61,12 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
     return 1;
 }
 
-void setDefaultHeader(Datagram* messageToSend)
+void setDefaultHeader(Datagram messageToSend)
 {
-	(*messageToSend)->header.windowSize = WINDOWSIZE;
-	(*messageToSend)->header.sequence = 1;
-	(*messageToSend)->header.flag = UNSET;
-	// messageToSend->message = '\0';
+	messageToSend->header.windowSize = WINDOWSIZE;
+	messageToSend->header.sequence = 1;
+	messageToSend->header.flag = UNSET;
+	messageToSend->message[0] = '\0';
 }
 
 int createSocket(int port)
