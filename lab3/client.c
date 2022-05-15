@@ -12,9 +12,9 @@
 //#define MAXLENGTH 512
 #define PORT 5555
 
-int main()
+int main(int argc, char *argv[])
 {
-    printf("Yoo begin client");
+    printf("Yoo begin client\n");
     
     int sock;
     int currentSeq = 0;
@@ -23,13 +23,13 @@ int main()
     Datagram temp = (Datagram)calloc(1 , sizeof(Datagram));
     if (temp == NULL)
     {
-        perror("Failed to allocate memory");
+        perror("Failed to allocate memory\n");
         exit(EXIT_FAILURE);
     }
     messageToSend = temp;
-    printf("Before setDefaultHeader");
+    printf("Before setDefaultHeader\n");
     char* msg = "Banana";
-    // setDefaultHeader(&messageToSend);
+    setDefaultHeader(&messageToSend);
     
     messageToSend->header.flag = SYN;
     struct sockaddr_in destAddr;
@@ -38,14 +38,14 @@ int main()
     memset(&hostName, 0, sizeof(char));
     printf("Just before argv\n");
 
-    //if (argv[1] == NULL) 
-    //{
-    //    perror("Usage: client [host name]\n");
-    //    exit(EXIT_FAILURE);
-    //}
+    if (argv[1] == NULL) 
+    {
+       perror("Usage: client [host name]\n");
+       exit(EXIT_FAILURE);
+    }
     printf("Made it through argv \n");
 
-    strncpy(hostName, "localhost", 50);
+    strncpy(hostName, argv[1], 50);
 	hostName[50-1] = '\0';
     hostInfo = gethostbyname(hostName);
     printf("Made it to destAddr :)\n");
