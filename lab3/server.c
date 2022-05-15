@@ -11,12 +11,10 @@
 
 int main() 
 {
-	int sock = createSocket(5555);
+	int sock = createSocket(PORT);
 	int sequenceNumber = 0;
-	Datagram receivedMessage;
-	Datagram messageToSend;
-	memset(&receivedMessage, 0, sizeof(receivedMessage));
-	memset(&messageToSend, 0, sizeof(messageToSend));
+	Datagram receivedMessage = initDatagram();
+	Datagram messageToSend = initDatagram();
 
     printf("Just before loop");
 	while (1) 

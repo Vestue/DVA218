@@ -14,15 +14,7 @@ int main(int argc, char *argv[])
     int sock;
     int currentSeq = 0;
     //Datagram receivedMessage;
-	Datagram messageToSend;
-    Datagram temp = (Datagram)calloc(1 , sizeof(Datagram));
-    if (temp == NULL)
-    {
-        perror("Failed to allocate memory\n");
-        exit(EXIT_FAILURE);
-    }
-    messageToSend = temp;
-    setDefaultHeader(messageToSend);
+	Datagram messageToSend = initDatagram();
     messageToSend->header.flag = SYN;
     char * msg = "Banana!\0";
     strncpy(messageToSend->message, msg, sizeof(msg));

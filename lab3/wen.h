@@ -73,6 +73,13 @@ typedef struct ConnectionInfo *ClientList;
 /* Declared functions and descriptions */
 
 /*
+    Allocate memory for a datagram.
+    Initialise content to default values if successfull
+    and return the datagram.
+*/
+Datagram initDatagram();
+
+/*
 	Attempt to read data from chosen socket.
 	If there is no data to read function should return 0.
 	

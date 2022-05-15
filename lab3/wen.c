@@ -69,6 +69,18 @@ void setDefaultHeader(Datagram messageToSend)
 	messageToSend->message[0] = '\0';
 }
 
+Datagram initDatagram()
+{
+    Datagram temp = (Datagram)calloc(1 , sizeof(Datagram));
+    if (temp == NULL)
+    {
+        perror("Failed to allocate memory\n");
+        exit(EXIT_FAILURE);
+    }
+    setDefaultHeader(temp);
+    return temp;
+}
+
 int createSocket(int port)
 {
 	int sock;
