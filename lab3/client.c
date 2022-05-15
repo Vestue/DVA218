@@ -9,26 +9,17 @@
 
 #include "client.h"
 
-//#define MAXLENGTH 512
-#define PORT 5555
-
 int main(int argc, char *argv[])
 {    
     int sock;
     int currentSeq = 0;
     //Datagram receivedMessage;
-	Datagram messageToSend;
-    Datagram temp = (Datagram)calloc(1 , sizeof(Datagram));
-    if (temp == NULL)
-    {
-        perror("Failed to allocate memory\n");
-        exit(EXIT_FAILURE);
-    }
-    messageToSend = temp;
-    char* msg = "Banana";
-    setDefaultHeader(&messageToSend);
-    
+	Datagram messageToSend = initDatagram();
     messageToSend->header.flag = SYN;
+    char * msg = "Banana!\0";
+    strncpy(messageToSend->message, msg, sizeof(msg));
+
+
     struct sockaddr_in destAddr;
     struct hostent *hostInfo;
     char hostName[50];
@@ -45,16 +36,11 @@ int main(int argc, char *argv[])
     hostInfo = gethostbyname(hostName);
     
     destAddr.sin_family = AF_INET;
-    destAddr.sin_port = htons(PORT);
+    destAddr.sin_port = htons(SERVERPORT);
     destAddr.sin_addr = *(struct in_addr *)hostInfo->h_addr;
     printf("Made it through destAddr :)\n");
 
-    if (sock = socket(AF_INET, SOCK_DGRAM, 0) < 0)
-	{
-		perror("Could not create a socket\n");
-		exit(EXIT_FAILURE);
-	}
-
+    sock = createSocket(PORT);
     sendMessageToServer(sock, messageToSend, destAddr);
     printf("Message sent\n");
     scanf("Press enter to continue...");

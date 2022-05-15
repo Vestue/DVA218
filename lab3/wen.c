@@ -32,12 +32,10 @@
 #define ACK 2
 #define FIN 3
 
-int recvMessage(int sock, Datagram receivedMessage)
+int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAddr)
 {
-	struct sockaddr_in addr;
-	unsigned int addrlen = sizeof(addr);
-	int msgLength;
-    msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage), 0, (struct sockaddr *)&addr, (unsigned int*)&addrlen);
+    int msgLength = recvfrom(sock, receivedMessage, sizeof(*receivedMessage), 
+                        0, (struct sockaddr *)&receivedAddr, sizeof(receivedAddr));
     if (msgLength < 0) {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
@@ -50,17 +48,42 @@ int sendMessage(int sock, struct Packet* messageToSend, struct sockaddr_in destA
 {
 	/*	TODO 
 		Pack packet with right flags and then send it
+
+        !R: Pack should be done before sendMessage is called so no need to pack here.
 	*/
+<<<<<<< HEAD
 	sendto(sock, (struct Packet*)&messageToSend, sizeof(messageToSend),
 	0, (struct sockaddr *)&destAddr, sizeof(destAddr));
+=======
+
+	if (sendto(sock, (Datagram)&messageToSend, sizeof(messageToSend),
+	0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
+    {
+        perror("Failed to send message");
+        return 0;
+    }
+    return 1;
+>>>>>>> 8e7ad501a3bcc089fdc36fcb84dc34871c932eb3
 }
 
-void setDefaultHeader(Datagram* messageToSend)
+void setDefaultHeader(Datagram messageToSend)
 {
-	(*messageToSend)->header.windowSize = WINDOWSIZE;
-	(*messageToSend)->header.sequence = 1;
-	(*messageToSend)->header.flag = UNSET;
-	// messageToSend->message = '\0';
+	messageToSend->header.windowSize = WINDOWSIZE;
+	messageToSend->header.sequence = 1;
+	messageToSend->header.flag = UNSET;
+	messageToSend->message[0] = '\0';
+}
+
+Datagram initDatagram()
+{
+    Datagram temp = (Datagram)calloc(1 , sizeof(Datagram));
+    if (temp == NULL)
+    {
+        perror("Failed to allocate memory\n");
+        exit(EXIT_FAILURE);
+    }
+    setDefaultHeader(temp);
+    return temp;
 }
 
 int createSocket(int port)

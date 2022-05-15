@@ -3,6 +3,11 @@
 
 #include "wen.c"
 
+/*Defined values here*/
+
+// Set port to 0 so OS assigns any avaible port
+#define PORT 0
+#define SERVERPORT 5555
 
 // Declarations
 

@@ -53,7 +53,7 @@ struct Header
 struct Packet
 {
 	struct Header header;
-	char* message;
+	char message[MAXLENGTH];
 };
 
 struct ConnectionInfo
@@ -73,13 +73,20 @@ typedef struct ConnectionInfo *ClientList;
 /* Declared functions and descriptions */
 
 /*
+    Allocate memory for a datagram.
+    Initialise content to default values if successfull
+    and return the datagram.
+*/
+Datagram initDatagram();
+
+/*
 	Attempt to read data from chosen socket.
 	If there is no data to read function should return 0.
 	
 	Otherwise, the data should be added to sent Datagram
 	and then return 1.
 */
-int recvMessage(int sock, Datagram receivedMessage);
+int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAddr);
 
 /*
 	Send Datagram to chosen socket by using the provided sockaddr.
@@ -183,7 +190,7 @@ int FINisSet(struct sockaddr_in addr, struct ConnectionInfo *connections);
 	window size, sequence number.
 	Set flag to UNSET and set message to '\0'.
 */
-void setDefaultHeader(Datagram* messageToSend);
+void setDefaultHeader(Datagram messageToSend);
 
 /*
 	Make the message ready to be sent as an ACK using the sequence number.
@@ -235,6 +242,31 @@ Datagram packData(Datagram messageToSend, char *dataToPack, int nextSeqNum);
 	things depending on what flag is in the datagram.
 */
 void GBN_interpretData(Datagram receivedMessage, struct sockaddr_in receivedFromAddr, struct ConnectionInfo *connections);
+//         switch (receivedMessage->header.flag)
+            //{
+            //	case SYN:
+            //		// Send flag SYN+ACK
+            //		messageToSend->header.flag = SYN + ACK;
+            //                 //sendMessageToClient(sock, messageToSend);
+            //		// TODO Start timer
+            //                 break;
+            //	//! Can recieve ACKs, FINs, or data
+            //	//! before connection even has been attempted
+            //	//? Check if client_addr is in client addr
+            //             case ACK:
+            //		// TODO Chill timer
+            //		break;
+            //	case FIN:
+            //		/*kill*/
+            //		break;
+            //	default:
+            //		/*Destroy and ACK old packages*/
+            //		/*Normal packet*/
+            //		messageToSend->header.flag = ACK;
+            //		messageToSend->header.sequence = receivedMessage->header.sequence + 1;
+            //		break;
+            //}
+            // TODO: if SYN_timer_timeouts
 
 /*
 *   Selective repeat functions

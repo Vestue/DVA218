@@ -11,45 +11,20 @@
 
 int main() 
 {
-	int sock = createSocket(5555);
+	int sock = createSocket(PORT);
 	int sequenceNumber = 0;
-	Datagram receivedMessage;
-	Datagram messageToSend;
-	memset(&receivedMessage, 0, sizeof(receivedMessage));
-	memset(&messageToSend, 0, sizeof(messageToSend));
+	Datagram receivedMessage = initDatagram();
+	Datagram messageToSend = initDatagram();
 
     printf("Just before loop");
 	while (1) 
 	{
 		if (recvMessageFromClient(sock, receivedMessage)) 
 		{
+            printf("I received!");
+
 			puts(receivedMessage->message);
-            printf("%d", messageToSend->header.flag);
-            //         switch (receivedMessage->header.flag)
-            //{
-            //	case SYN:
-            //		// Send flag SYN+ACK
-            //		messageToSend->header.flag = SYN + ACK;
-            //                 //sendMessageToClient(sock, messageToSend);
-            //		// TODO Start timer
-            //                 break;
-            //	//! Can recieve ACKs, FINs, or data
-            //	//! before connection even has been attempted
-            //	//? Check if client_addr is in client addr
-            //             case ACK:
-            //		// TODO Chill timer
-            //		break;
-            //	case FIN:
-            //		/*kill*/
-            //		break;
-            //	default:
-            //		/*Destroy and ACK old packages*/
-            //		/*Normal packet*/
-            //		messageToSend->header.flag = ACK;
-            //		messageToSend->header.sequence = receivedMessage->header.sequence + 1;
-            //		break;
-            //}
-            // TODO: if SYN_timer_timeout
+            printf("%d", receivedMessage->header.flag);
         }
 
 
@@ -71,12 +46,20 @@ int sendMessageToClient(int sock, Datagram messageToSend, struct sockaddr_in des
 }
 int recvMessageFromClient(int sock, Datagram receivedMessage)
 {
-	struct sockaddr_in addr;
-    unsigned int addrlen = sizeof(addr);
+    // TODO This variable needs to be returned somehow
+    // As we need to store the address of the client
+	struct sockaddr_in recvAddr;
+
+    unsigned int addrlen;
     int msgLength;
     printf("I am in messageclient now\n");
+<<<<<<< HEAD
     if (msgLength = recvfrom(sock, receivedMessage, MAXLENGTH,
         0, (struct sockaddr *)&addr, &addrlen) < 0) 
+=======
+    if (msgLength = recvfrom(sock, (Datagram)&receivedMessage, sizeof(receivedMessage),
+        0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
+>>>>>>> 8e7ad501a3bcc089fdc36fcb84dc34871c932eb3
     {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
