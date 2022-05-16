@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 	Datagram messageToSend = initDatagram();
     messageToSend->header.flag = SYN;
     char * msg = "Banana!\0";
-    strncpy(messageToSend->message, msg, sizeof(msg));
+    strncpy(messageToSend->message, msg, strlen(msg));
 
 
     struct sockaddr_in destAddr;
@@ -53,6 +53,9 @@ int main(int argc, char *argv[])
         printf("\nReceived from server: ");
         puts(messageToReceive->message);
         printf("%d", messageToReceive->header.flag);
+
+        currentSeq = messageToReceive->header.sequence;
+        printf("%d", currentSeq);
     }
 
     scanf("Press enter to continue...");

@@ -52,10 +52,8 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-	size_t messageLength = sizeof(struct Packet) - MAXLENGTH + strlen(messageToSend->message);
-
 	if (sendto(sock, (Datagram)messageToSend, sizeof(struct Packet),
-	0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
+	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
         perror("Failed to send message");
         return 0;
@@ -121,7 +119,7 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 	{
 		signal(SIGALRM, timeoutTest);
 		alarm(2);
-		if(connRequest->header.flag = SYNACK)
+		if(connRequest->header.flag == SYN + ACK)
 		{
 			connRequest->header.flag = ACK;
 			if(sendMessage(sock, connRequest, dest) < 0)
