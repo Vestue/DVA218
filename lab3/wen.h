@@ -12,6 +12,9 @@
 
 /* Defined macros */
 #define MAXLENGTH 512
+#define SERVERPORT 5555
+// Set clientport to 0 so OS assigns any avaible port
+#define CLIENTPORT 0
 
 // Receiver sets window size and maximum sequence number
 #define WINDOWSIZE 64
@@ -64,10 +67,16 @@ struct ConnectionInfo
 };
 
 
+
 /* Typedefs */
 
 typedef struct Packet *Datagram;
 
+typedef struct
+{
+	struct ConnectionInfo *clients;
+	size_t size;
+} ClientList;
 
 /* Declared functions and descriptions */
 
@@ -106,6 +115,13 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destination
 int createSocket(int port);
 
 /*
+    Setup information required for connection, go through the connection handshake
+    with the server.
+    Return sequence number sent in the server SYN+ACK.
+*/
+int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr);
+
+/*
 	Tries to connect to the server
 	returns 1 if successfull
 */
@@ -122,8 +138,6 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
 	Not sure it works might get removed
 */
 void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
-
-
 
 
 /*
@@ -232,6 +246,8 @@ Datagram packFIN(Datagram messageToSend);
 */
 Datagram packData(Datagram messageToSend, char *dataToPack, int nextSeqNum);
 
+void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients);
+
 /*
 *   GO BACK N Functions
 */
@@ -240,7 +256,7 @@ Datagram packData(Datagram messageToSend, char *dataToPack, int nextSeqNum);
 	Main function of GBN, this takes the data and then does different
 	things depending on what flag is in the datagram.
 */
-void GBN_interpretData(Datagram receivedMessage, struct sockaddr_in receivedFromAddr, struct ConnectionInfo *connections);
+void interpretWith_GBN_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients);
 //         switch (receivedMessage->header.flag)
             //{
             //	case SYN:
@@ -270,5 +286,45 @@ void GBN_interpretData(Datagram receivedMessage, struct sockaddr_in receivedFrom
 /*
 *   Selective repeat functions
 */
+
+void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients);
+
+/*
+	Allocate memory to a list used for client connection info.
+	(malloc)
+
+	Return pointer to client list if successful, print error if not.
+*/
+ClientList initClientList();
+
+/*
+    Begin by checking if client is in list.
+	Reallocate memory to make room for new client and then
+	add client info to the dynamic array.
+
+	Return 1 if successful, 0 if not.
+*/
+int addToClientList(ClientList *list, struct ConnectionInfo info);
+
+/*
+    Attempt to remove client from list.
+    First check if client is in list, then remove and reallocate.
+    
+    Return 1 if successful, 0 if not.
+*/
+int removeFromClientList(ClientList *list, struct sockaddr_in addr);
+
+/*
+	Check if the sockaddr exists in the list.
+
+	Return 1 if it does, 0 if it doesn't.
+*/
+int isInClientList(ClientList *list, struct sockaddr_in addr);
+
+/*
+    Search the list for the client and add the client.
+    Return NULL if it can't be found. 
+*/
+struct ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr);
 
 #endif

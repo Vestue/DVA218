@@ -122,3 +122,219 @@ void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
         exit(EXIT_FAILURE);
     }
 }
+
+int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr)
+{
+    // Setup destination adress.
+    struct hostent *hostInfo;
+    hostInfo = gethostbyname(hostName);
+    destAddr->sin_family = AF_INET;
+    destAddr->sin_port = htons(SERVERPORT);
+    destAddr->sin_addr = *(struct in_addr *)hostInfo->h_addr;
+
+    // Setup first message to be sent.
+    Datagram messageToSend = initDatagram();
+    messageToSend->header.flag = SYN;
+
+    //! Test message, remove later
+    char * msg = "Banana!\0";
+    strncpy(messageToSend->message, msg, strlen(msg));
+
+    // Attempt handshake with server
+    if (connectToServer(sock, messageToSend, *destAddr) != 1)
+    {
+        printf("Failed connection handshake.");
+        exit(EXIT_FAILURE);
+    }
+    return messageToSend->header.sequence;
+}
+
+int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
+{
+
+	//sätter flaggan till SYN och skickar, startar timer på 2 sek
+	connRequest->header.flag = SYN;
+	if(sendMessage(sock, connRequest, dest) < 0)
+	{
+		perror("Could not send message to server");
+		exit(EXIT_FAILURE);
+	}
+
+    Datagram messageToReceive = initDatagram();
+    struct sockaddr_in recvAddr;
+
+	while(1)
+	{
+		signal(SIGALRM, timeoutTest);
+		alarm(2);
+
+        if (recvMessage(sock, messageToReceive, &recvAddr))
+        {
+            printf("\nReceived from server: ");
+            puts(messageToReceive->message);
+            printf("%d", messageToReceive->header.flag);
+        }
+
+		if(messageToReceive->header.flag == SYN + ACK)
+		{
+            connRequest->header.sequence += 1;
+			connRequest->header.flag = ACK;
+			if(sendMessage(sock, connRequest, dest) == 0)
+			{
+				perror("Could not send message to server");
+				exit(EXIT_FAILURE);
+			}
+			printf("Connection established");
+
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
+{
+	printf("Before connection loop");
+    struct sockaddr_in tempAddr;
+	while(1)
+	{		
+		if (connRequest->header.flag == SYN)
+		{
+            *dest = tempAddr;
+			printf("Received SYN\n");
+			connRequest->header.flag = SYN + ACK;
+			signal(SIGALRM, timeoutTest);
+			alarm(2);
+			if(sendMessage(sock, connRequest, *dest) == 0)
+			{
+			    perror("Could not send message to client");
+			    exit(EXIT_FAILURE);
+			}
+		}
+        else return 0; // First message from a new client must be SYN
+
+        /*
+            Wait for ACK from the expected address.
+        ?   Might need to move this as the connection will be blocked if 
+        ?   every ACK gets lost from this client.
+
+            SYN could arrive here if the SYN+ACK got lost,
+            if so then the server will resend SYN+ACK and then wait here again.
+        */
+        recvMessage(sock, connRequest, &tempAddr);
+		
+        //* Make sure that ACK is coming from expected adress
+    	if(connRequest->header.flag == ACK 
+            && tempAddr.sin_addr.s_addr == dest->sin_addr.s_addr
+            && tempAddr.sin_port == dest->sin_port)
+        {
+            printf("Connection established");
+            return 1;
+        }
+	}
+}
+
+void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients)
+{
+    
+
+	if (SWMETHOD == GBN) interpretWith_GBN_receiver(sock, packet, addr, clients);
+	else interpretWith_SR_receiver(sock, packet, addr, clients);
+}
+
+void interpretWith_GBN_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
+{
+	Datagram messageToSend = initDatagram();
+    printf("%d", messageToSend->header.windowSize); //? Just to get rid of warnings
+}
+
+void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
+{
+	Datagram messageToSend = initDatagram();
+    printf("%d", messageToSend->header.windowSize); //? Just to get rid of warnings
+}
+
+
+
+
+/* List functions */
+
+ClientList initClientList()
+{
+    ClientList list;
+    struct ConnectionInfo* tempArr = (struct ConnectionInfo*)calloc(1, sizeof(struct ConnectionInfo));
+    if (tempArr == NULL)
+    {
+        perror("Failed to allocate memory for client list");
+        exit(EXIT_FAILURE);
+    }
+    list.clients = tempArr;
+    list.size = 0;
+    return list;
+}
+
+int addToClientList(ClientList *list, struct ConnectionInfo info)
+{
+    int cur = list->size;
+    list->size += 1;
+    list->clients = realloc(list->clients, list->size * sizeof(struct ConnectionInfo));
+    if (list->clients == NULL) return 0;
+    list->clients[cur] = info;
+    return 1;
+}
+
+int removeFromClientList(ClientList *list, struct sockaddr_in addr)
+{
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+        {
+            /*
+                * Make a temporary array to copy data to and then free and repoint old one.
+                * This is done to make sure that the array only uses needed amount of memory
+                * and don't contain any old entries.
+            */
+            struct ConnectionInfo* tempArr = (struct ConnectionInfo*)calloc(list->size, sizeof(struct ConnectionInfo));
+            if (tempArr == NULL)
+            {
+                perror("Failed to allocate memory for client list");
+                exit(EXIT_FAILURE);
+            }
+            // Copy everything before the index
+            if (i != 0) memcpy(tempArr, list->clients, i * sizeof(struct ConnectionInfo));
+            // Copy after index
+            if (i != list->size - 1) 
+                memcpy(tempArr + i, list->clients + i + 1, (list->size - i - 1) * sizeof(struct ConnectionInfo));
+            free(list->clients);
+            list->clients = tempArr;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int isInClientList(ClientList *list, struct sockaddr_in addr)
+{
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+            return 1;
+    }
+    return 0;
+}
+
+struct ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
+{
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+            return &list->clients[i];
+    }
+    return NULL;
+}
