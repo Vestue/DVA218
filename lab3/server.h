@@ -14,24 +14,39 @@
 	Allocate memory to a list used for client connection info.
 	(malloc)
 
-	Return 1 if successful, 0 if not.
+	Return pointer to client list if successful, print error if not.
 */
-int initClientList(ClientList* list);
+ClientList initClientList();
 
 /*
+    Begin by checking if client is in list.
 	Reallocate memory to make room for new client and then
 	add client info to the dynamic array.
 
-	Return 1 if successfull, 0 if not.
+	Return 1 if successful, 0 if not.
 */
-int addToClientList(ClientList* list, struct ConnectionInfo info);
+int addToClientList(ClientList list, struct ConnectionInfo info);
+
+/*
+    Attempt to remove client from list.
+    First check if client is in list, then remove and reallocate.
+    
+    Return 1 if successful, 0 if not.
+*/
+int removeFromClientList(ClientList list, struct sockaddr_in addr);
 
 /*
 	Check if the sockaddr exists in the list.
 
 	Return 1 if it does, 0 if it doesn't.
 */
-int isInClientList(ClientList* list, struct sockaddr_in addr);
+int isInClientList(ClientList list, struct sockaddr_in addr);
+
+/*
+    Search the list for the client and add the client.
+    Return NULL if it can't be found. 
+*/
+struct ConnectionInfo* findClient(ClientList list, struct sockaddr_in addr);
 
 /*
 	Accepts the connectionrequests
@@ -39,6 +54,16 @@ int isInClientList(ClientList* list, struct sockaddr_in addr);
 */
 int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
 
-void interpretPack(int sock, Datagram packet, Datagram messageToSend);
+//! Temporary declaration for testing
+int acceptConnectionInLoop(int sock, Datagram connRequest, struct sockaddr_in* dest);
+
+/*
+    Disconnect client and remove from the list.
+*/
+void closeConnection(ClientList list, struct sockaddr_in addr);
+
+void interpretPack(int sock, Datagram packet, struct sockaddr_in addr, ClientList clients);
+void interpretWithGBN(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList clients);
+void interpretWithSR(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList clients);
 
 #endif
