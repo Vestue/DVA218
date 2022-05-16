@@ -16,7 +16,7 @@ int main()
 	Datagram receivedMessage = initDatagram();
 	Datagram messageToSend = initDatagram();
     struct sockaddr_in receivedAdress;
-	acceptConnection(sock, receivedMessage, receivedAdress);
+	acceptConnection(sock, receivedMessage, &receivedAdress);
     printf("Just before loop\n");
 	while (1) 
 	{

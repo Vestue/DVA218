@@ -116,14 +116,26 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 		exit(EXIT_FAILURE);
 	}
 
+    Datagram messageToReceive = initDatagram();
+    struct sockaddr_in recvAddr;
+
 	while(1)
 	{
 		signal(SIGALRM, timeoutTest);
 		alarm(2);
-		if(connRequest->header.flag == SYN + ACK)
+
+        if (recvMessage(sock, messageToReceive, &recvAddr))
+        {
+            printf("\nReceived from server: ");
+            puts(messageToReceive->message);
+            printf("%d", messageToReceive->header.flag);
+        }
+
+		if(messageToReceive->header.flag == SYN + ACK)
 		{
+            connRequest->header.sequence += 1;
 			connRequest->header.flag = ACK;
-			if(sendMessage(sock, connRequest, dest) < 0)
+			if(sendMessage(sock, connRequest, dest) == 0)
 			{
 				perror("Could not send message to server");
 				exit(EXIT_FAILURE);
@@ -139,26 +151,25 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 
 
 
-int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
+int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
 {
-	
 	printf("Before connection loop");
 	while(1)
 	{
 
-		recvMessage(sock, connRequest, &dest);
+		recvMessage(sock, connRequest, dest);
 		
 
 		if (connRequest->header.flag == SYN)
 		{
 			printf("Received SYN\n");
-			connRequest->header.flag = SYNACK;
+			connRequest->header.flag = SYN + ACK;
 			signal(SIGALRM, timeoutTest);
 			alarm(2);
-			if(sendMessage(sock, connRequest, dest) < 0)
+			if(sendMessage(sock, connRequest, *dest) == 0)
 			{
-			perror("Could not send message to client");
-			exit(EXIT_FAILURE);
+			    perror("Could not send message to client");
+			    exit(EXIT_FAILURE);
 			}
 		}
 		

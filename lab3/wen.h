@@ -116,7 +116,7 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest);
 	Accepts the connectionrequests
 	returns 1 if succesfull
 */
-int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
+int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
 
 /*
 	Executes when a timeout has occured

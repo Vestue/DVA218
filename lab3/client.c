@@ -42,23 +42,9 @@ int main(int argc, char *argv[])
 
     sock = createSocket(PORT);
     connectToServer(sock, messageToSend, destAddr);
-    sendMessage(sock, messageToSend, destAddr);
-    printf("Message sent\n");
 
-
-    // * Attempt to receive
-    Datagram messageToReceive = initDatagram();
-    struct sockaddr_in recvAddr;
-    if (recvMessage(sock, messageToReceive, &recvAddr))
-    {
-        printf("\nReceived from server: ");
-        puts(messageToReceive->message);
-        printf("%d", messageToReceive->header.flag);
-
-        currentSeq = messageToReceive->header.sequence;
-        printf("%d", currentSeq);
-    }
-
-    scanf("Press enter to continue...");
+    //? Just to get rid of warning for now
+    currentSeq = messageToSend->header.sequence;
+    printf("%d\n", currentSeq);
     return 0;
 }
