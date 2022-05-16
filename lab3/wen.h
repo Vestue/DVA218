@@ -67,7 +67,6 @@ struct ConnectionInfo
 /* Typedefs */
 
 typedef struct Packet *Datagram;
-typedef struct ConnectionInfo *ClientList;
 
 
 /* Declared functions and descriptions */

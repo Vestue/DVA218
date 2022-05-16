@@ -28,14 +28,14 @@ int main()
             printf("\nServer: Connect from client %s, port %d\n", inet_ntoa(receivedAdress.sin_addr), ntohs(receivedAdress.sin_port));
         }
 
-        if (isInClientList(clients, receivedAdress))
+        if (isInClientList(&clients, receivedAdress))
         {
             if (acceptConnectionInLoop(sock, receivedMessage, &receivedAdress) == 0)
             {
                 printf("Refused connection from client %s, port %d\n", inet_ntoa(receivedAdress.sin_addr), ntohs(receivedAdress.sin_port));
             }
         } 
-        else interpretPack(sock, receivedMessage, receivedAdress, clients);
+        else interpretPack(sock, receivedMessage, receivedAdress, &clients);
 
 		if (sequenceNumber >= MAXSEQNUM)
 			sequenceNumber = 0;
@@ -119,7 +119,7 @@ int acceptConnectionInLoop(int sock, Datagram connRequest, struct sockaddr_in* d
 	}
 }
 
-void interpretPack(int sock, Datagram packet, struct sockaddr_in addr, ClientList clients)
+void interpretPack(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients)
 {
     if (packet->header.flag == ACK && findClient(clients, addr)->FIN_SET == 1)
     {
@@ -130,19 +130,19 @@ void interpretPack(int sock, Datagram packet, struct sockaddr_in addr, ClientLis
 	else interpretWithSR(sock, packet, addr, clients);
 }
 
-void interpretWithGBN(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList clients)
+void interpretWithGBN(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
 {
 	Datagram messageToSend = initDatagram();
     printf("%d", messageToSend->header.windowSize); //? Just to get rid of warnings
 }
 
-void interpretWithSR(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList clients)
+void interpretWithSR(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
 {
 	Datagram messageToSend = initDatagram();
     printf("%d", messageToSend->header.windowSize); //? Just to get rid of warnings
 }
 
-void closeConnection(ClientList list, struct sockaddr_in addr)
+void closeConnection(ClientList *list, struct sockaddr_in addr)
 {
     //Disconnect client
     removeFromClientList(list, addr);
@@ -152,31 +152,39 @@ void closeConnection(ClientList list, struct sockaddr_in addr)
 
 ClientList initClientList()
 {
-    ClientList temp = (ClientList)malloc(sizeof(struct ConnectionInfo));
+    ClientList list;
+    struct ConnectionInfo* temp = (struct ConnectionInfo*)calloc(1, sizeof(struct ConnectionInfo));
     if (temp == NULL)
     {
         perror("Failed to allocate memory for client list");
         exit(EXIT_FAILURE);
     }
-    return temp;
+    list.clients = temp;
+    list.size = 0;
+    return list;
 }
 
-int addToClientList(ClientList list, struct ConnectionInfo info)
+int addToClientList(ClientList *list, struct ConnectionInfo info)
+{
+    int cur = list->size;
+    list->size += 1;
+    list->clients = realloc(list->clients, list->size * sizeof(struct ConnectionInfo));
+    if (list->clients == NULL) return 0;
+    list->clients[cur] = info;
+    return 1;
+}
+
+int removeFromClientList(ClientList *list, struct sockaddr_in addr)
 {
     return 1;
 }
 
-int removeFromClientList(ClientList list, struct sockaddr_in addr)
+int isInClientList(ClientList *list, struct sockaddr_in addr)
 {
     return 1;
 }
 
-int isInClientList(ClientList list, struct sockaddr_in addr)
-{
-    return 1;
-}
-
-struct ConnectionInfo* findClient(ClientList list, struct sockaddr_in addr)
+struct ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
 {
     return NULL;
 }
