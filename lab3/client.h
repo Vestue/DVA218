@@ -16,6 +16,6 @@
     with the server.
     Return sequence number sent in the server SYN+ACK.
 */
-int setupConnection(int* sock, char* hostName, struct sockaddr_in* destAddr);
+int setupConnection(int sock, char* hostName, struct sockaddr_in* destAddr);
 
 #endif

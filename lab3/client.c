@@ -26,22 +26,16 @@ int main(int argc, char *argv[])
 
     /*
         Begin connection attempt.
-        Pointers are used as their values need to be used by other functions later on.
+        Return value does not need to be checked as program will
+        close upon error.
     */
-    int currentSeq = setupConnection(&sock, hostName, &destAddr);
+    int currentSeq = setupConnection(sock, hostName, &destAddr);
     printf("%d\n", currentSeq);
     return 0;
 }
 
-/*
-    Setup information required for connection, go through the connection handshake
-    with the server.
-    Return sequence number sent in the server SYN+ACK.
-*/
-int setupConnection(int* sock, char* hostName, struct sockaddr_in* destAddr)
+int setupConnection(int sock, char* hostName, struct sockaddr_in* destAddr)
 {
-    //*sock = createSocket(PORT);
-
     // Setup destination adress.
     struct hostent *hostInfo;
     hostInfo = gethostbyname(hostName);
@@ -58,7 +52,7 @@ int setupConnection(int* sock, char* hostName, struct sockaddr_in* destAddr)
     strncpy(messageToSend->message, msg, strlen(msg));
 
     // Attempt handshake with server
-    if (connectToServer(*sock, messageToSend, *destAddr) != 1)
+    if (connectToServer(sock, messageToSend, *destAddr) != 1)
     {
         printf("Failed connection handshake.");
         exit(EXIT_FAILURE);
