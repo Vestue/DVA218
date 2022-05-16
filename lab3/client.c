@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
     printf("Made it through destAddr :)\n");
 
     sock = createSocket(PORT);
+    connectToServer(sock, messageToSend, destAddr);
     sendMessage(sock, messageToSend, destAddr);
     printf("Message sent\n");
 

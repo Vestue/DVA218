@@ -38,6 +38,7 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 {
 	struct sockaddr_in recvAddr;
     unsigned int addrlen;
+    printf("I am in messageclient now\n");
 
     if (recvfrom(sock, (Datagram)receivedMessage, sizeof(struct Packet),
         0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
@@ -121,6 +122,8 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 	{
 		signal(SIGALRM, timeoutTest);
 		alarm(2);
+
+		recvMessage(sock, connRequest, &dest);
 		if(connRequest->header.flag = SYNACK)
 		{
 			connRequest->header.flag = ACK;
@@ -138,23 +141,41 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 	return 0;
 }
 
+
+
 int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
 {
 	
+	printf("Before connection loop");
 	while(1)
 	{
+
+		recvMessage(sock, connRequest, &dest);
+		
+
 		if (connRequest->header.flag == SYN)
 		{
+			printf("Received SYN\n");
 			connRequest->header.flag = SYNACK;
 			signal(SIGALRM, timeoutTest);
 			alarm(2);
+			if(sendMessage(sock, connRequest, dest) < 0)
+			{
+			perror("Could not send message to client");
+			exit(EXIT_FAILURE);
+			}
 		}
-        else if(connRequest->header.flag == ACK)
+		
+    	if(connRequest->header.flag == ACK)
         {
             printf("Connection established");
             return 1;
         }
+
+
+		
 	}
+	
 
 }
 
