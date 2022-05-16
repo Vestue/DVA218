@@ -14,40 +14,29 @@ int main()
 	int sock = createSocket(PORT);
 	int sequenceNumber = 0;
 	Datagram receivedMessage = initDatagram();
-    //Datagram receivedMessage = (Datagram)calloc(1, sizeof(Datagram));
-    struct sockaddr_in servAddr;
-    if (receivedMessage == NULL)
-    {
-        perror("Failed to allocate memory\n");
-        exit(EXIT_FAILURE);
-    }
 	Datagram messageToSend = initDatagram();
+    struct sockaddr_in receivedAdress;
 
     printf("Just before loop\n");
 	while (1) 
 	{
-        if (recvMessage(sock, receivedMessage, &servAddr) < 0)
-        {
-            printf("I received flag %d!\n", receivedMessage->header.flag);
-            
+		if (recvMessage(sock, receivedMessage, &receivedAdress)) 
+		{
+            printf("I successfylly received!\n");
+
 			puts(receivedMessage->message);
             printf("%d", receivedMessage->header.flag);
         }
-		// if (recvMessageFromClient(sock, receivedMessage))
-		// {
-        //     printf("I received flag %d!\n", receivedMessage->header.flag);
-            
-		// 	puts(receivedMessage->message);
-        //     printf("%d", receivedMessage->header.flag);
-        // }
 
-		if (sequenceNumber >= MAXSEQNUM) sequenceNumber = 0;
+
+		if (sequenceNumber >= MAXSEQNUM)
+			sequenceNumber = 0;
 	}
 
 	return 0;
 }
 
-// TODO: Fix checksum function
+
 
 void interpretPack(int sock, Datagram packet, Datagram messageToSend)
 {

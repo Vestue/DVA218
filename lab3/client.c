@@ -17,12 +17,13 @@ int main(int argc, char *argv[])
 	Datagram messageToSend = initDatagram();
     messageToSend->header.flag = SYN;
     char * msg = "Banana!\0";
-    strncpy(messageToSend->message, msg, strlen(msg));
+    strncpy(messageToSend->message, msg, sizeof(msg));
 
-    printf("message is %s", messageToSend->message);
+
     struct sockaddr_in destAddr;
     struct hostent *hostInfo;
     char hostName[50];
+    memset(&hostName, 0, sizeof(char));
 
     if (argv[1] == NULL) 
     {

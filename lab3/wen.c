@@ -32,33 +32,31 @@
 #define ACK 2
 #define FIN 3
 
-int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAddr)
+// TODO: Fix checksum function
+
+int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAdress)
 {
-    socklen_t addrlen = sizeof(struct sockaddr_in);
-    struct sockaddr_in recvAddr;
-    struct Packet receivedPack = *receivedMessage;
-    int msgLength = recvfrom(sock, (struct Packet*)&receivedPack, sizeof(receivedPack),
-                        0, (struct sockaddr *)&recvAddr, &addrlen);
-    if (msgLength < 0) {
+	struct sockaddr_in recvAddr;
+    unsigned int addrlen;
+    printf("I am in messageclient now\n");
+
+    if (recvfrom(sock, (Datagram)receivedMessage, sizeof(struct Packet),
+        0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
+    {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
-    } else if (msgLength == 0)
-    {
-        printf("Received empty message");
-         return 0;
     }
-    printf("Received message!");
-	return 1;
+    printf("Received message\n");
+    *receivedAdress = recvAddr;
+    return 1;
 }
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-    socklen_t destAddrLen = sizeof(destAddr);
-    struct Packet sendPack = *messageToSend;
-    size_t messageSize = sizeof(struct Packet) - MAXLENGTH + strlen(messageToSend->message);
+	size_t messageLength = sizeof(struct Packet) - MAXLENGTH + strlen(messageToSend->message);
 
-	if (sendto(sock, (struct Packet*)&sendPack, sizeof(sendPack),
-	0, (struct sockaddr *)&destAddr, destAddrLen) < 0)
+	if (sendto(sock, (Datagram)messageToSend, sizeof(struct Packet),
+	0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
         perror("Failed to send message");
         return 0;

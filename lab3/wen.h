@@ -11,7 +11,7 @@
 #define WEN_H
 
 /* Defined macros */
-#define MAXLENGTH 1024
+#define MAXLENGTH 512
 
 // Receiver sets window size and maximum sequence number
 #define WINDOWSIZE 64
@@ -29,6 +29,8 @@
 /* Enums */
 enum slidingWindowMethods { GBN = 0, SR = 1 };
 
+//! Enum itself can't be used as variable.
+//! Remove comment when everyone has read.
 typedef enum 
 { 
 	UNSET=0,
@@ -53,11 +55,6 @@ struct Packet
 	struct Header header;
 	char message[MAXLENGTH];
 };
-struct incPacket
-{
-	struct Header header;
-	char message[200];
-};
 
 struct ConnectionInfo
 {
@@ -70,7 +67,6 @@ struct ConnectionInfo
 /* Typedefs */
 
 typedef struct Packet *Datagram;
-typedef struct incPacket *incDatagram;
 typedef struct ConnectionInfo *ClientList;
 
 
@@ -90,7 +86,7 @@ Datagram initDatagram();
 	Otherwise, the data should be added to sent Datagram
 	and then return 1.
 */
-int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAddr);
+int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAdress);
 
 /*
 	Send Datagram to chosen socket by using the provided sockaddr.
