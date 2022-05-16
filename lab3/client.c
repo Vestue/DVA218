@@ -59,3 +59,46 @@ int setupConnection(int sock, char* hostName, struct sockaddr_in* destAddr)
     }
     return messageToSend->header.sequence;
 }
+
+int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
+{
+
+	//sätter flaggan till SYN och skickar, startar timer på 2 sek
+	connRequest->header.flag = SYN;
+	if(sendMessage(sock, connRequest, dest) < 0)
+	{
+		perror("Could not send message to server");
+		exit(EXIT_FAILURE);
+	}
+
+    Datagram messageToReceive = initDatagram();
+    struct sockaddr_in recvAddr;
+
+	while(1)
+	{
+		signal(SIGALRM, timeoutTest);
+		alarm(2);
+
+        if (recvMessage(sock, messageToReceive, &recvAddr))
+        {
+            printf("\nReceived from server: ");
+            puts(messageToReceive->message);
+            printf("%d", messageToReceive->header.flag);
+        }
+
+		if(messageToReceive->header.flag == SYN + ACK)
+		{
+            connRequest->header.sequence += 1;
+			connRequest->header.flag = ACK;
+			if(sendMessage(sock, connRequest, dest) == 0)
+			{
+				perror("Could not send message to server");
+				exit(EXIT_FAILURE);
+			}
+			printf("Connection established");
+
+			return 1;
+		}
+	}
+	return 0;
+}

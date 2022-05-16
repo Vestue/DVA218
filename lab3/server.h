@@ -33,8 +33,12 @@ int addToClientList(ClientList* list, struct ConnectionInfo info);
 */
 int isInClientList(ClientList* list, struct sockaddr_in addr);
 
-void interpretPack(int sock, Datagram packet, Datagram messageToSend);
+/*
+	Accepts the connectionrequests
+	returns 1 if succesfull
+*/
+int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
 
-void sendTimeout();
+void interpretPack(int sock, Datagram packet, Datagram messageToSend);
 
 #endif

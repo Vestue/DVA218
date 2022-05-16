@@ -18,4 +18,10 @@
 */
 int setupConnection(int sock, char* hostName, struct sockaddr_in* destAddr);
 
+/*
+	Tries to connect to the server
+	returns 1 if successfull
+*/
+int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest);
+
 #endif
