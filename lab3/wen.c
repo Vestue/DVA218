@@ -154,10 +154,11 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
 {
 	printf("Before connection loop");
+    struct sockaddr_in tempAddr;
 	while(1)
 	{
 
-		recvMessage(sock, connRequest, dest);
+		recvMessage(sock, connRequest, &tempAddr);
 		
 
 		if (connRequest->header.flag == SYN)
@@ -171,9 +172,13 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
 			    perror("Could not send message to client");
 			    exit(EXIT_FAILURE);
 			}
+            *dest = tempAddr;
 		}
 		
-    	if(connRequest->header.flag == ACK)
+        //* Make sure that ACK is coming from expected adress
+    	if(connRequest->header.flag == ACK 
+            && tempAddr.sin_addr.s_addr == dest->sin_addr.s_addr
+            && tempAddr.sin_port == dest->sin_port)
         {
             printf("Connection established");
             return 1;
