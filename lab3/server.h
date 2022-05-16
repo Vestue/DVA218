@@ -33,15 +33,7 @@ int addToClientList(ClientList* list, struct ConnectionInfo info);
 */
 int isInClientList(ClientList* list, struct sockaddr_in addr);
 
-//! Old declarations below
-
 void interpretPack(int sock, Datagram packet, Datagram messageToSend);
-
-int sendMessageToClient(int sock, Datagram messageToSend, struct sockaddr_in destAddr);
-
-int recvMessageFromClient(int socket, Datagram receivedMessage);
-
-int unpackMessage(Datagram packet);
 
 void sendTimeout();
 

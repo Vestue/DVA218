@@ -157,12 +157,11 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
     struct sockaddr_in tempAddr;
 	while(1)
 	{
-
 		recvMessage(sock, connRequest, &tempAddr);
 		
-
 		if (connRequest->header.flag == SYN)
 		{
+            *dest = tempAddr;
 			printf("Received SYN\n");
 			connRequest->header.flag = SYN + ACK;
 			signal(SIGALRM, timeoutTest);
@@ -172,7 +171,6 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
 			    perror("Could not send message to client");
 			    exit(EXIT_FAILURE);
 			}
-            *dest = tempAddr;
 		}
 		
         //* Make sure that ACK is coming from expected adress

@@ -9,10 +9,13 @@
 #define PORT 0
 #define SERVERPORT 5555
 
-// Declarations
+/* Declarations here */
 
-int sendMessageToServer(int sock, Datagram toSend, struct sockaddr_in destAddr);
-
-int recvMessageFromServer(int socket, Datagram receivedMessage);
+/*
+    Setup information required for connection, go through the connection handshake
+    with the server.
+    Return sequence number sent in the server SYN+ACK.
+*/
+int setupConnection(int* sock, char* hostName, struct sockaddr_in* destAddr);
 
 #endif
