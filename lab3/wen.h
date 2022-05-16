@@ -51,7 +51,7 @@ struct Header
 struct Packet
 {
 	struct Header header;
-	char message[100];
+	char message[MAXLENGTH];
 };
 struct incPacket
 {

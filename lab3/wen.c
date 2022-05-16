@@ -34,9 +34,11 @@
 
 int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAddr)
 {
-    unsigned int addrlen;
-    int msgLength = recvfrom(sock, (Datagram)&receivedMessage, sizeof(receivedMessage),
-                        0, (struct sockaddr *)&receivedAddr, 0);
+    socklen_t addrlen = sizeof(struct sockaddr_in);
+    struct sockaddr_in recvAddr;
+    struct Packet receivedPack = *receivedMessage;
+    int msgLength = recvfrom(sock, (struct Packet*)&receivedPack, sizeof(receivedPack),
+                        0, (struct sockaddr *)&recvAddr, &addrlen);
     if (msgLength < 0) {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
@@ -51,14 +53,12 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-	/*	TODO 
-		Pack packet with right flags and then send it
+    socklen_t destAddrLen = sizeof(destAddr);
+    struct Packet sendPack = *messageToSend;
+    size_t messageSize = sizeof(struct Packet) - MAXLENGTH + strlen(messageToSend->message);
 
-        !R: Pack should be done before sendMessage is called so no need to pack here.
-	*/
-
-	if (sendto(sock, (Datagram)&messageToSend, sizeof(messageToSend),
-	0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
+	if (sendto(sock, (struct Packet*)&sendPack, sizeof(sendPack),
+	0, (struct sockaddr *)&destAddr, destAddrLen) < 0)
     {
         perror("Failed to send message");
         return 0;
@@ -76,7 +76,7 @@ void setDefaultHeader(Datagram messageToSend)
 
 Datagram initDatagram()
 {
-    Datagram temp = (Datagram)calloc(1 , sizeof(Datagram));
+    Datagram temp = (Datagram)calloc(1 , sizeof(struct Packet));
     if (temp == NULL)
     {
         perror("Failed to allocate memory\n");
