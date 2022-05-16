@@ -43,6 +43,18 @@ int main(int argc, char *argv[])
     sock = createSocket(PORT);
     sendMessage(sock, messageToSend, destAddr);
     printf("Message sent\n");
+
+
+    // * Attempt to receive
+    Datagram messageToReceive = initDatagram();
+    struct sockaddr_in recvAddr;
+    if (recvMessage(sock, messageToReceive, &recvAddr))
+    {
+        printf("\nReceived from server: ");
+        puts(messageToReceive->message);
+        printf("%d", messageToReceive->header.flag);
+    }
+
     scanf("Press enter to continue...");
     return 0;
 }

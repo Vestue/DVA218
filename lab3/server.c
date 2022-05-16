@@ -26,6 +26,18 @@ int main()
 
 			puts(receivedMessage->message);
             printf("%d", receivedMessage->header.flag);
+
+            // * Test sending message
+            printf("\nServer: Connect from client %s, port %d\n", inet_ntoa(receivedAdress.sin_addr), ntohs(receivedAdress.sin_port));
+            char * msg = "Wazzup client man\0";
+            strncpy(messageToSend->message, msg, strlen(msg));
+            messageToSend->header.flag = SYN + ACK;
+
+            if (sendMessage(sock, messageToSend, receivedAdress)){
+                printf("Message sent to client!\n");
+            }
+            else
+                printf("Failed to send message\n");
         }
 
 
