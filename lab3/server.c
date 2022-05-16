@@ -153,13 +153,13 @@ void closeConnection(ClientList *list, struct sockaddr_in addr)
 ClientList initClientList()
 {
     ClientList list;
-    struct ConnectionInfo* temp = (struct ConnectionInfo*)calloc(1, sizeof(struct ConnectionInfo));
-    if (temp == NULL)
+    struct ConnectionInfo* tempArr = (struct ConnectionInfo*)calloc(1, sizeof(struct ConnectionInfo));
+    if (tempArr == NULL)
     {
         perror("Failed to allocate memory for client list");
         exit(EXIT_FAILURE);
     }
-    list.clients = temp;
+    list.clients = tempArr;
     list.size = 0;
     return list;
 }
@@ -176,15 +176,56 @@ int addToClientList(ClientList *list, struct ConnectionInfo info)
 
 int removeFromClientList(ClientList *list, struct sockaddr_in addr)
 {
-    return 1;
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+        {
+            /*
+                * Make a temporary array to copy data to and then free and repoint old one.
+                * This is done to make sure that the array only uses needed amount of memory
+                * and don't contain any old entries.
+            */
+            struct ConnectionInfo* tempArr = (struct ConnectionInfo*)calloc(list->size, sizeof(struct ConnectionInfo));
+            if (tempArr == NULL)
+            {
+                perror("Failed to allocate memory for client list");
+                exit(EXIT_FAILURE);
+            }
+            // Copy everything before the index
+            if (i != 0) memcpy(tempArr, list->clients, i * sizeof(struct ConnectionInfo));
+            // Copy after index
+            if (i != list->size - 1) 
+                memcpy(tempArr + i, list->clients + i + 1, (list->size - i - 1) * sizeof(struct ConnectionInfo));
+            free(list->clients);
+            list->clients = tempArr;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int isInClientList(ClientList *list, struct sockaddr_in addr)
 {
-    return 1;
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+            return 1;
+    }
+    return 0;
 }
 
 struct ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
 {
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+            return &list->clients[i];
+    }
     return NULL;
 }
