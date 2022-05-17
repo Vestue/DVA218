@@ -38,15 +38,12 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 {
 	struct sockaddr_in recvAddr;
     unsigned int addrlen;
-    printf("I am in messageclient now\n");
-
     if (recvfrom(sock, (Datagram)receivedMessage, sizeof(Header),
         0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
     {
         perror("Error receiving message!");
 		exit(EXIT_FAILURE);
     }
-    printf("Received message\n");
     *receivedAdress = recvAddr;
     return 1;
 }

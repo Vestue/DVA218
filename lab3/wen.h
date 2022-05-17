@@ -51,7 +51,7 @@ typedef struct
 	uint16_t windowSize;
 	uint32_t sequence;
 	uint8_t flag;
-    char* message[MAXLENGTH];
+    char message[MAXLENGTH];
 }Header;
 
 // struct Packet
@@ -104,10 +104,6 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 */
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destinationAddr);
 
-
-
-
-
 /*
 	Create socket using chosen port.
 	Return created socket if successful.
@@ -123,21 +119,24 @@ int createSocket(int port);
 int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr);
 
 /*
-	Tries to connect to the server
-	returns 1 if successfull
-*/
-int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest);
-
-/*
 	Accepts the connectionrequests
 	returns 1 if succesfull
 */
 int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
 
+
+//  !Everything below should be abstracted out
 /*
-	Executes when a timeout has occured
-	Not sure it works might get removed
+    Tries to connect to the server
+    returns 1 if successfull
 */
+int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest);
+
+/**
+ *
+ *  Not sure it works might get removed
+ *	Executes when a timeout has occured
+ */
 void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 
@@ -166,9 +165,8 @@ void stopTimer(Datagram timedConnection, int seqNum);
 */
 void restartTimer(Datagram timedConnection, int seqNum);
 
-//!  Test, delete later
+//!  feeling cute might delete later
 void timeoutTest();
-
 /*
 	Return the expected sequence number from a certain sockaddr.
 
@@ -197,9 +195,9 @@ void setFIN(struct sockaddr_in addr, ConnectionInfo *connections);
 int FINisSet(struct sockaddr_in addr, ConnectionInfo *connections);
 
 
-
-
 /*
+    Todo: Make more generic, example: setHeader(Datagram messageToSend, uint8_t flag)
+
 	Fill datagram with default information about
 	window size, sequence number.
 	Set flag to UNSET and set message to '\0'.
