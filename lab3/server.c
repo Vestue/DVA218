@@ -35,7 +35,7 @@ int main()
                 printf("Refused connection from client %s, port %d\n", inet_ntoa(receivedAdress.sin_addr), ntohs(receivedAdress.sin_port));
             }
         } 
-        else if (receivedMessage->header.flag == ACK && findClient(&clients, receivedAdress)->FIN_SET == 1)
+        else if (receivedMessage->flag == ACK && findClient(&clients, receivedAdress)->FIN_SET == 1)
             closeConnection(&clients, receivedAdress);
         else interpretPack_receiver(sock, receivedMessage, receivedAdress, &clients);
 
@@ -54,11 +54,11 @@ int TEMPacceptConnection(int sock, Datagram connRequest, struct sockaddr_in* des
 	{
 		recvMessage(sock, connRequest, &tempAddr);
 		
-		if (connRequest->header.flag == SYN)
+		if (connRequest->flag == SYN)
 		{
             *dest = tempAddr;
 			printf("Received SYN\n");
-			connRequest->header.flag = SYN + ACK;
+			connRequest->flag = SYN + ACK;
 			signal(SIGALRM, timeoutTest);
 			alarm(2);
 			if(sendMessage(sock, connRequest, *dest) == 0)
@@ -69,7 +69,7 @@ int TEMPacceptConnection(int sock, Datagram connRequest, struct sockaddr_in* des
 		}
 		
         //* Make sure that ACK is coming from expected adress
-    	if(connRequest->header.flag == ACK 
+    	if(connRequest->flag == ACK 
             && tempAddr.sin_addr.s_addr == dest->sin_addr.s_addr
             && tempAddr.sin_port == dest->sin_port)
         {
