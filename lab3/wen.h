@@ -46,35 +46,36 @@ typedef enum
 
 /* Struct definitions */
 
-struct Header
+typedef struct
 {
-	int windowSize;
-	int sequence;
-	int flag;
-};
+	uint16_t windowSize;
+	uint32_t sequence;
+	uint8_t flag;
+    char* message[MAXLENGTH];
+}Header;
 
-struct Packet
-{
-	struct Header header;
-	char message[MAXLENGTH];
-};
+// struct Packet
+// {
+// 	struct Header header;
+// 	char message[MAXLENGTH];
+// };
 
-struct ConnectionInfo
+typedef struct
 {
 	struct sockaddr_in addr;
 	int baseSeqNum;
 	int FIN_SET;
-};
+}ConnectionInfo;
 
 
 
 /* Typedefs */
 
-typedef struct Packet *Datagram;
+typedef Header *Datagram;
 
 typedef struct
 {
-	struct ConnectionInfo *clients;
+	ConnectionInfo *clients;
 	size_t size;
 } ClientList;
 
@@ -174,26 +175,26 @@ void timeoutTest();
 	Pointer is used to be able to get from either only one connection or
 	multiple connections (if its sent as the typedeffed ClientList) 
 */
-int getExpectedSeq(struct sockaddr_in addr, struct ConnectionInfo* connections);
+int getExpectedSeq(struct sockaddr_in addr, ConnectionInfo* connections);
 
 /*
 	Set base sequense number of chosen connection to 
 	sequence number sent as argument.
 */
-void setBaseSeq(int seqToSet, struct sockaddr_in addr, struct ConnectionInfo *connections);
+void setBaseSeq(int seqToSet, struct sockaddr_in addr, ConnectionInfo *connections);
 
 /*
 	Set that FIN has been received from connection.
 	FIN_SET = 1
 */
-void setFIN(struct sockaddr_in addr, struct ConnectionInfo *connections);
+void setFIN(struct sockaddr_in addr, ConnectionInfo *connections);
 
 /*
 	Read FIN_SET in chosen connection.
 	Return 1 if the FIN state is set,
 	0 if it isn't.
 */
-int FINisSet(struct sockaddr_in addr, struct ConnectionInfo *connections);
+int FINisSet(struct sockaddr_in addr, ConnectionInfo *connections);
 
 
 
@@ -304,7 +305,7 @@ ClientList initClientList();
 
 	Return 1 if successful, 0 if not.
 */
-int addToClientList(ClientList *list, struct ConnectionInfo info);
+int addToClientList(ClientList *list, ConnectionInfo info);
 
 /*
     Attempt to remove client from list.
@@ -325,6 +326,6 @@ int isInClientList(ClientList *list, struct sockaddr_in addr);
     Search the list for the client and add the client.
     Return NULL if it can't be found. 
 */
-struct ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr);
+ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr);
 
 #endif

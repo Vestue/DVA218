@@ -40,7 +40,7 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
     unsigned int addrlen;
     printf("I am in messageclient now\n");
 
-    if (recvfrom(sock, (Datagram)receivedMessage, sizeof(struct Packet),
+    if (recvfrom(sock, (Datagram)receivedMessage, sizeof(Header),
         0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
     {
         perror("Error receiving message!");
@@ -53,7 +53,7 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-	if (sendto(sock, (Datagram)messageToSend, sizeof(struct Packet),
+	if (sendto(sock, (Datagram)messageToSend, sizeof(Header),
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
         perror("Failed to send message");
@@ -64,15 +64,15 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 
 void setDefaultHeader(Datagram messageToSend)
 {
-	messageToSend->header.windowSize = WINDOWSIZE;
-	messageToSend->header.sequence = 1;
-	messageToSend->header.flag = UNSET;
+	messageToSend->windowSize = WINDOWSIZE;
+	messageToSend->sequence = 1;
+	messageToSend->flag = UNSET;
 	messageToSend->message[0] = '\0';
 }
 
 Datagram initDatagram()
 {
-    Datagram temp = (Datagram)calloc(1 , sizeof(struct Packet));
+    Datagram temp = (Datagram)calloc(1 , sizeof(Header));
     if (temp == NULL)
     {
         perror("Failed to allocate memory\n");
@@ -114,7 +114,7 @@ void timeoutTest()
 
 void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
 {
-	connRequest->header.flag = SYN;
+	connRequest->flag = SYN;
 
     if(sendMessage(sock, connRequest, dest) < 0)
     {
@@ -134,7 +134,7 @@ int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr
 
     // Setup first message to be sent.
     Datagram messageToSend = initDatagram();
-    messageToSend->header.flag = SYN;
+    messageToSend->flag = SYN;
 
     //! Test message, remove later
     char * msg = "Banana!\0";
@@ -146,14 +146,14 @@ int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr
         printf("Failed connection handshake.");
         exit(EXIT_FAILURE);
     }
-    return messageToSend->header.sequence;
+    return messageToSend->sequence;
 }
 
 int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 {
 
 	//sätter flaggan till SYN och skickar, startar timer på 2 sek
-	connRequest->header.flag = SYN;
+	connRequest->flag = SYN;
 	if(sendMessage(sock, connRequest, dest) < 0)
 	{
 		perror("Could not send message to server");
@@ -172,13 +172,13 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
         {
             printf("\nReceived from server: ");
             puts(messageToReceive->message);
-            printf("%d", messageToReceive->header.flag);
+            printf("%d", messageToReceive->flag);
         }
 
-		if(messageToReceive->header.flag == SYN + ACK)
+		if(messageToReceive->flag == SYN + ACK)
 		{
-            connRequest->header.sequence += 1;
-			connRequest->header.flag = ACK;
+            connRequest->sequence += 1;
+			connRequest->flag = ACK;
 			if(sendMessage(sock, connRequest, dest) == 0)
 			{
 				perror("Could not send message to server");
@@ -198,11 +198,11 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
     struct sockaddr_in tempAddr;
 	while(1)
 	{		
-		if (connRequest->header.flag == SYN)
+		if (connRequest->flag == SYN)
 		{
             *dest = tempAddr;
 			printf("Received SYN\n");
-			connRequest->header.flag = SYN + ACK;
+			connRequest->flag = SYN + ACK;
 			signal(SIGALRM, timeoutTest);
 			alarm(2);
 			if(sendMessage(sock, connRequest, *dest) == 0)
@@ -224,7 +224,7 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
         recvMessage(sock, connRequest, &tempAddr);
 		
         //* Make sure that ACK is coming from expected adress
-    	if(connRequest->header.flag == ACK 
+    	if(connRequest->flag == ACK 
             && tempAddr.sin_addr.s_addr == dest->sin_addr.s_addr
             && tempAddr.sin_port == dest->sin_port)
         {
@@ -245,13 +245,13 @@ void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, 
 void interpretWith_GBN_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
 {
 	Datagram messageToSend = initDatagram();
-    printf("%d", messageToSend->header.windowSize); //? Just to get rid of warnings
+    printf("%d", messageToSend->windowSize); //? Just to get rid of warnings
 }
 
 void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
 {
 	Datagram messageToSend = initDatagram();
-    printf("%d", messageToSend->header.windowSize); //? Just to get rid of warnings
+    printf("%d", messageToSend->windowSize); //? Just to get rid of warnings
 }
 
 
@@ -262,7 +262,7 @@ void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in des
 ClientList initClientList()
 {
     ClientList list;
-    struct ConnectionInfo* tempArr = (struct ConnectionInfo*)calloc(1, sizeof(struct ConnectionInfo));
+    ConnectionInfo* tempArr = (ConnectionInfo*)calloc(1, sizeof(ConnectionInfo));
     if (tempArr == NULL)
     {
         perror("Failed to allocate memory for client list");
@@ -273,11 +273,11 @@ ClientList initClientList()
     return list;
 }
 
-int addToClientList(ClientList *list, struct ConnectionInfo info)
+int addToClientList(ClientList *list, ConnectionInfo info)
 {
     int cur = list->size;
     list->size += 1;
-    list->clients = realloc(list->clients, list->size * sizeof(struct ConnectionInfo));
+    list->clients = realloc(list->clients, list->size * sizeof(ConnectionInfo));
     if (list->clients == NULL) return 0;
     list->clients[cur] = info;
     return 1;
@@ -296,17 +296,17 @@ int removeFromClientList(ClientList *list, struct sockaddr_in addr)
                 * This is done to make sure that the array only uses needed amount of memory
                 * and don't contain any old entries.
             */
-            struct ConnectionInfo* tempArr = (struct ConnectionInfo*)calloc(list->size, sizeof(struct ConnectionInfo));
+            ConnectionInfo* tempArr = (ConnectionInfo*)calloc(list->size, sizeof(ConnectionInfo));
             if (tempArr == NULL)
             {
                 perror("Failed to allocate memory for client list");
                 exit(EXIT_FAILURE);
             }
             // Copy everything before the index
-            if (i != 0) memcpy(tempArr, list->clients, i * sizeof(struct ConnectionInfo));
+            if (i != 0) memcpy(tempArr, list->clients, i * sizeof(ConnectionInfo));
             // Copy after index
             if (i != list->size - 1) 
-                memcpy(tempArr + i, list->clients + i + 1, (list->size - i - 1) * sizeof(struct ConnectionInfo));
+                memcpy(tempArr + i, list->clients + i + 1, (list->size - i - 1) * sizeof(ConnectionInfo));
             free(list->clients);
             list->clients = tempArr;
             return 1;
@@ -327,7 +327,7 @@ int isInClientList(ClientList *list, struct sockaddr_in addr)
     return 0;
 }
 
-struct ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
+ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
 {
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
