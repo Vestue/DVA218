@@ -14,7 +14,7 @@
 #define MAXLENGTH 512
 #define SERVERPORT 5555
 // Set clientport to 0 so OS assigns any avaible port
-#define CLIENTPORT 5556
+#define CLIENTPORT 0
 
 // Receiver sets window size and maximum sequence number
 #define WINDOWSIZE 64

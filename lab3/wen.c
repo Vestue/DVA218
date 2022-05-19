@@ -57,7 +57,7 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
     if (recvfrom(sock, (Datagram)receivedMessage, sizeof(Header),
         0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
     {
-        perror("Error receiving message!");
+        perror("Error receiving message!\n");
 		exit(EXIT_FAILURE);
     }
     *receivedAdress = recvAddr;
@@ -69,7 +69,7 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 	if (sendto(sock, (Datagram)messageToSend, sizeof(Header),
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
-        perror("Failed to send message");
+        perror("Failed to send message\n");
         return 0;
     }
     return 1;
@@ -129,9 +129,8 @@ int createClientSpecificSocket(struct sockaddr_in clientAddr)
 		exit(EXIT_FAILURE);
 	}
     memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
+	addr = clientAddr;
     addr.sin_port = htons(CLIENTPORT);
-	addr.sin_addr.s_addr = htonl(clientAddr.sin_addr.s_addr);
 	
 	if (bind(sock, (struct sockaddr*)&addr, (unsigned int)sizeof(addr)) < 0)
 	{
@@ -143,7 +142,7 @@ int createClientSpecificSocket(struct sockaddr_in clientAddr)
 
 void timeoutTest()
 {
-    printf("Timed out");
+    printf("\nTimed out\n");
 
 } 
 
@@ -179,7 +178,7 @@ int connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr)
     // Attempt handshake with server
     if (initHandshakeWithServer(sock, messageToSend, *destAddr) != 1)
     {
-        printf("Failed connection handshake.");
+        printf("Failed connection handshake.\n");
         exit(EXIT_FAILURE);
     }
     return messageToSend->sequence;
@@ -189,7 +188,7 @@ int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in d
 {
 	if(sendMessage(sock, connRequest, dest) < 0)
 	{
-		perror("Could not send message to server");
+		perror("Could not send message to server.\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -213,10 +212,10 @@ int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in d
             setHeader(connRequest, ACK, messageToReceive);
 			if(sendMessage(sock, connRequest, dest) == 0)
 			{
-				perror("Could not send message to server");
+				perror("Could not send message to server\n");
 				exit(EXIT_FAILURE);
 			}
-			printf("Connection established");
+			printf("Connection established\n");
 
 			return 1;
 		}
@@ -226,7 +225,6 @@ int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in d
 
 int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* dest, ClientList* list)
 {
-	printf("Before connection loop");
     struct sockaddr_in tempAddr;
 	Datagram toSend = initDatagram();
 
@@ -248,7 +246,7 @@ int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* d
 			// designated port.
 			if(sendMessage(clientSock, toSend, *dest) == 0)
 			{
-			    perror("Could not send message to client");
+			    perror("Could not send message to client\n");
 			    exit(EXIT_FAILURE);
 			}
 		}
@@ -276,7 +274,7 @@ int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* d
         {
 			if (addToClientList(list, initConnectionInfo(connRequest, *dest, clientSock)))
 			{
-				printf("Connection established");
+				printf("Connection established\n");
 				free(toSend);
             	return 1;
 			}
