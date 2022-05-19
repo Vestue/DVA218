@@ -19,6 +19,7 @@
 // Receiver sets window size and maximum sequence number
 #define WINDOWSIZE 64
 #define MAXSEQNUM 128
+#define STARTSEQ 42
 #define ERORRCODE -1
 #define SWMETHOD 0
 /*
@@ -65,6 +66,7 @@ typedef struct
 typedef struct
 {
 	struct sockaddr_in addr;
+	int sock;
 	int baseSeqNum;
 	int FIN_SET;
 }ConnectionInfo;
@@ -125,7 +127,7 @@ int connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr);
 	Return socket to connected client
 	Return -1 if failed
 */
-int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
+int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* dest, ClientList* list);
 
 
 //  !Everything below should be abstracted out
@@ -289,6 +291,12 @@ void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in des
 	Return pointer to client list if successful, print error if not.
 */
 ClientList initClientList();
+
+/*
+	Create a valid ConnectionInfo using the given information in datagram.
+	This is only to be used when receiver or sender reaches "connection established" state.
+*/
+ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in recvAddr);
 
 /*
     Begin by checking if client is in list.

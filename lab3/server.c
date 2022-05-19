@@ -30,7 +30,7 @@ int main()
 
         if (isInClientList(&clients, receivedAdress) == 0)
         {
-            if (acceptConnection(sock, receivedMessage, &receivedAdress) == 0)
+            if (acceptClientConnection(sock, receivedMessage, &receivedAdress, &clients) == 0)
             {
                 printf("Refused connection from client %s, port %d\n", inet_ntoa(receivedAdress.sin_addr), ntohs(receivedAdress.sin_port));
             }

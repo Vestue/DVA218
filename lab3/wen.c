@@ -118,6 +118,29 @@ int createSocket(int port)
 	return sock;
 }
 
+int createClientSpecificSocket(struct sockaddr_in clientAddr)
+{
+	int sock;
+	struct sockaddr_in addr;
+
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	{
+		perror("Could not create a socket\n");
+		exit(EXIT_FAILURE);
+	}
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(CLIENTPORT);
+	addr.sin_addr.s_addr = htonl(clientAddr.sin_addr.s_addr);
+	
+	if (bind(sock, (struct sockaddr*)&addr, (unsigned int)sizeof(addr)) < 0)
+	{
+	   perror("Could not bind socket!");
+	   exit(EXIT_FAILURE);
+	}
+	return sock;
+}
+
 void timeoutTest()
 {
     printf("Timed out");
@@ -201,20 +224,21 @@ int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in d
 	return 0;
 }
 
-int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
+int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* dest, ClientList* list)
 {
 	printf("Before connection loop");
     struct sockaddr_in tempAddr;
+	Datagram toSend = initDatagram();
 	while(1)
 	{		
 		if (connRequest->flag == SYN)
 		{
             *dest = tempAddr;
 			printf("Received SYN\n");
-			connRequest->flag = SYN + ACK;
+			setHeader(toSend, SYN + ACK, connRequest);
 			signal(SIGALRM, timeoutTest);
 			alarm(2);
-			if(sendMessage(sock, connRequest, *dest) == 0)
+			if(sendMessage(sock, toSend, *dest) == 0)
 			{
 			    perror("Could not send message to client");
 			    exit(EXIT_FAILURE);
@@ -237,10 +261,15 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
             && tempAddr.sin_addr.s_addr == dest->sin_addr.s_addr
             && tempAddr.sin_port == dest->sin_port)
         {
-            printf("Connection established");
-            return 1;
+			if (addToClientList(list, initConnectionInfo(connRequest, *dest)))
+			{
+				printf("Connection established");
+            	return 1;
+			}
+            return ERORRCODE;
         }
 	}
+	free(toSend);
 }
 
 void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients)
@@ -280,6 +309,28 @@ ClientList initClientList()
     list.clients = tempArr;
     list.size = 0;
     return list;
+}
+
+ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in recvAddr)
+{
+	ConnectionInfo tempInfo;
+	if (receivedDatagram->flag == ACK) 
+	{
+		tempInfo.baseSeqNum = STARTSEQ;
+		tempInfo.sock = createClientSpecificSocket(recvAddr);
+	}
+	else if (receivedDatagram->flag == SYN + ACK) 
+	{
+		tempInfo.baseSeqNum = receivedDatagram->ackNum;
+	}
+	else
+	{
+		printf("\nWrong usage of initConnectionInfo\n");
+		exit(EXIT_FAILURE);
+	}
+	tempInfo.addr = recvAddr;
+	tempInfo.FIN_SET = 0;
+	return tempInfo;
 }
 
 int addToClientList(ClientList *list, ConnectionInfo info)
@@ -529,7 +580,7 @@ void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram)
         case (SYN + ACK):
             datagramToSend->flag = SYN + ACK;
             datagramToSend->ackNum = receivedDatagram->sequence + 1;
-            datagramToSend->sequence = 42;
+            datagramToSend->sequence = STARTSEQ;
             break;
         case FIN:
             datagramToSend->flag = FIN;
