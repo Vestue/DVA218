@@ -15,6 +15,7 @@ int main()
 	int sequenceNumber = 0;
 	Datagram receivedMessage = initDatagram();
     struct sockaddr_in receivedAdress;
+    memset(&receivedAdress, 0, sizeof(struct sockaddr_in));
 
 	TEMPacceptConnection(sock, receivedMessage, &receivedAdress);
 
@@ -50,6 +51,7 @@ int TEMPacceptConnection(int sock, Datagram connRequest, struct sockaddr_in* des
 {
 	printf("Before connection loop");
     struct sockaddr_in tempAddr;
+    memset(&tempAddr, 0, sizeof(struct sockaddr_in));
 	while(1)
 	{
 		recvMessage(sock, connRequest, &tempAddr);

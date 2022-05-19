@@ -37,7 +37,8 @@
 int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAdress)
 {
 	struct sockaddr_in recvAddr;
-    unsigned int addrlen;
+    memset(&recvAddr, 0, sizeof(struct sockaddr_in));
+    unsigned int addrlen = sizeof(recvAddr);
     printf("I am in messageclient now\n");
 
     if (recvfrom(sock, (Datagram)receivedMessage, sizeof(Header),
