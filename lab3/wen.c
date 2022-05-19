@@ -37,7 +37,14 @@
 int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAdress)
 {
 	struct sockaddr_in recvAddr;
+<<<<<<< HEAD
     unsigned int addrlen;
+=======
+    memset(&recvAddr, 0, sizeof(struct sockaddr_in));
+    unsigned int addrlen = sizeof(recvAddr);
+    printf("I am in messageclient now\n");
+
+>>>>>>> 910c093ac1307bd8e116c7d6561aa15fdd0ddad6
     if (recvfrom(sock, (Datagram)receivedMessage, sizeof(Header),
         0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
     {
@@ -334,4 +341,101 @@ ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
             return &list->clients[i];
     }
     return NULL;
+}
+
+int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* dest)
+{
+
+	struct sockaddr_in tempAddr;
+
+
+
+	while(1)
+	{
+
+		recvMessage(sock, disconnRequest, &tempAddr);
+		
+		if(disconnRequest->flag == FIN)
+		{
+			*dest = tempAddr;
+			disconnRequest->flag = ACK;
+
+			if(sendMessage(sock, disconnRequest, *dest) < 0)
+			{
+				printf("Failed to disconnect from client");
+				exit(EXIT_FAILURE);
+			}
+			disconnRequest->flag = FIN;
+			if(sendMessage(sock, disconnRequest, *dest))
+			{
+				printf("Failed to disconnect from client");
+				exit(EXIT_FAILURE);
+			}
+			signal(SIGALRM, timeoutTest);
+			alarm(2);
+			
+		}
+
+		if(disconnRequest->flag == ACK)
+		{
+			printf("Server is disconnected");
+			
+			return 1;
+		}
+			
+		
+		
+
+	}
+
+
+}
+
+int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in dest)
+{
+
+
+	struct sockaddr_in tempAddr;
+	disconnRequest->flag = FIN;
+	int counter = 0;
+	signal(SIGALRM, timeoutTest);
+	alarm(2);
+	if(sendMessage(sock, disconnRequest, dest) < 0)
+	{
+		printf("Failed to disconnect from server");
+		exit(EXIT_FAILURE);
+	}
+
+	while(1)
+	{
+
+		recvMessage(sock, disconnRequest, &tempAddr);
+
+		if(disconnRequest->flag == FIN && counter == 0)
+		{
+			counter++;
+			disconnRequest->flag = ACK;
+			sendMessage(sock, disconnRequest, dest);
+			signal(SIGALRM, timeoutTest);
+			alarm(2); //Ska vara 2 * MSL
+
+		}
+		if(disconnRequest->flag == FIN && counter > 0) //if counter is more than 0 that means it is the second FIN received
+		{
+			disconnRequest->flag = ACK;
+			sendMessage(sock, disconnRequest, dest);
+			alarm(2); //resetar timern, går timern ut är clienten disconnectad
+
+			return 1; //temporär return
+		}
+		
+		if(disconnRequest->flag == ACK)
+			counter++;
+		
+		
+		
+	
+			
+	}
+
 }

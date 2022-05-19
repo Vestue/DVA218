@@ -14,7 +14,7 @@
 #define MAXLENGTH 512
 #define SERVERPORT 5555
 // Set clientport to 0 so OS assigns any avaible port
-#define CLIENTPORT 0
+#define CLIENTPORT 5556
 
 // Receiver sets window size and maximum sequence number
 #define WINDOWSIZE 64
@@ -138,6 +138,13 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest);
  *	Executes when a timeout has occured
  */
 void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
+
+
+
+int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* dest);
+
+
+int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in dest);
 
 
 /*
