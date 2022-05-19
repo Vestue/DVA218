@@ -51,7 +51,7 @@ typedef struct
 	uint16_t windowSize;
 	uint32_t sequence;
 	uint8_t flag;
-    char* message[MAXLENGTH];
+    char message[MAXLENGTH];
 }Header;
 
 // struct Packet
