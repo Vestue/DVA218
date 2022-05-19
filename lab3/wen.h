@@ -296,7 +296,7 @@ ClientList initClientList();
 	Create a valid ConnectionInfo using the given information in datagram.
 	This is only to be used when receiver or sender reaches "connection established" state.
 */
-ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in recvAddr);
+ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in recvAddr, int sock);
 
 /*
     Begin by checking if client is in list.
