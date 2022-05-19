@@ -16,8 +16,9 @@ int main(int argc, char *argv[])
 	
     if (argv[1] == NULL) 
     {
-       perror("Usage: client [host name]\n");
-       exit(EXIT_FAILURE);
+		printf("Error! Incorrect argument.\n\n");
+		printf("Usage: client [host name]\n");
+  		exit(EXIT_FAILURE);
     }
     char hostName[50];
     memset(&hostName, 0, sizeof(char));
