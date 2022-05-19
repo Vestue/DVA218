@@ -339,7 +339,7 @@ ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
     return NULL;
 }
 
-int DisconnectServerSide(int sock, Datagram disconnRequest, sockaddr_in* dest)
+int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* dest)
 {
 
 	struct sockaddr_in tempAddr;
@@ -353,16 +353,16 @@ int DisconnectServerSide(int sock, Datagram disconnRequest, sockaddr_in* dest)
 		
 		if(disconnRequest->flag == FIN)
 		{
-			*dest = tempAddr
+			*dest = tempAddr;
 			disconnRequest->flag = ACK;
 
-			if(sendMessage(sock, disconnRequest, dest) < 0)
+			if(sendMessage(sock, disconnRequest, *dest) < 0)
 			{
 				printf("Failed to disconnect from client");
 				exit(EXIT_FAILURE);
 			}
 			disconnRequest->flag = FIN;
-			if(sendMessage(sock, disconnRequest, dest))
+			if(sendMessage(sock, disconnRequest, *dest))
 			{
 				printf("Failed to disconnect from client");
 				exit(EXIT_FAILURE);
@@ -387,7 +387,7 @@ int DisconnectServerSide(int sock, Datagram disconnRequest, sockaddr_in* dest)
 
 }
 
-int DisconnectClientSide(int sock, Datagram disconnRequest, sockaddr_in dest)
+int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in dest)
 {
 
 

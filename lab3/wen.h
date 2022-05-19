@@ -142,10 +142,10 @@ void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 
 
-int DisconnectServerSide(int sock, Datagram disconnRequest, sockaddr_in* dest);
+int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* dest);
 
 
-int DisconnectClientSide(int sock, Datagram disconnRequest, sockaddr_in dest)
+int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in dest);
 
 
 /*
