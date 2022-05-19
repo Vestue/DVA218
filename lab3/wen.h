@@ -118,7 +118,7 @@ int createSocket(int port);
     with the server.
     Return sequence number sent in the server SYN+ACK.
 */
-int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr);
+int connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr);
 
 /*
 	Accepts the connectionrequests
@@ -133,7 +133,7 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
     Tries to connect to the server
     returns 1 if successfull
 */
-int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest);
+int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 /**
  *

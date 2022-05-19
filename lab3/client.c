@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         Return value does not need to be checked as program will
         close upon error.
     */
-    int currentSeq = setupServerConnection(sock, hostName, &destAddr);
+    int currentSeq = connectToServer(sock, hostName, &destAddr);
     printf("%d\n", currentSeq);
     return 0;
 }

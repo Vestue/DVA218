@@ -136,7 +136,7 @@ void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
     }
 }
 
-int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr)
+int connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr)
 {
     // Setup destination adress.
     struct hostent *hostInfo;
@@ -147,14 +147,14 @@ int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr
 
     // Setup first message to be sent.
     Datagram messageToSend = initDatagram();
-    messageToSend->flag = SYN;
+    setHeader(messageToSend, SYN, NULL);
 
     //! Test message, remove later
     char * msg = "Banana!\0";
     strncpy(messageToSend->message, msg, strlen(msg));
 
     // Attempt handshake with server
-    if (connectToServer(sock, messageToSend, *destAddr) != 1)
+    if (initHandshakeWithServer(sock, messageToSend, *destAddr) != 1)
     {
         printf("Failed connection handshake.");
         exit(EXIT_FAILURE);
@@ -162,11 +162,8 @@ int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr
     return messageToSend->sequence;
 }
 
-int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
+int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 {
-
-	//sätter flaggan till SYN och skickar, startar timer på 2 sek
-	connRequest->flag = SYN;
 	if(sendMessage(sock, connRequest, dest) < 0)
 	{
 		perror("Could not send message to server");
@@ -190,8 +187,7 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest)
 
 		if(messageToReceive->flag == SYN + ACK)
 		{
-            connRequest->sequence += 1;
-			connRequest->flag = ACK;
+            setHeader(connRequest, ACK, messageToReceive);
 			if(sendMessage(sock, connRequest, dest) == 0)
 			{
 				perror("Could not send message to server");
