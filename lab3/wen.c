@@ -354,6 +354,7 @@ int addToClientList(ClientList *list, ConnectionInfo info)
 
 int removeFromClientList(ClientList *list, struct sockaddr_in addr)
 {
+	if(list == NULL) return 0;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
@@ -386,6 +387,7 @@ int removeFromClientList(ClientList *list, struct sockaddr_in addr)
 
 int isInClientList(ClientList *list, struct sockaddr_in addr)
 {
+	if(list == NULL) return 0;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
@@ -398,6 +400,7 @@ int isInClientList(ClientList *list, struct sockaddr_in addr)
 
 ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
 {
+	if(list == NULL) return NULL;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
@@ -511,6 +514,7 @@ int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in d
 
 int getExpectedSeq(struct sockaddr_in addr, ClientList* list)
 {
+	if(list == NULL) return ERORRCODE;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
@@ -524,6 +528,7 @@ int getExpectedSeq(struct sockaddr_in addr, ClientList* list)
 
 int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list)
 {
+	if(list == NULL) return ERORRCODE;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
@@ -539,6 +544,7 @@ int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list)
 
 int setFIN(struct sockaddr_in addr, ClientList* list)
 {
+	if(list == NULL) return ERORRCODE;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
@@ -554,6 +560,7 @@ int setFIN(struct sockaddr_in addr, ClientList* list)
 
 int isFINSet(struct sockaddr_in addr, ClientList* list)
 {
+	if(list == NULL) return ERORRCODE;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
