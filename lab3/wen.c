@@ -434,3 +434,12 @@ int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in d
 	}
 
 }
+
+/*
+    * Functions to get values from ConnectionInfo
+*/
+
+int getExpectedSeq(struct sockaddr_in addr, ConnectionInfo* connections)
+{
+    
+}

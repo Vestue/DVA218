@@ -172,7 +172,7 @@ void stopTimer(Datagram timedConnection, int seqNum);
 */
 void restartTimer(Datagram timedConnection, int seqNum);
 
-//!  feeling cute might delete later
+//!  Feeling cute might delete later :3
 void timeoutTest();
 /*
 	Return the expected sequence number from a certain sockaddr.
