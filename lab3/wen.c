@@ -453,12 +453,68 @@ int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in d
     * Functions to get values from ConnectionInfo
 */
 
-int getExpectedSeq(struct sockaddr_in addr, ConnectionInfo* connections)
+int getExpectedSeq(struct sockaddr_in addr, ClientList* list)
 {
-
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+            return list->clients[i].baseSeqNum;
+    }
+    // Return ERRORCODE as it can't find client.
+    return ERORRCODE;
 }
 
-void setHeader(Datagram datagramToSend, int flag, int lastReceivedSeq, int lastReceivedACK_Num)
+int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list)
+{
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+        {
+            list->clients[i].baseSeqNum = seqToSet;
+            return 1;
+        }
+    }
+    return ERORRCODE;
+}
+
+int setFIN(struct sockaddr_in addr, ClientList* list)
+{
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+        {
+            list->clients[i].FIN_SET = 1;
+            return 1;
+        }
+    }
+    return ERORRCODE;
+}
+
+int isFINSet(struct sockaddr_in addr, ClientList* list)
+{
+    struct sockaddr_in tempAddr;
+    for (int i = 0; i < list->size; i++)
+    {
+        tempAddr = list->clients[i].addr;
+        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
+        {
+            return list->clients[i].FIN_SET;
+        }
+    }
+    return ERORRCODE;
+}
+
+/*
+    * Functions to set neccessary information in header depending on flag.
+*/
+
+void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram)
 {
     datagramToSend->windowSize = WINDOWSIZE;
 	datagramToSend->message[0] = '\0';
@@ -472,28 +528,28 @@ void setHeader(Datagram datagramToSend, int flag, int lastReceivedSeq, int lastR
             break;
         case ACK:
             datagramToSend->flag = ACK;
-            datagramToSend->ackNum = lastReceivedSeq + 1;
+            datagramToSend->ackNum = receivedDatagram->sequence + 1;
             break;
         case (SYN + ACK):
             datagramToSend->flag = SYN + ACK;
-            datagramToSend->ackNum = lastReceivedSeq + 1;
+            datagramToSend->ackNum = receivedDatagram->sequence + 1;
             datagramToSend->sequence = 42;
             break;
         case FIN:
             datagramToSend->flag = FIN;
-            datagramToSend->sequence = lastReceivedACK_Num;
-            datagramToSend->ackNum = lastReceivedSeq + 1;
+            datagramToSend->sequence = receivedDatagram->ackNum;
+            datagramToSend->ackNum = receivedDatagram->sequence + 1;
             break;
         default:
             datagramToSend->flag = UNSET;
-            datagramToSend->sequence = lastReceivedACK_Num;
-            datagramToSend->ackNum = lastReceivedSeq + 1;
+            datagramToSend->sequence = receivedDatagram->ackNum;
+            datagramToSend->ackNum = receivedDatagram->sequence + 1;
             break;
     }
 }
 
-void packMessage(Datagram datagramToSend, char* messageToSend, int lastReceivedSeq, int lastReceivedACK_Num)
+void packMessage(Datagram datagramToSend, char* messageToSend, Datagram receivedDatagram)
 {
-    setHeader(datagramToSend, UNSET, lastReceivedSeq, lastReceivedACK_Num);
+    setHeader(datagramToSend, UNSET, receivedDatagram);
     strncpy(datagramToSend->message, messageToSend, strlen(messageToSend));
 }

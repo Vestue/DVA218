@@ -52,7 +52,7 @@ typedef struct
 	uint32_t sequence;
     uint32_t ackNum;
 	uint8_t flag;
-	uint_16_t checksum;
+	uint16_t checksum;
     char message[MAXLENGTH];
 }Header;
 
@@ -177,36 +177,47 @@ void restartTimer(Datagram timedConnection, int seqNum);
 
 //!  Feeling cute might delete later :3
 void timeoutTest();
+
+
 /*
 	Return the expected sequence number from a certain sockaddr.
+    Return ERRORCODE if client can't be found.
 
-	Pointer is used to be able to get from either only one connection or
-	multiple connections (if its sent as the typedeffed ClientList) 
+    ? These are only needed for ClientList as the client has instant
+    ? access to information about server.
 */
-int getExpectedSeq(struct sockaddr_in addr, ConnectionInfo* connections);
+int getExpectedSeq(struct sockaddr_in addr, ClientList* list);
 
 /*
 	Set base sequense number of chosen connection to 
 	sequence number sent as argument.
+
+    Return 1 if successfully changed.
+    Return ERRORCODE if client can't be found.
 */
-void setBaseSeq(int seqToSet, struct sockaddr_in addr, ConnectionInfo *connections);
+int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list);
 
 /*
 	Set that FIN has been received from connection.
 	FIN_SET = 1
+
+    Return 1 if sucessfully changed.
+    Return ERRORCODE if client can't be found.
 */
-void setFIN(struct sockaddr_in addr, ConnectionInfo *connections);
+int setFIN(struct sockaddr_in addr, ClientList* list);
 
 /*
 	Read FIN_SET in chosen connection.
+
 	Return 1 if the FIN state is set,
 	0 if it isn't.
+    Return ERRORCODE if client can't be found.
 */
-int FINisSet(struct sockaddr_in addr, ConnectionInfo *connections);
+int isFINSet(struct sockaddr_in addr, ClientList* list);
 
 
 /*
-    Todo: Make more generic, example: setHeader(Datagram messageToSend, uint8_t flag)
+    ! Remove setDefaultHeader once current functions start using setHeader instead.
 
 	Fill datagram with default information about
 	window size, sequence number.
@@ -217,15 +228,16 @@ void setDefaultHeader(Datagram messageToSend);
 /*
     * Pack flags into Datagram.
     * Include seqNum and ACKNum that was last received from the intended recepient of the package.
-    * Use NULL as input if there are no known numbers.
+    * 
+    * Use NULL as input for receivedDatagram if no datagram has been received yet.
     * (NULL should only be used for SYN)
 */
-void setHeader(Datagram datagramToSend, int flag, int lastReceivedSeq, int lastReceivedACK_Num);
+void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram);
 
 /*
     Pack message into datagram and set correct information for a data packet.
 */
-void packMessage(Datagram datagramToSend, char* messageToSend, int lastReceivedSeq, int lastReceivedACK_Num);
+void packMessage(Datagram datagramToSend, char* messageToSend, Datagram receivedDatagram);
 
 void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients);
 
