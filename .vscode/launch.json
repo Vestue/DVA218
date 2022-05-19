@@ -10,6 +10,7 @@
             "request": "launch",
             "program": "${fileDirname}/${fileBasenameNoExtension}",
             "args": [],
+            // "args": ["localhost"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
