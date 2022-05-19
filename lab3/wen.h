@@ -19,7 +19,7 @@
 // Receiver sets window size and maximum sequence number
 #define WINDOWSIZE 64
 #define MAXSEQNUM 128
-
+#define ERORRCODE -1
 #define SWMETHOD 0
 /*
 	Set if Go-Back-N or Selective Repeat should
@@ -50,7 +50,9 @@ typedef struct
 {
 	uint16_t windowSize;
 	uint32_t sequence;
+    uint32_t ackNum;
 	uint8_t flag;
+	uint_16_t checksum;
     char message[MAXLENGTH];
 }Header;
 
@@ -120,7 +122,8 @@ int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr
 
 /*
 	Accepts the connectionrequests
-	returns 1 if succesfull
+	Return socket to connected client
+	Return -1 if failed
 */
 int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
 
@@ -212,45 +215,17 @@ int FINisSet(struct sockaddr_in addr, ConnectionInfo *connections);
 void setDefaultHeader(Datagram messageToSend);
 
 /*
-	Make the message ready to be sent as an ACK using the sequence number.
-	messageToSend should first get default values and then get the seq++
-	and ACK flag.
-
-*    Function returns the prepared datagram.
-?    The use of this is to be able to do things like:
-?        sendMessage(sock, packACK(messageToSend, nextSeqNum), destinationAddr);
-?   In one single step instead of needing to setDefaultMessage and then change flags
-?   in the server or client itself.
-
-*   Datagram types as paramters are used to increase abstraction for client and server.
+    * Pack flags into Datagram.
+    * Include seqNum and ACKNum that was last received from the intended recepient of the package.
+    * Use NULL as input if there are no known numbers.
+    * (NULL should only be used for SYN)
 */
-Datagram packACK(Datagram messageToSend, int nextSeqNum);
+void setHeader(Datagram datagramToSend, int flag, int lastReceivedSeq, int lastReceivedACK_Num);
 
 /*
-	Make the message get default values and then set the SYN flag.
-	Returns altered datagram.
+    Pack message into datagram and set correct information for a data packet.
 */
-Datagram packSYN(Datagram messageToSend);
-
-/*
-	Make the message get default values and then set the SYN+ACK flag.
-	Then set a starting point for sequence number to be used.
-	Returns altered datagram.
-*/
-Datagram packSYNACK(Datagram messageToSend, int startingSeq);
-
-/*
-	Make the message get default values and then set the FIN flag.
-	Returns altered datagram.
-*/
-Datagram packFIN(Datagram messageToSend);
-
-/*
-	Make message get default values and then add a string and
-	the next sequence number to it.
-	Returns altered datagram.
-*/
-Datagram packData(Datagram messageToSend, char *dataToPack, int nextSeqNum);
+void packMessage(Datagram datagramToSend, char* messageToSend, int lastReceivedSeq, int lastReceivedACK_Num);
 
 void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients);
 

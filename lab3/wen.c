@@ -28,11 +28,25 @@
 	as they otherwise cause issues with the enums using in the
 	packet header.
 */
+#define UNSET 0
 #define SYN 1
 #define ACK 2
-#define FIN 3
+#define FIN 4
 
 // TODO: Fix checksum function
+
+// int calcChecksum(const Datagram toCalc)
+// {
+//     uint8_t P = 0b100000111;
+//     int n = 9, w = 8;
+//     uint len = sizeof(*toCalc);
+//     for (int i = 0; i < len; i++)
+//     {
+//         if ()
+//     }
+    
+//     return 0;
+// }
 
 int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAdress)
 {
@@ -441,5 +455,45 @@ int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in d
 
 int getExpectedSeq(struct sockaddr_in addr, ConnectionInfo* connections)
 {
+
+}
+
+void setHeader(Datagram datagramToSend, int flag, int lastReceivedSeq, int lastReceivedACK_Num)
+{
+    datagramToSend->windowSize = WINDOWSIZE;
+	datagramToSend->message[0] = '\0';
     
+    switch (flag)
+    {
+        case SYN:
+            datagramToSend->flag = SYN;
+            datagramToSend->sequence = MAXSEQNUM - 1;
+            datagramToSend->ackNum = 0;
+            break;
+        case ACK:
+            datagramToSend->flag = ACK;
+            datagramToSend->ackNum = lastReceivedSeq + 1;
+            break;
+        case (SYN + ACK):
+            datagramToSend->flag = SYN + ACK;
+            datagramToSend->ackNum = lastReceivedSeq + 1;
+            datagramToSend->sequence = 42;
+            break;
+        case FIN:
+            datagramToSend->flag = FIN;
+            datagramToSend->sequence = lastReceivedACK_Num;
+            datagramToSend->ackNum = lastReceivedSeq + 1;
+            break;
+        default:
+            datagramToSend->flag = UNSET;
+            datagramToSend->sequence = lastReceivedACK_Num;
+            datagramToSend->ackNum = lastReceivedSeq + 1;
+            break;
+    }
+}
+
+void packMessage(Datagram datagramToSend, char* messageToSend, int lastReceivedSeq, int lastReceivedACK_Num)
+{
+    setHeader(datagramToSend, UNSET, lastReceivedSeq, lastReceivedACK_Num);
+    strncpy(datagramToSend->message, messageToSend, strlen(messageToSend));
 }
