@@ -10,15 +10,6 @@
 /*Declared functions here*/
 
 
-
-/*
-	Accepts the connectionrequests
-	returns 1 if succesfull
-    
-    ! Remove when start to use main loop in server
-*/
-int TEMPacceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
-
 /*
     Disconnect client and remove from the list.
 */

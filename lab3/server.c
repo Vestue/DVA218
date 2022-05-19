@@ -16,8 +16,6 @@ int main()
 	Datagram receivedMessage = initDatagram();
     struct sockaddr_in receivedAdress;
 
-	//TEMPacceptConnection(sock, receivedMessage, &receivedAdress);
-
     ClientList clients = initClientList();
 	while (1) 
 	{
