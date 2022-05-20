@@ -444,7 +444,6 @@ int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* 
 
     if(receivedDatagram->flag == FIN)
     {
-        printf("Received FIN\n");
         *dest = tempAddr;
         disconnRequest->flag = ACK;
         if(sendMessage(sock, disconnRequest, *dest) < 0)
@@ -452,7 +451,7 @@ int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* 
             printf("Failed to disconnect from client\n");
             exit(EXIT_FAILURE);
         }
-        printf("Send ACK\n");
+
         disconnRequest->flag = FIN;
     }
     
@@ -468,7 +467,7 @@ int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* 
 
         if(receivedDatagram->flag == ACK)
         {
-            printf("Disconnected\n");
+            printf("\nDisconnected\n");
 
             return 1;
 
@@ -496,7 +495,7 @@ int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in d
 		printf("Failed to disconnect from server");
 		exit(EXIT_FAILURE);
 	}
-    printf("FIN sent\n");
+ 
 
 	while(1)
 	{
@@ -505,7 +504,7 @@ int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in d
 
 		if(messageReceived->flag == FIN && counter == 0)
 		{
-            printf("Received first FIN\n");
+           
 			counter++;
 			disconnRequest->flag = ACK;
 			sendMessage(sock, disconnRequest, destAddr);
@@ -516,8 +515,7 @@ int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in d
 		if(messageReceived->flag == FIN && counter > 0) //if counter is more than 0 that means it is the second FIN received
 		{
 			disconnRequest->flag = ACK;
-            printf("Received second FIN\n");
-            printf("Disconnected\n");
+            printf("\nDisconnected\n");
 			sendMessage(sock, disconnRequest, destAddr);
 			alarm(2); //resetar timern, går timern ut är clienten disconnectad
             
@@ -525,12 +523,11 @@ int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in d
 		}
 		
 		if(messageReceived->flag == ACK)
-        {
             counter++;
-            printf("Received ACK %d\n", counter);
+           
            
             
-        }
+        
 			
 		
 		

@@ -71,6 +71,7 @@ int TEMPacceptConnection(int sock, Datagram connRequest, struct sockaddr_in* des
             && tempAddr.sin_addr.s_addr == dest->sin_addr.s_addr
             && tempAddr.sin_port == dest->sin_port)
         {
+			alarm(0);
             printf("Connection established");
             return 1;
         }
