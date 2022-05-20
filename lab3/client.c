@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
 {    
     int sock = createSocket(CLIENTPORT);
     struct sockaddr_in destAddr;
+    Datagram recvMessage;
 	
     if (argv[1] == NULL) 
     {
@@ -31,5 +32,6 @@ int main(int argc, char *argv[])
     */
     int currentSeq = setupServerConnection(sock, hostName, &destAddr);
     printf("%d\n", currentSeq);
+    setupClientDisconnect(sock, hostName, &destAddr);
     return 0;
 }

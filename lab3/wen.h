@@ -139,7 +139,7 @@ int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest);
  */
 void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
-
+int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr);
 
 int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* dest);
 

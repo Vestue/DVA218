@@ -17,6 +17,7 @@ int main()
     struct sockaddr_in receivedAdress;
 
 	TEMPacceptConnection(sock, receivedMessage, &receivedAdress);
+	DisconnectServerSide(sock, receivedMessage, &receivedAdress);
 
     ClientList clients = initClientList();
     printf("Just before loop\n");
@@ -57,7 +58,6 @@ int TEMPacceptConnection(int sock, Datagram connRequest, struct sockaddr_in* des
 		if (connRequest->flag == SYN)
 		{
             *dest = tempAddr;
-			printf("Received SYN\n");
 			connRequest->flag = SYN + ACK;
 			signal(SIGALRM, timeoutTest);
 			alarm(2);
