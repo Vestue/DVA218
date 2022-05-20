@@ -42,7 +42,8 @@ int main(int argc, char *argv[])
 	char message[MESSAGELENGTH] = { '\0' };
 	int currentSeq = serverInfo.baseSeqNum;
 	int retval = 0;
-	
+	printf("\n>");
+	fflush(stdout);
 	while(1)
 	{
 		//? Move this into the part where window gets moved
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
 			perror("\nFailed to monitor set");
 			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
 			FD_ZERO(&readFdSet);
+			printf("\n>");
 			//exit(EXIT_FAILURE);
 		}
 
@@ -71,11 +73,13 @@ int main(int argc, char *argv[])
 				fgets(message, MESSAGELENGTH, stdin);
 				message[MESSAGELENGTH - 1] = '\0';
 				retval = writeMessage(serverInfo, message, &currentSeq);
-				if (retval == 1) printf("Message sent!\n");
+				if (retval == 1) printf("\nMessage sent!\n");
 				else if (retval == ERORRCODE) printf("Could not send message!\n");
 				else printf("Window is full!\n");
+				printf("\n>");
 			}
 		}
+		fflush(stdout);
 	}
 
     //setupClientDisconnect(sock, hostName, &destAddr);
@@ -110,7 +114,7 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
 
 	//* Start TIMER
 	printf("Implement later\n");
-	
+
 	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
 	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
 	return 1;

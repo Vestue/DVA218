@@ -44,7 +44,7 @@ int main()
 			else if (FD_ISSET(currSock, &readFdSet))
 			{
 				printf("\nI'm working on it!\n");
-				printf("Reading from socket %d\n", currSock);
+				printf(">Reading from socket %d\n", currSock);
 				//interpretPack_receiver(serverSock, receivedMessage, receivedAdress, &clients);
 
 				close(currSock);
