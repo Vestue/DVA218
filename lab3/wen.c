@@ -162,7 +162,7 @@ void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
     }
 }
 
-int connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr)
+ConnectionInfo connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr)
 {
     // Setup destination adress.
     struct hostent *hostInfo;
@@ -179,18 +179,22 @@ int connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr)
     char * msg = "Banana!\0";
     strncpy(messageToSend->message, msg, strlen(msg));
 
+	//? tempList is used as ConnectionInfo can't be initiated by itself (?)
+	ClientList tempList = initClientList();
     // Attempt handshake with server
-    if (initHandshakeWithServer(sock, messageToSend, *destAddr) != 1)
+    if (initHandshakeWithServer(sock, messageToSend, *destAddr, &tempList) != 1)
     {
         printf("Failed connection handshake.\n");
+		free(messageToSend);
         exit(EXIT_FAILURE);
     }
-    return messageToSend->sequence;
+	free(messageToSend);
+    return tempList.clients[0];
 }
 
-int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in dest)
+int initHandshakeWithServer(int sock, Datagram toSend, struct sockaddr_in dest, ClientList* list)
 {
-	if(sendMessage(sock, connRequest, dest) < 0)
+	if(sendMessage(sock, toSend, dest) < 0)
 	{
 		perror("Could not send message to server.\n");
 		exit(EXIT_FAILURE);
@@ -213,18 +217,28 @@ int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in d
 
 		if(messageToReceive->flag == SYN + ACK)
 		{
-            setHeader(connRequest, ACK, messageToReceive);
-			if(sendMessage(sock, connRequest, dest) == 0)
+            setHeader(toSend, ACK, messageToReceive);
+			if(sendMessage(sock, toSend, dest) == 0)
 			{
 				perror("Could not send message to server\n");
-				exit(EXIT_FAILURE);
+				free(messageToReceive);
+				return ERORRCODE;
 			}
-			printf("Connection established\n");
-
-			return 1;
+			if (addToClientList(list, initConnectionInfo(messageToReceive, recvAddr, sock)))
+			{
+				printf("Connection established\n");
+				free(messageToReceive);
+				return 1;
+			}
+			else
+			{
+				free(messageToReceive);
+				return ERORRCODE;
+			}
 		}
 	}
-	return 0;
+	free(messageToReceive);
+	return ERORRCODE;
 }
 
 int acceptClientConnection(int serverSock, ClientList* list)

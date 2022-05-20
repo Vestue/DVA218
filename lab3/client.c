@@ -30,8 +30,8 @@ int main(int argc, char *argv[])
         Return value does not need to be checked as program will
         close upon error.
     */
-    int currentSeq = connectToServer(sock, hostName, &destAddr);
-    printf("%d\n", currentSeq);
+    ConnectionInfo serverInfo = connectToServer(sock, hostName, &destAddr);
+    printf("%d\n", serverInfo.baseSeqNum);
     setupClientDisconnect(sock, hostName, &destAddr);
     return 0;
 }

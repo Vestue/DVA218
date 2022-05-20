@@ -118,9 +118,9 @@ int createSocket(int port);
 /*
     Setup information required for connection, go through the connection handshake
     with the server.
-    Return sequence number sent in the server SYN+ACK.
+    Return the information to be used in connection with server.
 */
-int connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr);
+ConnectionInfo connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr);
 
 /*
 	Accepts the connectionrequests
@@ -132,10 +132,11 @@ int acceptClientConnection(int serverSock, ClientList* list);
 
 //  !Everything below should be abstracted out
 /*
-    Tries to connect to the server
-    returns 1 if successfull
+    Tries to connect to the server.
+    Returns 1 if successful, ERRORCODE if not.
+	Put server information into the ConnectionInfo in the ClientList upon connection.
 */
-int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in dest);
+int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in dest, ClientList* list);
 
 /**
  *
