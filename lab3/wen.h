@@ -14,12 +14,13 @@
 #define MAXLENGTH 512
 #define SERVERPORT 5555
 // Set clientport to 0 so OS assigns any avaible port
-#define CLIENTPORT 5556
+#define CLIENTPORT 0
 
 // Receiver sets window size and maximum sequence number
 #define WINDOWSIZE 64
 #define MAXSEQNUM 128
-
+#define STARTSEQ 42
+#define ERORRCODE -1
 #define SWMETHOD 0
 /*
 	Set if Go-Back-N or Selective Repeat should
@@ -50,7 +51,9 @@ typedef struct
 {
 	uint16_t windowSize;
 	uint32_t sequence;
+    uint32_t ackNum;
 	uint8_t flag;
+	uint16_t checksum;
     char message[MAXLENGTH];
 }Header;
 
@@ -63,6 +66,7 @@ typedef struct
 typedef struct
 {
 	struct sockaddr_in addr;
+	int sock;
 	int baseSeqNum;
 	int FIN_SET;
 }ConnectionInfo;
@@ -116,13 +120,14 @@ int createSocket(int port);
     with the server.
     Return sequence number sent in the server SYN+ACK.
 */
-int setupServerConnection(int sock, char* hostName, struct sockaddr_in* destAddr);
+int connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr);
 
 /*
 	Accepts the connectionrequests
-	returns 1 if succesfull
+	Return socket to connected client
+	Return -1 if failed
 */
-int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
+int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* dest, ClientList* list);
 
 
 //  !Everything below should be abstracted out
@@ -130,7 +135,7 @@ int acceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest);
     Tries to connect to the server
     returns 1 if successfull
 */
-int connectToServer(int sock, Datagram connRequest, struct sockaddr_in dest);
+int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 /**
  *
@@ -174,36 +179,47 @@ void restartTimer(Datagram timedConnection, int seqNum);
 
 //!  Feeling cute might delete later :3
 void timeoutTest();
+
+
 /*
 	Return the expected sequence number from a certain sockaddr.
+    Return ERRORCODE if client can't be found.
 
-	Pointer is used to be able to get from either only one connection or
-	multiple connections (if its sent as the typedeffed ClientList) 
+    ? These are only needed for ClientList as the client has instant
+    ? access to information about server.
 */
-int getExpectedSeq(struct sockaddr_in addr, ConnectionInfo* connections);
+int getExpectedSeq(struct sockaddr_in addr, ClientList* list);
 
 /*
 	Set base sequense number of chosen connection to 
 	sequence number sent as argument.
+
+    Return 1 if successfully changed.
+    Return ERRORCODE if client can't be found.
 */
-void setBaseSeq(int seqToSet, struct sockaddr_in addr, ConnectionInfo *connections);
+int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list);
 
 /*
 	Set that FIN has been received from connection.
 	FIN_SET = 1
+
+    Return 1 if sucessfully changed.
+    Return ERRORCODE if client can't be found.
 */
-void setFIN(struct sockaddr_in addr, ConnectionInfo *connections);
+int setFIN(struct sockaddr_in addr, ClientList* list);
 
 /*
 	Read FIN_SET in chosen connection.
+
 	Return 1 if the FIN state is set,
 	0 if it isn't.
+    Return ERRORCODE if client can't be found.
 */
-int FINisSet(struct sockaddr_in addr, ConnectionInfo *connections);
+int isFINSet(struct sockaddr_in addr, ClientList* list);
 
 
 /*
-    Todo: Make more generic, example: setHeader(Datagram messageToSend, uint8_t flag)
+    ! Remove setDefaultHeader once current functions start using setHeader instead.
 
 	Fill datagram with default information about
 	window size, sequence number.
@@ -212,45 +228,18 @@ int FINisSet(struct sockaddr_in addr, ConnectionInfo *connections);
 void setDefaultHeader(Datagram messageToSend);
 
 /*
-	Make the message ready to be sent as an ACK using the sequence number.
-	messageToSend should first get default values and then get the seq++
-	and ACK flag.
-
-*    Function returns the prepared datagram.
-?    The use of this is to be able to do things like:
-?        sendMessage(sock, packACK(messageToSend, nextSeqNum), destinationAddr);
-?   In one single step instead of needing to setDefaultMessage and then change flags
-?   in the server or client itself.
-
-*   Datagram types as paramters are used to increase abstraction for client and server.
+    * Pack flags into Datagram.
+    * Include seqNum and ACKNum that was last received from the intended recepient of the package.
+    * 
+    * Use NULL as input for receivedDatagram if no datagram has been received yet.
+    * (NULL should only be used for SYN)
 */
-Datagram packACK(Datagram messageToSend, int nextSeqNum);
+void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram);
 
 /*
-	Make the message get default values and then set the SYN flag.
-	Returns altered datagram.
+    Pack message into datagram and set correct information for a data packet.
 */
-Datagram packSYN(Datagram messageToSend);
-
-/*
-	Make the message get default values and then set the SYN+ACK flag.
-	Then set a starting point for sequence number to be used.
-	Returns altered datagram.
-*/
-Datagram packSYNACK(Datagram messageToSend, int startingSeq);
-
-/*
-	Make the message get default values and then set the FIN flag.
-	Returns altered datagram.
-*/
-Datagram packFIN(Datagram messageToSend);
-
-/*
-	Make message get default values and then add a string and
-	the next sequence number to it.
-	Returns altered datagram.
-*/
-Datagram packData(Datagram messageToSend, char *dataToPack, int nextSeqNum);
+void packMessage(Datagram datagramToSend, char* messageToSend, Datagram receivedDatagram);
 
 void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients);
 
@@ -302,6 +291,12 @@ void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in des
 	Return pointer to client list if successful, print error if not.
 */
 ClientList initClientList();
+
+/*
+	Create a valid ConnectionInfo using the given information in datagram.
+	This is only to be used when receiver or sender reaches "connection established" state.
+*/
+ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in recvAddr, int sock);
 
 /*
     Begin by checking if client is in list.

@@ -17,8 +17,9 @@ int main(int argc, char *argv[])
 	
     if (argv[1] == NULL) 
     {
-       perror("Usage: client [host name]\n");
-       exit(EXIT_FAILURE);
+		printf("Error! Incorrect argument.\n\n");
+		printf("Usage: client [host name]\n");
+  		exit(EXIT_FAILURE);
     }
     char hostName[50];
     memset(&hostName, 0, sizeof(char));
@@ -30,7 +31,7 @@ int main(int argc, char *argv[])
         Return value does not need to be checked as program will
         close upon error.
     */
-    int currentSeq = setupServerConnection(sock, hostName, &destAddr);
+    int currentSeq = connectToServer(sock, hostName, &destAddr);
     printf("%d\n", currentSeq);
     setupClientDisconnect(sock, hostName, &destAddr);
     return 0;
