@@ -98,10 +98,7 @@ int writeMessageGBN(ConnectionInfo server, char* message, int* currentSeq)
 
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
-	if (sendMessage(server.sock, toSend, server.addr) < 0)
-	{
-		return ERORRCODE;
-	}
+	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
 	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
 	return 1;
 }
@@ -110,6 +107,11 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
 {
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
+
+	//* Start TIMER
 	printf("Implement later\n");
-	return ERORRCODE;
+	
+	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
+	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
+	return 1;
 }
