@@ -11,38 +11,45 @@
 
 int main() 
 {
-	int sock = createSocket(SERVERPORT);
-	int sequenceNumber = 0;
-	Datagram receivedMessage = initDatagram();
-    struct sockaddr_in receivedAdress;
-
+	int serverSock = createSocket(SERVERPORT);
+	int clientSock;
     ClientList clients = initClientList();
+
+	fd_set activeFdSet, readFdSet;
+	FD_ZERO(&activeFdSet);
+	FD_ZERO(&readFdSet);
+	FD_SET(serverSock, &activeFdSet);
+
 	while (1) 
 	{
-		if (recvMessage(sock, receivedMessage, &receivedAdress)) 
+		// Copy active set to read-set for select on read-set
+		readFdSet = activeFdSet;
+		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
 		{
-            printf("\nServer: Connect from client %s, port %d\n", inet_ntoa(receivedAdress.sin_addr), ntohs(receivedAdress.sin_port));
-        }
+			perror("\nFailed to monitor set");
+			//exit(EXIT_FAILURE);
+		}
 
-        if (isInClientList(&clients, receivedAdress) == 0)
-        {
-            if (acceptClientConnection(sock, receivedMessage, &receivedAdress, &clients) == 0)
-            {
-                printf("\nRefused connection from client %s, port %d\n", inet_ntoa(receivedAdress.sin_addr), ntohs(receivedAdress.sin_port));
-            }
-			else
+		for (int currSock = 0; currSock < FD_SETSIZE; currSock++)
+		{
+			// * New connection incoming
+			if (currSock == serverSock && FD_ISSET(currSock, &readFdSet))
 			{
-				//! Move this when disconnect can be called via message
-				DisconnectServerSide(sock, receivedMessage, &receivedAdress);
-				closeConnection(&clients, receivedAdress);
-			} 
-        } 
-        else if (receivedMessage->flag == ACK && findClient(&clients, receivedAdress)->FIN_SET == 1)
-            closeConnection(&clients, receivedAdress);
-        else interpretPack_receiver(sock, receivedMessage, receivedAdress, &clients);
+				clientSock = acceptClientConnection(serverSock, &clients);
+				if (clientSock != ERORRCODE) FD_SET(clientSock, &activeFdSet);
+			}
+			// * Receiving from connected client
+			else if (FD_ISSET(currSock, &readFdSet))
+			{
+				printf("\nI'm working on it!\n");
+				//interpretPack_receiver(serverSock, receivedMessage, receivedAdress, &clients);
+			}
+		}
 
+		/* Move this
 		if (sequenceNumber >= MAXSEQNUM)
 			sequenceNumber = 0;
+		*/
 	}
 	return 0;
 }
@@ -50,5 +57,6 @@ int main()
 void closeConnection(ClientList *list, struct sockaddr_in addr)
 {
     //Disconnect client
+	//DisconnectServerSide(serverSock, receivedMessage, &receivedAdress);
     removeFromClientList(list, addr);
 }

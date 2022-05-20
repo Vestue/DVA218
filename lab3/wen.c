@@ -227,30 +227,46 @@ int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in d
 	return 0;
 }
 
-int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* dest, ClientList* list)
+int acceptClientConnection(int serverSock, ClientList* list)
 {
-    struct sockaddr_in tempAddr;
+	Datagram receivedDatagram = initDatagram();
+	struct sockaddr_in recvAddr;
+	if (recvMessage(serverSock, receivedDatagram, &recvAddr) != 1)
+	{
+		free(receivedDatagram);
+		printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+		return ERORRCODE;
+	} 
+	if (isInClientList(list, recvAddr))
+	{
+		free(receivedDatagram);
+		printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+		return ERORRCODE;
+	}
+
+    struct sockaddr_in ACKaddr;
 	Datagram toSend = initDatagram();
 
 	/*	Socket is created here to avoid creating several sockets
 		if the SYN+ACK gets lost.
 	*/
-	int clientSock = createClientSpecificSocket(*dest);
+	int clientSock = createClientSpecificSocket(recvAddr);
 	while(1)
 	{		
-		if (connRequest->flag == SYN)
+		if (receivedDatagram->flag == SYN)
 		{
-            *dest = tempAddr;
-			connRequest->flag = SYN + ACK;
 			printf("Received SYN\n");
-			setHeader(toSend, SYN + ACK, connRequest);
+			setHeader(toSend, SYN + ACK, receivedDatagram);
 			signal(SIGALRM, timeoutTest);
 			alarm(2);
 
 			// Send using the clientSock so client gets address of
 			// designated port.
-			if(sendMessage(clientSock, toSend, *dest) == 0)
+			if(sendMessage(clientSock, toSend, recvAddr) == 0)
 			{
+				free(toSend);
+				free(receivedDatagram);
+				close(clientSock);
 			    perror("Could not send message to client\n");
 			    exit(EXIT_FAILURE);
 			}
@@ -258,8 +274,10 @@ int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* d
         else	// First message from a new client must be SYN
 		{
 			free(toSend);
+			free(receivedDatagram);
 			close(clientSock);
-			return 0; 
+			printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+			return ERORRCODE;
 		} 
 
         /*
@@ -270,25 +288,28 @@ int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* d
             SYN could arrive here if the SYN+ACK got lost,
             if so then the server will resend SYN+ACK and then wait here again.
         */
-        recvMessage(sock, connRequest, &tempAddr);
+        recvMessage(serverSock, receivedDatagram, &ACKaddr);
 		
         //* Make sure that ACK is coming from expected adress
-    	if(connRequest->flag == ACK 
-            && tempAddr.sin_addr.s_addr == dest->sin_addr.s_addr
-            && tempAddr.sin_port == dest->sin_port)
+		//! Timeout need to trigger this state aswell
+    	if(receivedDatagram->flag == ACK 
+            && ACKaddr.sin_addr.s_addr == recvAddr.sin_addr.s_addr
+            && ACKaddr.sin_port == recvAddr.sin_port)
         {
-            printf("\nConnection established\n");
-            return 1;
-			if (addToClientList(list, initConnectionInfo(connRequest, *dest, clientSock)))
+			if (addToClientList(list, initConnectionInfo(receivedDatagram, recvAddr, clientSock)))
 			{
-				printf("Connection established\n");
+				printf("\nConnection established with client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+				free(receivedDatagram);
 				free(toSend);
-            	return 1;
+            	return clientSock;
 			}
 			free(toSend);
+			free(receivedDatagram);
 			close(clientSock);
-            return ERORRCODE;
+            printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+			return ERORRCODE;
         }
+		recvAddr = ACKaddr;
 	}
 }
 

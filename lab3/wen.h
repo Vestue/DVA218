@@ -127,7 +127,7 @@ int connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr);
 	Return socket to connected client
 	Return -1 if failed
 */
-int acceptClientConnection(int sock, Datagram connRequest, struct sockaddr_in* dest, ClientList* list);
+int acceptClientConnection(int serverSock, ClientList* list);
 
 
 //  !Everything below should be abstracted out
