@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
 {    
     int sock = createSocket(CLIENTPORT);
     struct sockaddr_in destAddr;
-    Datagram recvMessage;
 	
     if (argv[1] == NULL) 
     {

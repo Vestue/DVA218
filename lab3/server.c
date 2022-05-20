@@ -16,9 +16,6 @@ int main()
 	Datagram receivedMessage = initDatagram();
     struct sockaddr_in receivedAdress;
 
-	TEMPacceptConnection(sock, receivedMessage, &receivedAdress);
-	DisconnectServerSide(sock, receivedMessage, &receivedAdress);
-
     ClientList clients = initClientList();
 	while (1) 
 	{
@@ -33,6 +30,12 @@ int main()
             {
                 printf("\nRefused connection from client %s, port %d\n", inet_ntoa(receivedAdress.sin_addr), ntohs(receivedAdress.sin_port));
             }
+			else
+			{
+				//! Move this when disconnect can be called via message
+				DisconnectServerSide(sock, receivedMessage, &receivedAdress);
+				closeConnection(&clients, receivedAdress);
+			} 
         } 
         else if (receivedMessage->flag == ACK && findClient(&clients, receivedAdress)->FIN_SET == 1)
             closeConnection(&clients, receivedAdress);
@@ -42,40 +45,6 @@ int main()
 			sequenceNumber = 0;
 	}
 	return 0;
-}
-
-// ! Remove when start to use main loop in server
-int TEMPacceptConnection(int sock, Datagram connRequest, struct sockaddr_in* dest)
-{
-	printf("Before connection loop");
-    struct sockaddr_in tempAddr;
-	while(1)
-	{
-		recvMessage(sock, connRequest, &tempAddr);
-		
-		if (connRequest->flag == SYN)
-		{
-            *dest = tempAddr;
-			connRequest->flag = SYN + ACK;
-			signal(SIGALRM, timeoutTest);
-			alarm(2);
-			if(sendMessage(sock, connRequest, *dest) == 0)
-			{
-			    perror("Could not send message to client");
-			    exit(EXIT_FAILURE);
-			}
-		}
-		
-        //* Make sure that ACK is coming from expected adress
-    	if(connRequest->flag == ACK 
-            && tempAddr.sin_addr.s_addr == dest->sin_addr.s_addr
-            && tempAddr.sin_port == dest->sin_port)
-        {
-			alarm(0);
-            printf("Connection established");
-            return 1;
-        }
-	}
 }
 
 void closeConnection(ClientList *list, struct sockaddr_in addr)
