@@ -27,6 +27,8 @@ int main()
 		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
 		{
 			perror("\nFailed to monitor set");
+			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
+			FD_ZERO(&readFdSet);
 			//exit(EXIT_FAILURE);
 		}
 
@@ -42,6 +44,7 @@ int main()
 			else if (FD_ISSET(currSock, &readFdSet))
 			{
 				printf("\nI'm working on it!\n");
+				printf("Reading from socket %d\n", currSock);
 				//interpretPack_receiver(serverSock, receivedMessage, receivedAdress, &clients);
 			}
 		}

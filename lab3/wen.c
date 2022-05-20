@@ -255,7 +255,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 	{		
 		if (receivedDatagram->flag == SYN)
 		{
-			printf("Received SYN\n");
+			printf("\nReceived SYN");
 			setHeader(toSend, SYN + ACK, receivedDatagram);
 			signal(SIGALRM, timeoutTest);
 			alarm(2);
