@@ -46,6 +46,9 @@ int main()
 				printf("\nI'm working on it!\n");
 				printf("Reading from socket %d\n", currSock);
 				//interpretPack_receiver(serverSock, receivedMessage, receivedAdress, &clients);
+
+				close(currSock);
+				FD_CLR(currSock, &activeFdSet);
 			}
 		}
 

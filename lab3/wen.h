@@ -104,7 +104,7 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 /*
 	Send Datagram to chosen socket by using the provided sockaddr.
 
-	Return 1 if successful and 0 if not.
+	Return 1 if successful and ERRORCODE if not.
 */
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destinationAddr);
 
@@ -120,7 +120,7 @@ int createSocket(int port);
     with the server.
     Return the information to be used in connection with server.
 */
-ConnectionInfo connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr);
+ConnectionInfo connectToServer(int sock, char* hostName);
 
 /*
 	Accepts the connectionrequests
@@ -240,7 +240,7 @@ void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram);
 /*
     Pack message into datagram and set correct information for a data packet.
 */
-void packMessage(Datagram datagramToSend, char* messageToSend, Datagram receivedDatagram);
+void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
 
 void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients);
 

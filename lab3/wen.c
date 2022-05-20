@@ -74,7 +74,7 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
         perror("Failed to send message\n");
-        return 0;
+        return ERORRCODE;
     }
     return 1;
 }
@@ -162,14 +162,16 @@ void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
     }
 }
 
-ConnectionInfo connectToServer(int sock, char* hostName, struct sockaddr_in* destAddr)
+ConnectionInfo connectToServer(int sock, char* hostName)
 {
     // Setup destination adress.
     struct hostent *hostInfo;
     hostInfo = gethostbyname(hostName);
-    destAddr->sin_family = AF_INET;
-    destAddr->sin_port = htons(SERVERPORT);
-    destAddr->sin_addr = *(struct in_addr *)hostInfo->h_addr;
+
+	struct sockaddr_in destAddr;
+    destAddr.sin_family = AF_INET;
+    destAddr.sin_port = htons(SERVERPORT);
+    destAddr.sin_addr = *(struct in_addr *)hostInfo->h_addr;
 
     // Setup first message to be sent.
     Datagram messageToSend = initDatagram();
@@ -182,7 +184,7 @@ ConnectionInfo connectToServer(int sock, char* hostName, struct sockaddr_in* des
 	//? tempList is used as ConnectionInfo can't be initiated by itself (?)
 	ClientList tempList = initClientList();
     // Attempt handshake with server
-    if (initHandshakeWithServer(sock, messageToSend, *destAddr, &tempList) != 1)
+    if (initHandshakeWithServer(sock, messageToSend, destAddr, &tempList) != 1)
     {
         printf("Failed connection handshake.\n");
 		free(messageToSend);
@@ -218,7 +220,7 @@ int initHandshakeWithServer(int sock, Datagram toSend, struct sockaddr_in dest, 
 		if(messageToReceive->flag == SYN + ACK)
 		{
             setHeader(toSend, ACK, messageToReceive);
-			if(sendMessage(sock, toSend, dest) == 0)
+			if(sendMessage(sock, toSend, dest) == ERORRCODE)
 			{
 				perror("Could not send message to server\n");
 				free(messageToReceive);
@@ -276,7 +278,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 
 			// Send using the clientSock so client gets address of
 			// designated port.
-			if(sendMessage(clientSock, toSend, recvAddr) == 0)
+			if(sendMessage(clientSock, toSend, recvAddr) == ERORRCODE)
 			{
 				free(toSend);
 				free(receivedDatagram);
@@ -650,7 +652,8 @@ void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram)
 {
     datagramToSend->windowSize = WINDOWSIZE;
 	datagramToSend->message[0] = '\0';
-    
+	//! Sequence numbers should be moved as they work diffrent depending on GBN/SR and sender/receiver
+	//? SYN and SYN + ACK can still be used though
     switch (flag)
     {
         case SYN:
@@ -680,8 +683,10 @@ void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram)
     }
 }
 
-void packMessage(Datagram datagramToSend, char* messageToSend, Datagram receivedDatagram)
+//! Change to use setHeader when brain starts working again
+void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq)
 {
-    setHeader(datagramToSend, UNSET, receivedDatagram);
+	datagramToSend->windowSize = WINDOWSIZE;
+	datagramToSend->sequence = currentSeq;
     strncpy(datagramToSend->message, messageToSend, strlen(messageToSend));
 }

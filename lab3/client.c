@@ -11,9 +11,6 @@
 
 int main(int argc, char *argv[])
 {    
-    int sock = createSocket(CLIENTPORT);
-    struct sockaddr_in destAddr;
-	
     if (argv[1] == NULL) 
     {
 		printf("Error! Incorrect argument.\n\n");
@@ -25,13 +22,94 @@ int main(int argc, char *argv[])
     strncpy(hostName, argv[1], 50);
 	hostName[50-1] = '\0';
 
+    int sock = createSocket(CLIENTPORT);
+
     /*
         Begin connection attempt.
         Return value does not need to be checked as program will
         close upon error.
     */
-    ConnectionInfo serverInfo = connectToServer(sock, hostName, &destAddr);
+    ConnectionInfo serverInfo = connectToServer(sock, hostName);
+	serverInfo.baseSeqNum = serverInfo.baseSeqNum % MAXSEQNUM;
     printf("%d\n", serverInfo.baseSeqNum);
-    setupClientDisconnect(sock, hostName, &destAddr);
+
+	fd_set activeFdSet, readFdSet;
+	FD_ZERO(&activeFdSet);
+	FD_ZERO(&readFdSet);
+	FD_SET(STDIN_FILENO, &activeFdSet);
+	FD_SET(serverInfo.sock, &activeFdSet);
+
+	char message[MESSAGELENGTH] = { '\0' };
+	int currentSeq = serverInfo.baseSeqNum;
+	int retval = 0;
+	
+	while(1)
+	{
+		//? Move this into the part where window gets moved
+		serverInfo.baseSeqNum = serverInfo.baseSeqNum % MAXSEQNUM;
+		readFdSet = activeFdSet;
+		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
+		{
+			perror("\nFailed to monitor set");
+			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
+			FD_ZERO(&readFdSet);
+			//exit(EXIT_FAILURE);
+		}
+
+		for (int currSock = 0; currSock < FD_SETSIZE; currSock++)
+		{
+			/* 
+				* Prioritize receiving from server to avoid blocking
+				* ACKs through constant typing.
+			*/
+			if (currSock == serverInfo.sock && FD_ISSET(currSock, &readFdSet))
+			{
+				//interpretPack_sender
+			}
+			else if (currSock == STDIN_FILENO && FD_ISSET(currSock, &readFdSet))
+			{
+				fgets(message, MESSAGELENGTH, stdin);
+				message[MESSAGELENGTH - 1] = '\0';
+				retval = writeMessage(serverInfo, message, &currentSeq);
+				if (retval == 1) printf("Message sent!\n");
+				else if (retval == ERORRCODE) printf("Could not send message!\n");
+				else printf("Window is full!\n");
+			}
+		}
+	}
+
+    //setupClientDisconnect(sock, hostName, &destAddr);
     return 0;
+}
+
+//? Move this when testing is done
+int writeMessage(ConnectionInfo server, char* message, int* currentSeq)
+{
+	int retval;
+	if (SWMETHOD == GBN) retval = writeMessageGBN(server, message, currentSeq);
+	else retval = writeMessageSR(server, message, currentSeq);
+	return retval;
+}
+
+int writeMessageGBN(ConnectionInfo server, char* message, int* currentSeq)
+{
+	// Don't send if window full
+	if(abs(server.baseSeqNum - *currentSeq) > WINDOWSIZE) return 0;
+
+	Datagram toSend = initDatagram();
+	packMessage(toSend, message, *currentSeq);
+	if (sendMessage(server.sock, toSend, server.addr) < 0)
+	{
+		return ERORRCODE;
+	}
+	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
+	return 1;
+}
+
+int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
+{
+	Datagram toSend = initDatagram();
+	packMessage(toSend, message, *currentSeq);
+	printf("Implement later\n");
+	return ERORRCODE;
 }
