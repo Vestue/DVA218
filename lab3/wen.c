@@ -35,18 +35,22 @@
 
 // TODO: Fix checksum function
 
-// int calcChecksum(const Datagram toCalc)
-// {
-//     uint8_t P = 0b100000111;
-//     int n = 9, w = 8;
-//     uint len = sizeof(*toCalc);
-//     for (int i = 0; i < len; i++)
-//     {
-//         if ()
-//     }
-    
-//     return 0;
-// }
+
+uint32_t calcChecksum(const void* M, uint32_t length)
+{
+    uint32_t P = 0x04C11DB7;
+    const uint8_t* M8 = (const uint8_t*)M;
+    uint32_t R = 0;
+    for (uint32_t i = 0; i < length; ++i)
+    {
+        R ^= M8[i];
+        for (uint32_t j = 0; j < 8; ++j)
+        {
+            R = R & 1 ? (R >> 1) ^ P : R >> 1;
+        }
+    }
+    return R;
+}
 
 int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAdress)
 {
