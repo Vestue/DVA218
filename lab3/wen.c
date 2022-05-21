@@ -55,13 +55,12 @@ uint32_t calcChecksum(const void* message, uint32_t length)
 
 bool corrupt(Datagram toCheck)
 {
-	uint32_t calcd = 0;
 	Datagram temp = (Datagram)calloc(1, sizeof(*toCheck));
 	memcpy(temp, toCheck, sizeof(*toCheck));
 	temp->checksum = 0;
-	calcd = calcChecksum((temp), (sizeof(temp)));
-	if (toCheck->checksum == calcd) return false;
-	printf("Calc checksum: %d\tRecv checksum: %d", calcd, toCheck->checksum);
+	temp->checksum = calcChecksum((temp), (sizeof(*temp)));
+	if (toCheck->checksum == temp->checksum)
+		printf("Calc checksum: %d\tRecv checksum: %d", temp->checksum, toCheck->checksum);
 	return true;
 }
 
