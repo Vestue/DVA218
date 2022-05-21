@@ -21,6 +21,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
 #include "wen.h"
 
 /*
@@ -373,7 +374,19 @@ void interpretPack_receiver(int sock, ClientList *clientList)
 }
 
 void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
-{
+{	
+	/*
+	//* Check if any timer has run out
+	struct timespec currTime;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
+	for (int i = 0; i < MAXSEQNUM; i++)
+	{
+		if (client->buffer[i].timeStamp.tv_sec - currTime.tv_sec > RTT)
+		{
+			//! Timer is not needed here, WTF you doin?
+		}
+	}*/
+
 	Datagram messageToSend = initDatagram();
     printf("%d", messageToSend->windowSize); //? Just to get rid of warnings
 }
