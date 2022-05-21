@@ -21,6 +21,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
 #include "wen.h"
 
 /*
@@ -350,25 +351,49 @@ int acceptClientConnection(int serverSock, ClientList* list)
 	}
 }
 
-void interpretPack_receiver(int sock, ClientList *clients)
+void interpretPack_receiver(int sock, ClientList *clientList)
 {
 	Datagram receivedDatagram = initDatagram();
-	ConnectionInfo *client = findClientFromSock(clients, sock);
-	recvMessage(client->sock, receivedDatagram, &client->addr);
+	ConnectionInfo *client = findClientFromSock(clientList, sock);
+	printf("I got into interpret!\n");
+	printf("clientSoc %d, sock %d\n",client->sock, sock);
+	//recvMessage(client->sock, receivedDatagram, &client->addr);
+
 	if (receivedDatagram->flag == FIN)
 	{
-		setFIN(client->addr, clients);
+		setFIN(client->addr, clientList);
 		// TODO: Start disconnect stuff and remove client from list upon timeout
 	}
+	else if (receivedDatagram->flag == ACK && isFINSet(*client))
+	{
+		//Fully disconnect client by removing and closing socket.
+	}
+	else if (receivedDatagram->flag == ACK) return; // What is the client ACKing?
 
-	if (SWMETHOD == GBN) interpretWith_GBN_receiver(sock, receivedDatagram, client->addr, clients);
-	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clients);
+	if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
+	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clientList);
 }
 
-void interpretWith_GBN_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
-{
-	Datagram messageToSend = initDatagram();
-    printf("%d", messageToSend->windowSize); //? Just to get rid of warnings
+void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
+{	
+	/* Check if any timer has run out
+	struct timespec currTime;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
+	for (int i = 0; i < MAXSEQNUM; i++)
+	{
+		if (client->buffer[i].timeStamp.tv_sec - currTime.tv_sec > RTT)
+		{
+			//! Timer is not needed here, WTF you doin?
+		}
+	}*/
+
+	if (receivedDatagram->sequence == client->baseSeqNum) //TODO || non-corrupt(PKT)
+	{
+		Datagram toSend = initDatagram();
+		setHeader(toSend, ACK, receivedDatagram);
+		client->baseSeqNum++;
+	}
+	// else discard
 }
 
 void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
@@ -409,6 +434,12 @@ ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in 
 	tempInfo.addr = recvAddr;
 	tempInfo.FIN_SET = 0;
 	tempInfo.sock = sock;
+	for (int i = 0; i < MAXSEQNUM; i++) tempInfo.buffer[i].message[0] = '\0';
+	for (int i = 0; i < MAXSEQNUM; i++)
+	{
+		tempInfo.buffer[i].timeStamp.tv_nsec = 0;
+		tempInfo.buffer[i].timeStamp.tv_sec = 0;
+	} 
 	return tempInfo;
 }
 
@@ -662,19 +693,10 @@ int setFIN(struct sockaddr_in addr, ClientList* list)
     return ERORRCODE;
 }
 
-int isFINSet(struct sockaddr_in addr, ClientList* list)
+int isFINSet(ConnectionInfo connection)
 {
-	if(list == NULL) return ERORRCODE;
-    struct sockaddr_in tempAddr;
-    for (int i = 0; i < list->size; i++)
-    {
-        tempAddr = list->clients[i].addr;
-        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
-        {
-            return list->clients[i].FIN_SET;
-        }
-    }
-    return ERORRCODE;
+	if(connection.FIN_SET) return 1;
+	return 0;
 }
 
 /*

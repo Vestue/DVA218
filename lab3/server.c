@@ -9,7 +9,6 @@
 
 #include "server.h"
 #include <errno.h>
-#include <time.h>
 
 int main() 
 {
@@ -65,7 +64,7 @@ int main()
 			{
 				printf("\nI'm working on it!\n");
 				printf(">Reading from socket %d\n", currSock);
-				interpretPack_receiver(serverSock, &clients);
+				interpretPack_receiver(currSock, &clients);
 
 				close(currSock);
 				FD_CLR(currSock, &activeFdSet);
