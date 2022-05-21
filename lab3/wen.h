@@ -22,6 +22,8 @@
 #define STARTSEQ 42
 #define ERORRCODE -1
 #define SWMETHOD 0
+#define MESSAGELENGTH 256
+
 /*
 	Set if Go-Back-N or Selective Repeat should
 	be used as the method for sliding windows.
@@ -57,11 +59,20 @@ typedef struct
     char message[MAXLENGTH];
 }Header;
 
-// struct Packet
-// {
-// 	struct Header header;
-// 	char message[MAXLENGTH];
-// };
+/*
+	Message should be set to '\0' per default.
+
+	If a message is sent/received it should be 
+	put into the buffer with the time that it
+	was sent/received.
+
+	Get the timestamp by doing time(&timeStamp);
+*/
+struct messageBuffer
+{
+	char message[MESSAGELENGTH];
+	struct timespec timeStamp;
+};
 
 typedef struct
 {
@@ -69,6 +80,7 @@ typedef struct
 	int sock;
 	int baseSeqNum;
 	int FIN_SET;
+	struct messageBuffer buffer[MAXSEQNUM];
 }ConnectionInfo;
 
 
