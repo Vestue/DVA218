@@ -5,11 +5,14 @@ Datakommunikation
 ### MessageBuffer
 - Should this buffer be windowsize?
   - NO, that causes issues with not being able to tell if a packet is old or new.
+
+````c
 struct messageBuffer[MAXSEQNUM]
 {
 	char* message;
 	int timeStamp; //Kravspec, kanske ska vara på annat ställe
 }
+````
 
 For serverside:
 - if baseSeq = 30 and incSeq = 31, 32, 33
