@@ -20,7 +20,6 @@
 #include <netdb.h>
 #include <signal.h>
 #include <string.h>
-#include <stdbool.h>
 #include <sys/time.h>
 #include "wen.h"
 
@@ -53,15 +52,19 @@ uint32_t calcChecksum(const void* message, uint32_t length)
     return R;
 }
 
-bool corrupt(Datagram toCheck)
+int corrupt(Datagram toCheck)
 {
-	Datagram temp = (Datagram)calloc(1, sizeof(*toCheck));
-	memcpy(temp, toCheck, sizeof(*toCheck));
-	temp->checksum = 0;
-	temp->checksum = calcChecksum((temp), (sizeof(*temp)));
-	if (toCheck->checksum == temp->checksum)
-		printf("Calc checksum: %d\tRecv checksum: %d", temp->checksum, toCheck->checksum);
-	return true;
+	//Creates a copy of packet with a zero'd checksum
+	Datagram zeroedChecksum = (Datagram)calloc(1, sizeof(*toCheck));
+	memcpy(zeroedChecksum, toCheck, sizeof(*toCheck));
+	zeroedChecksum->checksum = 0;
+	zeroedChecksum->checksum = calcChecksum((zeroedChecksum), (sizeof(*zeroedChecksum)));
+
+	//? Add error inducing code here later
+	// example: if rand<25 return 1
+	if (toCheck->checksum == zeroedChecksum->checksum)
+		return 0;
+	return 1;
 }
 
 int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAdress)
