@@ -53,6 +53,10 @@ int main()
 			// * New connection incoming
 			if (currSock == serverSock && FD_ISSET(currSock, &readFdSet))
 			{
+				// Timers for testing purpose
+				clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
+				printf("\nConnection request after: %lu seconds\n", stop.tv_sec - start.tv_sec);
+
 				clientSock = acceptClientConnection(serverSock, &clients);
 				if (clientSock != ERORRCODE) FD_SET(clientSock, &activeFdSet);
 			}
