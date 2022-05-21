@@ -9,6 +9,7 @@
 
 #include "server.h"
 #include <errno.h>
+#include <time.h>
 
 int main() 
 {
@@ -21,6 +22,14 @@ int main()
 	FD_ZERO(&readFdSet);
 	FD_SET(serverSock, &activeFdSet);
 
+	// Timers and clocks to test things
+	struct timespec start, stop;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	time_t beforeLoopTime;
+	time(&beforeLoopTime);
+	printf("\nTime before loop: %s", ctime(&beforeLoopTime));
+	printf("Started at: %lu\n", start.tv_sec);
+
 	while (1) 
 	{
 		// Copy active set to read-set for select on read-set
@@ -32,6 +41,11 @@ int main()
 			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
 			FD_ZERO(&readFdSet);
 			//exit(EXIT_FAILURE);
+
+			// Test clock
+			clock_gettime(CLOCK_MONOTONIC_RAW, &stop);
+			printf("Stopped at: %lu\n", stop.tv_sec);
+			printf("\nElapsed time before timeout: %lu sec\n", stop.tv_sec - start.tv_sec);
 		}
 
 		for (int currSock = 0; currSock < FD_SETSIZE; currSock++)
