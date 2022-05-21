@@ -351,12 +351,19 @@ int acceptClientConnection(int serverSock, ClientList* list)
 	}
 }
 
-void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients)
+void interpretPack_receiver(int sock, ClientList *clients)
 {
-    
+	Datagram receivedDatagram = initDatagram();
+	ConnectionInfo *client = findClientFromSock(clients, sock);
+	recvMessage(client->sock, receivedDatagram, &client->addr);
+	if (receivedDatagram->flag == FIN)
+	{
+		setFIN(client->addr, clients);
+		// TODO: Start disconnect stuff and remove client from list upon timeout
+	}
 
-	if (SWMETHOD == GBN) interpretWith_GBN_receiver(sock, packet, addr, clients);
-	else interpretWith_SR_receiver(sock, packet, addr, clients);
+	if (SWMETHOD == GBN) interpretWith_GBN_receiver(sock, receivedDatagram, client->addr, clients);
+	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clients);
 }
 
 void interpretWith_GBN_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
@@ -473,6 +480,14 @@ ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
             return &list->clients[i];
     }
     return NULL;
+}
+
+ConnectionInfo* findClientFromSock(ClientList *list, int sock)
+{
+	if(list == NULL) return NULL;
+	for (int i = 0; i < list->size; i++)
+		if (list->clients[i].sock == sock) return &list->clients[i];
+	return NULL;
 }
 
 int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr)
