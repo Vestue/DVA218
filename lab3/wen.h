@@ -179,7 +179,7 @@ void stopTimer(Datagram timedConnection, int seqNum);
 void restartTimer(Datagram timedConnection, int seqNum);
 
 //!  Feeling cute might delete later :3
-void timeoutTest();
+void timeoutTest(int signum);
 
 
 /*

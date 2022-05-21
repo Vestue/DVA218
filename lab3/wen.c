@@ -144,10 +144,14 @@ int createClientSpecificSocket(struct sockaddr_in clientAddr)
 	return sock;
 }
 
-void timeoutTest()
+void timeoutTest(int signum)
 {
     printf("\nTimed out\n");
 
+	if (signum == SIGKILL)
+	{
+		exit(EXIT_SUCCESS);
+	}
 } 
 
 
