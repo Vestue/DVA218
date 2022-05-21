@@ -87,7 +87,6 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
 	messageToSend->checksum = calcChecksum((Datagram)messageToSend, sizeof(*messageToSend));
-	printf("Sending checksum: %d\n", messageToSend->checksum);
 	if (sendto(sock, (Datagram)messageToSend, sizeof(Header),
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
