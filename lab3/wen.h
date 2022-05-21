@@ -254,7 +254,14 @@ void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram);
 */
 void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
 
-void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients);
+/*
+	Resolve which client initiated the connection and send the
+	forward into GBN or SR depending on which method is to be used.
+
+	Also check if FIN is set in the received message. 
+	If that is the case: trigger disconnect process.
+*/
+void interpretPack_receiver(int sock, ClientList *clients);
 
 /*
 *   GO BACK N Functions
@@ -340,5 +347,13 @@ int isInClientList(ClientList *list, struct sockaddr_in addr);
     Return NULL if it can't be found. 
 */
 ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr);
+
+/*
+	Find the client that matches given sock.
+
+	Return pointer to ConnectionInfo if found.
+	Return NULL if not.
+*/
+ConnectionInfo* findClientFromSock(ClientList *list, int sock);
 
 #endif
