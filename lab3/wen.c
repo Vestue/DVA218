@@ -355,10 +355,15 @@ void interpretPack_receiver(int sock, ClientList *clients)
 	Datagram receivedDatagram = initDatagram();
 	ConnectionInfo *client = findClientFromSock(clients, sock);
 	recvMessage(client->sock, receivedDatagram, &client->addr);
+
 	if (receivedDatagram->flag == FIN)
 	{
 		setFIN(client->addr, clients);
 		// TODO: Start disconnect stuff and remove client from list upon timeout
+	}
+	else if (receivedDatagram->flag == ACK && isFINSet(client->addr, clients))
+	{
+		//Fully disconnect client by removing and closing socket.
 	}
 
 	if (SWMETHOD == GBN) interpretWith_GBN_receiver(sock, receivedDatagram, client->addr, clients);
@@ -409,6 +414,7 @@ ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in 
 	tempInfo.addr = recvAddr;
 	tempInfo.FIN_SET = 0;
 	tempInfo.sock = sock;
+	for (int i = 0; i < MAXSEQNUM; i++) tempInfo.buffer[i].message[0] = '\0';
 	return tempInfo;
 }
 
