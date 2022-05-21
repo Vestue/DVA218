@@ -333,27 +333,29 @@ int acceptClientConnection(int serverSock, ClientList* list)
 	}
 }
 
-void interpretPack_receiver(int sock, ClientList *clients)
+void interpretPack_receiver(int sock, ClientList *clientList)
 {
 	Datagram receivedDatagram = initDatagram();
-	ConnectionInfo *client = findClientFromSock(clients, sock);
-	recvMessage(client->sock, receivedDatagram, &client->addr);
+	ConnectionInfo *client = findClientFromSock(clientList, sock);
+	printf("I got into interpret!\n");
+	printf("clientSoc %d, sock %d\n",client->sock, sock);
+	//recvMessage(client->sock, receivedDatagram, &client->addr);
 
 	if (receivedDatagram->flag == FIN)
 	{
-		setFIN(client->addr, clients);
+		setFIN(client->addr, clientList);
 		// TODO: Start disconnect stuff and remove client from list upon timeout
 	}
-	else if (receivedDatagram->flag == ACK && isFINSet(client->addr, clients))
+	else if (receivedDatagram->flag == ACK && isFINSet(*client))
 	{
 		//Fully disconnect client by removing and closing socket.
 	}
 
-	if (SWMETHOD == GBN) interpretWith_GBN_receiver(sock, receivedDatagram, client->addr, clients);
-	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clients);
+	if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
+	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clientList);
 }
 
-void interpretWith_GBN_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
+void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
 {
 	Datagram messageToSend = initDatagram();
     printf("%d", messageToSend->windowSize); //? Just to get rid of warnings
@@ -398,6 +400,11 @@ ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in 
 	tempInfo.FIN_SET = 0;
 	tempInfo.sock = sock;
 	for (int i = 0; i < MAXSEQNUM; i++) tempInfo.buffer[i].message[0] = '\0';
+	for (int i = 0; i < MAXSEQNUM; i++)
+	{
+		tempInfo.buffer[i].timeStamp.tv_nsec = 0;
+		tempInfo.buffer[i].timeStamp.tv_sec = 0;
+	} 
 	return tempInfo;
 }
 
@@ -651,19 +658,10 @@ int setFIN(struct sockaddr_in addr, ClientList* list)
     return ERORRCODE;
 }
 
-int isFINSet(struct sockaddr_in addr, ClientList* list)
+int isFINSet(ConnectionInfo connection)
 {
-	if(list == NULL) return ERORRCODE;
-    struct sockaddr_in tempAddr;
-    for (int i = 0; i < list->size; i++)
-    {
-        tempAddr = list->clients[i].addr;
-        if(tempAddr.sin_addr.s_addr == addr.sin_addr.s_addr && tempAddr.sin_port == addr.sin_port)
-        {
-            return list->clients[i].FIN_SET;
-        }
-    }
-    return ERORRCODE;
+	if(connection.FIN_SET) return 1;
+	return 0;
 }
 
 /*
