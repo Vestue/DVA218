@@ -273,8 +273,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 		{
 			printf("\nReceived SYN");
 			setHeader(toSend, SYN + ACK, receivedDatagram);
-			signal(SIGALRM, timeoutTest);
-			alarm(2);
+			
 
 			// Send using the clientSock so client gets address of
 			// designated port.
@@ -472,7 +471,7 @@ int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr
     return datagramToSend->sequence;
 }
 
-int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* dest)
+int DisconnectServerSide(int sock, Datagram sendTo, struct sockaddr_in* dest)
 {
 
     Datagram receivedDatagram = initDatagram();
@@ -486,20 +485,20 @@ int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* 
     if(receivedDatagram->flag == FIN)
     {
         *dest = tempAddr;
-        disconnRequest->flag = ACK;
-        if(sendMessage(sock, disconnRequest, *dest) < 0)
+        setHeader(sendTo, ACK, receivedDatagram);
+        if(sendMessage(sock, sendTo, *dest) < 0)
         {
             printf("Failed to disconnect from client\n");
             exit(EXIT_FAILURE);
         }
 
-        disconnRequest->flag = FIN;
+        setHeader(sendTo, FIN, receivedDatagram);
     }
     
 
 	while(1)
 	{
-        if (sendMessage(sock, disconnRequest, *dest) < 0)
+        if (sendMessage(sock, sendTo, *dest) < 0)
         {
             printf("Failed to disconnect from client");
             exit(EXIT_FAILURE);
@@ -521,17 +520,15 @@ int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* 
 
 }
 
-int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in destAddr)
+int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr)
 {
     Datagram messageReceived = initDatagram();
     struct sockaddr_in tempAddr;
     int counter = 0;
 	
     printf("In disconnect clientside\n");
-	disconnRequest->flag = FIN;	
-	signal(SIGALRM, timeoutTest);
-	alarm(2);
-	if(sendMessage(sock, disconnRequest, destAddr) < 0)
+	setHeader(sendTo, FIN, messageReceived);
+	if(sendMessage(sock, sendTo, destAddr) < 0)
 	{
 		printf("Failed to disconnect from server");
 		exit(EXIT_FAILURE);
@@ -547,20 +544,19 @@ int DisconnectClientSide(int sock, Datagram disconnRequest, struct sockaddr_in d
 		{
            
 			counter++;
-			disconnRequest->flag = ACK;
-			sendMessage(sock, disconnRequest, destAddr);
-			signal(SIGALRM, timeoutTest);
-			alarm(2); //Ska vara 2 * MSL
+			setHeader(sendTo, ACK, messageReceived);
+			sendMessage(sock, sendTo, destAddr);
+			 //Timer should be 2 * MSL
 
 		}
 		if(messageReceived->flag == FIN && counter > 0) //if counter is more than 0 that means it is the second FIN received
 		{
-			disconnRequest->flag = ACK;
+			setHeader(sendTo, ACK, messageReceived);
             printf("\nDisconnected\n");
-			sendMessage(sock, disconnRequest, destAddr);
-			alarm(2); //resetar timern, går timern ut är clienten disconnectad
+			sendMessage(sock, sendTo, destAddr);
+			 //restarts timer, if timer runs out client disconnects
             
-			return 1; //temporär return
+			return 1; //temporary return
 		}
 		
 		if(messageReceived->flag == ACK)
