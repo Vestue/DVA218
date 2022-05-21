@@ -20,6 +20,7 @@
 #include <netdb.h>
 #include <signal.h>
 #include <string.h>
+#include <stdbool.h>
 #include <sys/time.h>
 #include "wen.h"
 
@@ -36,10 +37,10 @@
 // TODO: Fix checksum function
 
 
-uint32_t calcChecksum(const void* M, uint32_t length)
+uint32_t calcChecksum(const void* message, uint32_t length)
 {
     uint32_t P = 0x04C11DB7;
-    const uint8_t* M8 = (const uint8_t*)M;
+    const uint8_t* M8 = (const uint8_t*)message;
     uint32_t R = 0;
     for (uint32_t i = 0; i < length; ++i)
     {
@@ -52,6 +53,18 @@ uint32_t calcChecksum(const void* M, uint32_t length)
     return R;
 }
 
+bool corrupt(Datagram toCheck)
+{
+	uint32_t calcd = 0;
+	Datagram temp = (Datagram)calloc(1, sizeof(*toCheck));
+	memcpy(temp, toCheck, sizeof(*toCheck));
+	temp->checksum = 0;
+	calcd = calcChecksum((temp), (sizeof(temp)));
+	if (toCheck->checksum == calcd) return false;
+	printf("Calc checksum: %d\tRecv checksum: %d", calcd, toCheck->checksum);
+	return true;
+}
+
 int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* receivedAdress)
 {
 	struct sockaddr_in recvAddr;
@@ -59,17 +72,20 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
     unsigned int addrlen = sizeof(recvAddr);
 
     if (recvfrom(sock, (Datagram)receivedMessage, sizeof(Header),
-        0, (struct sockaddr *)&recvAddr, &addrlen) < 0) 
+        0, (struct sockaddr *)&recvAddr, &addrlen) < 0)
     {
         perror("Error receiving message!\n");
 		exit(EXIT_FAILURE);
     }
+	corrupt(receivedMessage);
     *receivedAdress = recvAddr;
     return 1;
 }
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
+	messageToSend->checksum = calcChecksum((Datagram)messageToSend, sizeof(*messageToSend));
+	printf("Sending checksum: %d\n", messageToSend->checksum);
 	if (sendto(sock, (Datagram)messageToSend, sizeof(Header),
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
