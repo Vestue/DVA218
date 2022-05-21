@@ -150,6 +150,7 @@ void timeoutTest(int signum)
 
 	if (signum == SIGKILL)
 	{
+		printf("\nExiting..");
 		exit(EXIT_SUCCESS);
 	}
 } 
