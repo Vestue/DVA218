@@ -227,9 +227,8 @@ int setFIN(struct sockaddr_in addr, ClientList* list);
 
 	Return 1 if the FIN state is set,
 	0 if it isn't.
-    Return ERRORCODE if client can't be found.
 */
-int isFINSet(struct sockaddr_in addr, ClientList* list);
+int isFINSet(ConnectionInfo connection);
 
 
 /*
@@ -272,7 +271,7 @@ void interpretPack_receiver(int sock, ClientList *clients);
 	Main function of GBN, this takes the data and then does different
 	things depending on what flag is in the datagram.
 */
-void interpretWith_GBN_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients);
+void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList);
 //         switch (receivedMessage->header.flag)
             //{
             //	case SYN:
