@@ -368,6 +368,7 @@ void interpretPack_receiver(int sock, ClientList *clientList)
 	{
 		//Fully disconnect client by removing and closing socket.
 	}
+	else if (receivedDatagram->flag == ACK) return; // What is the client ACKing?
 
 	if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
 	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clientList);
@@ -375,8 +376,7 @@ void interpretPack_receiver(int sock, ClientList *clientList)
 
 void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
 {	
-	/*
-	//* Check if any timer has run out
+	/* Check if any timer has run out
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
 	for (int i = 0; i < MAXSEQNUM; i++)
@@ -387,8 +387,13 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 		}
 	}*/
 
-	Datagram messageToSend = initDatagram();
-    printf("%d", messageToSend->windowSize); //? Just to get rid of warnings
+	if (receivedDatagram->sequence == client->baseSeqNum) //TODO || non-corrupt(PKT)
+	{
+		Datagram toSend = initDatagram();
+		setHeader(toSend, ACK, receivedDatagram);
+		client->baseSeqNum++;
+	}
+	// else discard
 }
 
 void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
