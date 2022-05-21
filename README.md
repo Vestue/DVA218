@@ -29,3 +29,7 @@ to be \0. Then when TIMER(63) triggers, it will read \0 and know not to send mes
 #### Points to note
 - Something can not be put into the buffer if the distance between baseSeq and currSeq is bigger than windowSize.
 - If an ACK gets lost the server will see that the incSeq is behind the baseSeq. And can then just ACK again.
+- This buffer should be per **connection** so put it into the:
+````c 
+struct ConnectionInfo
+````
