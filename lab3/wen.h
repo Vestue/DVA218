@@ -23,6 +23,7 @@
 #define ERORRCODE -1
 #define SWMETHOD 0
 #define MESSAGELENGTH 256
+#define RTT 3
 
 /*
 	Set if Go-Back-N or Selective Repeat should
