@@ -50,6 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Lab 3 stuff
 lab3/client
 lab3/.vscode/tasks.json
 lab3/server
+lab3/.idea/
+lab3/.vscode/

@@ -8,6 +8,7 @@
  ****************************************************************/ 
 
 #include "server.h"
+#include <errno.h>
 
 int main() 
 {
@@ -27,6 +28,7 @@ int main()
 		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
 		{
 			perror("\nFailed to monitor set");
+			printf("Errno is: %d\n", errno);
 			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
 			FD_ZERO(&readFdSet);
 			//exit(EXIT_FAILURE);
