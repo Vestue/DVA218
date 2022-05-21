@@ -51,11 +51,12 @@ typedef enum
 
 typedef struct
 {
+	
 	uint16_t windowSize;
 	uint32_t sequence;
     uint32_t ackNum;
 	uint8_t flag;
-	uint16_t checksum;
+	uint32_t checksum;
     char message[MAXLENGTH];
 }Header;
 
