@@ -427,7 +427,7 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	else if (receivedDatagram->flag == ACK) return; // What is the client ACKing?
 
 	//* Send to GBN or SR to handle DATA in package
-	if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
+	else if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
 	else interpretWith_SR_receiver(sock, receivedDatagram, client, clientList);
 }
 
