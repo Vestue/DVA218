@@ -606,6 +606,8 @@ ConnectionInfo* findClientFromSock(ClientList *list, int sock)
 }
 
 //!Abstract
+//! What is the point of this function? We already know the host info.
+/*
 int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr)
 {
     struct hostent* hostInfo;
@@ -622,7 +624,7 @@ int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr
 
     }
     return datagramToSend->sequence;
-}
+}*/
 
 int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet)
 {
@@ -671,8 +673,9 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 	return 1;
 }
 
-int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr, int nextSeq)
+int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 {
+	Datagram sendTo = initDatagram();
     Datagram messageReceived = initDatagram();
     struct sockaddr_in tempAddr;
 	
@@ -689,14 +692,14 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr,
 		if (time_current.tv_sec - time_FIN_sent.tv_sec > 2 * RTT)
 		{
 			printf("Sending FIN..\n");
-			if(sendMessage(sock, sendTo, destAddr) < 0)
+			if(sendMessage(server.sock, sendTo, server.addr) < 0)
 			{
 				printf("Failed to disconnect from server");
 				exit(EXIT_FAILURE);
 			}
 			clock_gettime(CLOCK_MONOTONIC_RAW, &time_FIN_sent);
 		}
-		recvMessage(sock, messageReceived, &tempAddr);
+		recvMessage(server.sock, messageReceived, &tempAddr);
 	} while (messageReceived->flag != ACK || messageReceived->flag != FIN);
 
 	while(1)
@@ -707,7 +710,7 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr,
 			printf("Received FIN\n");
 			//TODO: Check if function is used correctly
 			setHeader(sendTo, ACK, 0, messageReceived->sequence);
-			sendMessage(sock, sendTo, destAddr);
+			sendMessage(server.sock, sendTo, server.addr);
 			clock_gettime(CLOCK_MONOTONIC_RAW, &time_FIN_received);
 		}
 
@@ -719,7 +722,7 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr,
 			exit(EXIT_SUCCESS);
 		}
 
-		recvMessage(sock, messageReceived, &tempAddr);
+		recvMessage(server.sock, messageReceived, &tempAddr);
 	}
 }
 

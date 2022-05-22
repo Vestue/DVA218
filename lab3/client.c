@@ -75,12 +75,16 @@ int main(int argc, char *argv[])
 			*/
 			if (currSock == serverInfo.sock && FD_ISSET(currSock, &readFdSet))
 			{
-				//interpretPack_sender
+				interpretPack_sender(&serverInfo, &currentSeq);
 			}
 			else if (currSock == STDIN_FILENO && FD_ISSET(currSock, &readFdSet))
 			{
 				fgets(message, MESSAGELENGTH, stdin);
 				message[MESSAGELENGTH - 1] = '\0';
+
+				if (strncmp(message, "EXIT\n", MESSAGELENGTH) == 0)
+					DisconnectClientSide(serverInfo, currentSeq);
+
 				retval = writeMessage(&serverInfo, message, &currentSeq);
 				if (retval == ERRORCODE) printf("Could not send message!\n");
 				else if (retval == 0) printf("Window is full!\n");
@@ -143,7 +147,16 @@ void interpretPack_sender(ConnectionInfo *server, int *currentSeq)
 
 void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 {
-
+	if (receivedDatagram->flag == ACK && !corrupt(receivedDatagram))
+	{
+		//* Reset data on buffer-spot and move window
+		server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
+		server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
+		for (int i = 0; i < MESSAGELENGTH; i++)
+			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
+		server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
+	}
+	else printf("Received a corrupt packet!\n");
 }
 
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
