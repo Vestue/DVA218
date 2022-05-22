@@ -74,12 +74,16 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
     if (recvfrom(sock, (Datagram)receivedMessage, sizeof(Header),
         0, (struct sockaddr *)&recvAddr, &addrlen) < 0)
     {
+		free(receivedMessage);
         perror("Error receiving message!\n");
 		exit(EXIT_FAILURE);
     }
-	corrupt(receivedMessage);
-    *receivedAdress = recvAddr;
-    return 1;
+	if(!corrupt(receivedMessage))
+	{
+    	*receivedAdress = recvAddr;
+    	return 1;
+	}
+	return ERRORCODE;
 }
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
@@ -89,11 +93,12 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
         perror("Failed to send message\n");
-        return ERORRCODE;
+        return ERRORCODE;
     }
     return 1;
 }
 
+//!Abstract
 void setDefaultHeader(Datagram messageToSend)
 {
 	messageToSend->windowSize = WINDOWSIZE;
@@ -102,6 +107,7 @@ void setDefaultHeader(Datagram messageToSend)
 	messageToSend->message[0] = '\0';
 }
 
+//!Abstract
 Datagram initDatagram()
 {
     Datagram temp = (Datagram)calloc(1 , sizeof(Header));
@@ -137,6 +143,7 @@ int createSocket(int port)
 	return sock;
 }
 
+//!Abstract
 int createClientSpecificSocket(struct sockaddr_in clientAddr)
 {
 	int sock;
@@ -158,7 +165,7 @@ int createClientSpecificSocket(struct sockaddr_in clientAddr)
 	}
 	return sock;
 }
-
+//!Abstract
 void timeoutTest(int signum)
 {
     printf("\nTimed out\n");
@@ -170,7 +177,7 @@ void timeoutTest(int signum)
 	}
 } 
 
-
+//!Abstract
 void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
 {
 	connRequest->flag = SYN;
@@ -214,6 +221,7 @@ ConnectionInfo connectToServer(int sock, char* hostName)
     return tempList.clients[0];
 }
 
+//!Abstract
 int initHandshakeWithServer(int sock, Datagram toSend, struct sockaddr_in dest, ClientList* list)
 {
 	if(sendMessage(sock, toSend, dest) < 0)
@@ -240,11 +248,11 @@ int initHandshakeWithServer(int sock, Datagram toSend, struct sockaddr_in dest, 
 		if(messageToReceive->flag == SYN + ACK)
 		{
             setHeader(toSend, ACK, messageToReceive);
-			if(sendMessage(sock, toSend, dest) == ERORRCODE)
+			if(sendMessage(sock, toSend, dest) == ERRORCODE)
 			{
 				printf("Could not send message to server\n");
 				free(messageToReceive);
-				return ERORRCODE;
+				return ERRORCODE;
 			}
 			if (addToClientList(list, initConnectionInfo(messageToReceive, recvAddr, sock)))
 			{
@@ -255,30 +263,31 @@ int initHandshakeWithServer(int sock, Datagram toSend, struct sockaddr_in dest, 
 			else
 			{
 				free(messageToReceive);
-				return ERORRCODE;
+				return ERRORCODE;
 			}
 		}
 	}
 	free(messageToReceive);
-	return ERORRCODE;
+	return ERRORCODE;
 }
+
 //?Split up into smaller more precise functions
 int acceptClientConnection(int serverSock, ClientList* list)
 {
 	Datagram receivedDatagram = initDatagram();
 	struct sockaddr_in recvAddr;
-	if (recvMessage(serverSock, receivedDatagram, &recvAddr) != 1)
+	if ((recvMessage(serverSock, receivedDatagram, &recvAddr)) || (isInClientList(list, recvAddr)))
 	{
 		free(receivedDatagram);
 		printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
-		return ERORRCODE;
-	} 
-	if (isInClientList(list, recvAddr))
-	{
-		free(receivedDatagram);
-		printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
-		return ERORRCODE;
+		return ERRORCODE;
 	}
+	// if (isInClientList(list, recvAddr))
+	// {
+	// 	free(receivedDatagram);
+	// 	printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+	// 	return ERRORCODE;
+	// }
 
     struct sockaddr_in ACKaddr;
 	Datagram toSend = initDatagram();
@@ -297,7 +306,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 
 			// Send using the clientSock so client gets address of
 			// designated port.
-			if(sendMessage(clientSock, toSend, recvAddr) == ERORRCODE)
+			if(sendMessage(clientSock, toSend, recvAddr) == ERRORCODE)
 			{
 				free(toSend);
 				free(receivedDatagram);
@@ -312,7 +321,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 			free(receivedDatagram);
 			close(clientSock);
 			printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
-			return ERORRCODE;
+			return ERRORCODE;
 		} 
 
         /*
@@ -342,12 +351,13 @@ int acceptClientConnection(int serverSock, ClientList* list)
 			free(receivedDatagram);
 			close(clientSock);
             printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
-			return ERORRCODE;
+			return ERRORCODE;
         }
 		recvAddr = ACKaddr;
 	}
 }
 
+//!Abstract
 void interpretPack_receiver(int sock, ClientList *clientList)
 {
 	Datagram receivedDatagram = initDatagram();
@@ -371,6 +381,7 @@ void interpretPack_receiver(int sock, ClientList *clientList)
 	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clientList);
 }
 
+//!Abstract
 void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
 {	
 	/* Check if any timer has run out
@@ -393,6 +404,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 	// else discard
 }
 
+//!Abstract
 void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
 {
 	Datagram messageToSend = initDatagram();
@@ -404,6 +416,7 @@ void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in des
 
 /* List functions */
 
+//!Abstract
 ClientList initClientList()
 {
     ClientList list;
@@ -418,6 +431,7 @@ ClientList initClientList()
     return list;
 }
 
+//!Abstract
 ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in recvAddr, int sock)
 {
 	ConnectionInfo tempInfo;
@@ -440,6 +454,7 @@ ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in 
 	return tempInfo;
 }
 
+//!Abstract
 int addToClientList(ClientList *list, ConnectionInfo info)
 {
     int cur = list->size;
@@ -450,6 +465,7 @@ int addToClientList(ClientList *list, ConnectionInfo info)
     return 1;
 }
 
+//!Abstract
 int removeFromClientList(ClientList *list, struct sockaddr_in addr)
 {
 	if(list == NULL) return 0;
@@ -483,6 +499,7 @@ int removeFromClientList(ClientList *list, struct sockaddr_in addr)
     return 0;
 }
 
+//!Abstract
 int isInClientList(ClientList *list, struct sockaddr_in addr)
 {
 	if(list == NULL) return 0;
@@ -496,6 +513,7 @@ int isInClientList(ClientList *list, struct sockaddr_in addr)
     return 0;
 }
 
+//!Abstract
 ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
 {
 	if(list == NULL) return NULL;
@@ -509,6 +527,7 @@ ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr)
     return NULL;
 }
 
+//!Abstract
 ConnectionInfo* findClientFromSock(ClientList *list, int sock)
 {
 	if(list == NULL) return NULL;
@@ -517,6 +536,7 @@ ConnectionInfo* findClientFromSock(ClientList *list, int sock)
 	return NULL;
 }
 
+//!Abstract
 int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr)
 {
     struct hostent* hostInfo;
@@ -644,9 +664,10 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr)
     * Functions to get values from ConnectionInfo
 */
 
+//!Abstract
 int getExpectedSeq(struct sockaddr_in addr, ClientList* list)
 {
-	if(list == NULL) return ERORRCODE;
+	if(list == NULL) return ERRORCODE;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
@@ -655,12 +676,13 @@ int getExpectedSeq(struct sockaddr_in addr, ClientList* list)
             return list->clients[i].baseSeqNum;
     }
     // Return ERRORCODE as it can't find client.
-    return ERORRCODE;
+    return ERRORCODE;
 }
 
+//!Abstract
 int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list)
 {
-	if(list == NULL) return ERORRCODE;
+	if(list == NULL) return ERRORCODE;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
@@ -671,12 +693,13 @@ int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list)
             return 1;
         }
     }
-    return ERORRCODE;
+    return ERRORCODE;
 }
 
+//!Abstract
 int setFIN(struct sockaddr_in addr, ClientList* list)
 {
-	if(list == NULL) return ERORRCODE;
+	if(list == NULL) return ERRORCODE;
     struct sockaddr_in tempAddr;
     for (int i = 0; i < list->size; i++)
     {
@@ -687,9 +710,10 @@ int setFIN(struct sockaddr_in addr, ClientList* list)
             return 1;
         }
     }
-    return ERORRCODE;
+    return ERRORCODE;
 }
 
+//!Abstract
 int isFINSet(ConnectionInfo connection)
 {
 	if(connection.FIN_SET) return 1;
@@ -700,37 +724,121 @@ int isFINSet(ConnectionInfo connection)
     * Functions to set neccessary information in header depending on flag.
 */
 
-void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram)
+//!Abstract
+void setSeqNum(int seqNum)
 {
-    datagramToSend->windowSize = WINDOWSIZE;
-	datagramToSend->message[0] = '\0';
+
+}
+void setAckNum(int ackNum)
+{
+
+}
+void setHeaderGBN(Datagram datagram, int flag, int nextSeqNum, int whoIs)
+{
+	datagram->windowSize = WINDOWSIZE;
+	datagram->message[0] = '\0';
+	datagram->flag = flag;
+	if(flag == SYN)
+	{
+		setSeqNum(MAXSEQNUM - 1)
+		setACKNum(0)
+		return;
+	}
+	//setSeqNum()
+	//setACKNum()
+	switch (flag)
+    {
+        // case SYN:
+        //     datagram->flag = SYN;
+        //     datagram->sequence = MAXSEQNUM - 1;
+        //     datagram->ackNum = 0;
+        //     break;
+        case ACK:
+            // datagram->flag = ACK;
+            datagram->ackNum = receivedDatagram->sequence + 1;
+            break;
+        case (SYN + ACK):
+            // datagram->flag = SYN + ACK;
+            datagram->ackNum = receivedDatagram->sequence + 1;
+            datagram->sequence = STARTSEQ;
+            break;
+        case FIN:
+            // datagram->flag = FIN;
+            datagram->sequence = receivedDatagram->ackNum;
+            datagram->ackNum = receivedDatagram->sequence + 1;
+            break;
+        default:
+            // datagram->flag = UNSET;
+            datagram->sequence = receivedDatagram->ackNum;
+            datagram->ackNum = receivedDatagram->sequence + 1;
+            break;
+    }
+}
+
+void setHeaderSR(Datagram datagram, int flag, int nextSeqNum, , int whoIs)
+{
+	datagram->windowSize = WINDOWSIZE;
+	datagram->message[0] = '\0';
+    switch (flag)
+    {
+        case SYN:
+            datagram->flag = SYN;
+            datagram->sequence = MAXSEQNUM - 1;
+            datagram->ackNum = 0;
+            break;
+        case ACK:
+            datagram->flag = ACK;
+            datagram->ackNum = receivedDatagram->sequence + 1;
+            break;
+        case (SYN + ACK):
+            datagram->flag = SYN + ACK;
+            datagram->ackNum = receivedDatagram->sequence + 1;
+            datagram->sequence = STARTSEQ;
+            break;
+        case FIN:
+            datagram->flag = FIN;
+            datagram->sequence = receivedDatagram->ackNum;
+            datagram->ackNum = receivedDatagram->sequence + 1;
+            break;
+        default:
+            datagram->flag = UNSET;
+            datagram->sequence = receivedDatagram->ackNum;
+            datagram->ackNum = receivedDatagram->sequence + 1;
+            break;
+    }
+}
+
+void setHeader(Datagram datagram, int flag, Datagram receivedDatagram)
+{
+    datagram->windowSize = WINDOWSIZE;
+	datagram->message[0] = '\0';
 	//! Sequence numbers should be moved as they work diffrent depending on GBN/SR and sender/receiver
 	//? SYN and SYN + ACK can still be used though
     switch (flag)
     {
         case SYN:
-            datagramToSend->flag = SYN;
-            datagramToSend->sequence = MAXSEQNUM - 1;
-            datagramToSend->ackNum = 0;
+            datagram->flag = SYN;
+            datagram->sequence = MAXSEQNUM - 1;
+            datagram->ackNum = 0;
             break;
         case ACK:
-            datagramToSend->flag = ACK;
-            datagramToSend->ackNum = receivedDatagram->sequence + 1;
+            datagram->flag = ACK;
+            datagram->ackNum = receivedDatagram->sequence + 1;
             break;
         case (SYN + ACK):
-            datagramToSend->flag = SYN + ACK;
-            datagramToSend->ackNum = receivedDatagram->sequence + 1;
-            datagramToSend->sequence = STARTSEQ;
+            datagram->flag = SYN + ACK;
+            datagram->ackNum = receivedDatagram->sequence + 1;
+            datagram->sequence = STARTSEQ;
             break;
         case FIN:
-            datagramToSend->flag = FIN;
-            datagramToSend->sequence = receivedDatagram->ackNum;
-            datagramToSend->ackNum = receivedDatagram->sequence + 1;
+            datagram->flag = FIN;
+            datagram->sequence = receivedDatagram->ackNum;
+            datagram->ackNum = receivedDatagram->sequence + 1;
             break;
         default:
-            datagramToSend->flag = UNSET;
-            datagramToSend->sequence = receivedDatagram->ackNum;
-            datagramToSend->ackNum = receivedDatagram->sequence + 1;
+            datagram->flag = UNSET;
+            datagram->sequence = receivedDatagram->ackNum;
+            datagram->ackNum = receivedDatagram->sequence + 1;
             break;
     }
 }

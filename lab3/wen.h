@@ -20,7 +20,7 @@
 #define WINDOWSIZE 64
 #define MAXSEQNUM 128
 #define STARTSEQ 42
-#define ERORRCODE -1
+#define ERRORCODE -1
 #define SWMETHOD 0
 #define MESSAGELENGTH 256
 #define RTT 3
@@ -34,7 +34,16 @@
 */
 
 /* Enums */
-enum slidingWindowMethods { GBN = 0, SR = 1 };
+typedef enum 
+{
+	 GBN = 0, 
+	 SR = 1 
+}slidingWindowMethods;
+typedef enum 
+{ 
+	SNDR = 0,
+	RCVR = 1
+}whoIs;
 
 //! Enum itself can't be used as variable.
 //! Remove comment when everyone has read.
@@ -47,12 +56,10 @@ typedef enum
 	FIN=4,
 }flag;
 
-
 /* Struct definitions */
 
 typedef struct
 {
-	
 	uint16_t windowSize;
 	uint32_t sequence;
     uint32_t ackNum;
