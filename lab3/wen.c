@@ -8,6 +8,7 @@
  ****************************************************************/ 
 
 #include <stdio.h>
+#include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,8 +35,16 @@
 #define ACK 2
 #define FIN 4
 
-// TODO: Fix checksum function
+/*
+	!Has to be first in file
+	Error handling function
+	Exits program after printing error message
+*/
 
+void errorHandler(char* errmsg, int errCode)
+{
+
+}
 
 uint32_t calcChecksum(const void* message, uint32_t length)
 {
