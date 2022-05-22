@@ -773,8 +773,9 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
 
         if(SRwindow < WINDOWSIZE)
         {
+            server.buffer[currentSeq] = *message;
             if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
-            *currentSeq = (*currentSeq + 1) % MAXSEQNUM;
+            *currentSeq = (*currentSeq + 1) % MAXSEQNUM;      
             SRwindow++;
             //* Start TIMER
             printf("Implement later\n");
@@ -783,7 +784,7 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
 
         else if(SRwindow >= WINDOWSIZE && message->ackNum == server.baseSeqNum) 
         {
-
+            server.buffer[message->ackNum] = '\0';
             server.baseSeqNum++;
             SRwindow--;
         }
