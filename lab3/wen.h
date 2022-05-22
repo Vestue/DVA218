@@ -82,6 +82,7 @@ typedef struct
 	int sock;
 	int baseSeqNum;
 	int FIN_SET;
+	struct timespec FIN_SET_time;
 	struct messageBuffer buffer[MAXSEQNUM];
 }ConnectionInfo;
 
@@ -161,8 +162,7 @@ void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr);
 
-int DisconnectServerSide(int sock, Datagram sendTo, struct sockaddr_in* dest);
-
+int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet);
 
 int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in dest);
 
@@ -262,7 +262,7 @@ void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
 	Also check if FIN is set in the received message. 
 	If that is the case: trigger disconnect process.
 */
-void interpretPack_receiver(int sock, ClientList *clients);
+void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSet);
 
 /*
 *   GO BACK N Functions
