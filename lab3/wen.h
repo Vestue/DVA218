@@ -21,8 +21,9 @@
 #define MAXSEQNUM 128
 #define STARTSEQ 42
 #define ERRORCODE -1
-#define SWMETHOD 0
 #define MESSAGELENGTH 256
+
+// RTT is assumed to be 3 seconds
 #define RTT 3
 
 /*
@@ -31,6 +32,7 @@
 	Go-Back-N = 0
 	Selective Repeat = 1
 */
+#define SWMETHOD 0
 
 /* Enums */
 enum slidingWindowMethods { GBN = 0, SR = 1 };
@@ -160,7 +162,7 @@ int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr
 
 int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet);
 
-int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr, int nextSeq);
+int DisconnectClientSide(ConnectionInfo server, int nextSeq);
 
 
 /*
