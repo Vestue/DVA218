@@ -235,6 +235,7 @@ int setFIN(struct sockaddr_in addr, ClientList* list);
 
 	Return 1 if the FIN state is set,
 	0 if it isn't.
+    Return ERRORCODE if client can't be found.
 */
 int isFINSet(ConnectionInfo connection);
 
@@ -244,10 +245,18 @@ int isFINSet(ConnectionInfo connection);
 
 	Fill datagram with default information about
 	window size, sequence number.
-	Set flag to DATA and set message to '\0'.
+	Set flag to UNSET and set message to '\0'.
 */
 void setDefaultHeader(Datagram messageToSend);
 
+/*
+    * Pack flags into Datagram.
+    * Include seqNum and ACKNum that was last received from the intended recepient of the package.
+    * 
+    * Use NULL as input for receivedDatagram if no datagram has been received yet.
+    * (NULL should only be used for SYN)
+*/
+void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram);
 
 /*
     Pack message into datagram and set correct information for a data packet.
