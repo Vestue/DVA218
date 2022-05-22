@@ -242,7 +242,11 @@ void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram);
 */
 void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
 
+<<<<<<< Updated upstream
 void interpretPack_receiver(int sock, Datagram packet, struct sockaddr_in addr, ClientList *clients);
+=======
+void interpretPack_receiver(int sock, Datagram packet, ClientList *clients);
+>>>>>>> Stashed changes
 
 /*
 *   GO BACK N Functions
