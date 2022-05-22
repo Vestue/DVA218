@@ -42,7 +42,6 @@ int main(int argc, char *argv[])
 
 	char message[MESSAGELENGTH] = { '\0' };
 	int currentSeq = serverInfo.baseSeqNum;
-	int currentWindow = serverInfo.windowCount;
 	int retval = 0;
 	printf("\n>");
 	fflush(stdout);
@@ -104,14 +103,7 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int* currentSeq)
 
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
-	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERRORCODE;
+	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
 	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
 	return 1;
 }
-
-
-
-	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERRORCODE;
-	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
-	return 1;
-

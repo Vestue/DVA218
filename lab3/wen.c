@@ -250,7 +250,7 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
     Datagram messageToSend = initDatagram();
 
     setHeader(messageToSend, SYN, 0, 0);
-    strncpy(messageToSend->message, "LINE:257!\0", strlen("LINE:257!\0")); //! Test message, remove later
+    // strncpy(messageToSend->message, "LINE:257!\0", strlen("LINE:257!\0")); //! Test message, remove later
 	messageToSend->checksum = calcChecksum(messageToSend, sizeof(*messageToSend));
 
 	if(sendMessage(sock, messageToSend, dest) < 0)
@@ -278,7 +278,7 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 		if(messageToReceive->flag == SYN + ACK)
 		{
             setHeader(messageToSend, ACK, 0, messageToReceive->sequence);
-			strncpy(messageToSend->message, "LINE:285!\0", strlen("LINE:285!\0")); //! Test message, remove later
+			// strncpy(messageToSend->message, "LINE:285!\0", strlen("LINE:285!\0")); //! Test message, remove later
 			messageToSend->checksum = calcChecksum(messageToSend, sizeof(*messageToSend));
 
 			if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
@@ -438,25 +438,15 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 //!Abstract
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
-
-    
-    struct sockaddr_in recvAddr;
-
-
     while(1)
     {
-<<<<<<< HEAD
-        Datagram toSend = initDatagram();
-        setHeader(toSend, ACK, 0, packet->sequence);
-        client->baseSeqNum++;
-=======
 
-        recvMessage(sock, packet, &client.addr);
+        recvMessage(sock, packet, &client->addr);
 	
         if(packet->sequence == client->baseSeqNum)
         {
             Datagram toSend = initDatagram();
-            setHeader(toSend, ACK, packet);
+            setHeader(toSend, ACK, 0, packet->sequence);
             printf("received packet, sending back ACK\n");
             sendMessage(sock, packet, client->addr);
             client->baseSeqNum++;
@@ -464,7 +454,6 @@ void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client
 
         
 
->>>>>>> 8522c424cd4a6c76f486d11adac16540bb4000d6
     }
 }
 
@@ -612,6 +601,46 @@ int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr
     return datagramToSend->sequence;
 }
 
+int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet)
+{
+	if ((receivedDatagram->flag == FIN)) 
+	{
+		Datagram toSend = initDatagram();
+    	setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->sequence);
+		if (sendMessage(client->sock, toSend, client->addr) < 0)
+		{
+			printf("Failed to disconnect client\n");
+			return ERRORCODE;
+		}
+		clock_gettime(CLOCK_MONOTONIC_RAW, &client->FIN_SET_time);
+	}
+
+	//Fully disconnect client by removing and closing socket.
+	else if ((receivedDatagram->flag == ACK && isFINSet(*client)) || (isFINSet(*client) && client->FIN_SET_time.tv_sec > 4 * RTT))
+	{
+        printf("\nDisconnectedclient %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
+		close(client->sock);
+		FD_CLR(client->sock, activeFdSet);
+		removeFromClientList(clientList, client->addr);
+	}
+
+	// Resend FIN
+	//? Needs to be last if-state as this checks for a shorter elapsed time
+	//? than previous one
+	else if (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)
+	{
+		Datagram toSend = initDatagram();
+		setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->sequence);
+		if (sendMessage(client->sock, toSend, client->addr) < 0)
+		{
+			printf("Failed to disconnect client\n");
+			return ERRORCODE;
+		}
+	}
+
+	return 1;
+}
+
 int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr, int nextSeq)
 {
     Datagram messageReceived = initDatagram();
@@ -733,56 +762,43 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 
         if(SRwindow < WINDOWSIZE)
         {
-<<<<<<< Updated upstream
-			strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
-<<<<<<< HEAD
-            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
-=======
-            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERORRCODE;
-=======
 
->>>>>>> Stashed changes
->>>>>>> 8522c424cd4a6c76f486d11adac16540bb4000d6
+			strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
+
+            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
+
+            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
+
             *currentSeq = (*currentSeq + 1) % MAXSEQNUM;      
-            server.buffer->message[*currentSeq] = *message;
-            if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
+            server->buffer->message[*currentSeq] = *message;
+            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
             printf("Sending package: %s Sequence: %d Window Size: %d\n", toSend->message, *currentSeq, SRwindow);
             //* Start TIMER
             printf("Implement later\n");
             SRwindow++;
             return 1;
         }
-        recvMessage(server.sock, messageReceived, &server.addr);
+        recvMessage(server->sock, messageReceived, &server->addr);
 
-<<<<<<< Updated upstream
 		/* 
 		! What is message->ackNum? Gives errors
-        else if(SRwindow >= WINDOWSIZE && message->ackNum == server.baseSeqNum) 
+        else if(SRwindow >= WINDOWSIZE && message->ackNum == server->baseSeqNum) 
         {
             server->buffer[message->ackNum].message = '\0';
             server->baseSeqNum++;
-=======
-        if(messageReceived->ackNum == server.baseSeqNum) 
+        if(messageReceived->ackNum == server->baseSeqNum) 
         {
             printf("Received ACK!");
-            server.buffer->message[server.baseSeqNum] = '\0';
-            server.baseSeqNum++;
->>>>>>> Stashed changes
+            server->buffer->message[server->baseSeqNum] = '\0';
+            server->baseSeqNum++;
             SRwindow--;
         }
         */
 
 
 
-<<<<<<< Updated upstream
         //recvMessage(server->sock, message, &server->addr);
-=======
-        
->>>>>>> Stashed changes
     }
-
-
-    
 }
 
 
