@@ -64,12 +64,10 @@ int main()
 			{
 				printf("\nI'm working on it!\n");
 				printf(">Reading from socket %d\n", currSock);
-
-				close(currSock);
-				FD_CLR(currSock, &activeFdSet);
-
-				//TODO add when GBN sender has been implemented
-				//interpretPack_receiver(currSock, &clients, &activeFdSet);
+				interpretPack_receiver(currSock, &clients, &activeFdSet);
+				
+				//close(currSock);
+				//FD_CLR(currSock, &activeFdSet);
 			}
 		}
 
