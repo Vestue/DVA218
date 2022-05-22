@@ -351,25 +351,23 @@ int acceptClientConnection(int serverSock, ClientList* list)
 	}
 }
 
-void interpretPack_receiver(int sock, ClientList *clientList)
+void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSet)
 {
 	Datagram receivedDatagram = initDatagram();
 	ConnectionInfo *client = findClientFromSock(clientList, sock);
 	printf("I got into interpret!\n");
 	printf("clientSoc %d, sock %d\n",client->sock, sock);
-	//recvMessage(client->sock, receivedDatagram, &client->addr);
+	recvMessage(client->sock, receivedDatagram, &client->addr);
 
-	if (receivedDatagram->flag == FIN)
+	//* Start disconnect process
+	if (receivedDatagram->flag == FIN || (receivedDatagram->flag == ACK && isFINSet(*client))
+		|| (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)) 
 	{
-		setFIN(client->addr, clientList);
-		// TODO: Start disconnect stuff and remove client from list upon timeout
-	}
-	else if (receivedDatagram->flag == ACK && isFINSet(*client))
-	{
-		//Fully disconnect client by removing and closing socket.
+		DisconnectServerSide(client, receivedDatagram, clientList, activeFdSet);
 	}
 	else if (receivedDatagram->flag == ACK) return; // What is the client ACKing?
 
+	//* Send to GBN or SR to handle DATA in package
 	if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
 	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clientList);
 }
@@ -387,7 +385,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 		}
 	}*/
 
-	if (receivedDatagram->sequence == client->baseSeqNum) //TODO || non-corrupt(PKT)
+	if ((receivedDatagram->sequence == client->baseSeqNum) || (!corrupt(receivedDatagram)))
 	{
 		Datagram toSend = initDatagram();
 		setHeader(toSend, ACK, receivedDatagram);
@@ -396,10 +394,16 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 	// else discard
 }
 
-void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
+void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
-	Datagram messageToSend = initDatagram();
-    printf("%d", messageToSend->windowSize); //? Just to get rid of warnings
+	
+    if(packet->sequence == client->baseSeqNum)
+    {
+        Datagram toSend = initDatagram();
+        setHeader(toSend, ACK, packet);
+        client->baseSeqNum++;
+    }
+    
 }
 
 
@@ -539,53 +543,44 @@ int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr
     return datagramToSend->sequence;
 }
 
-int DisconnectServerSide(int sock, Datagram sendTo, struct sockaddr_in* dest)
+int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet)
 {
-
-    Datagram receivedDatagram = initDatagram();
-	struct sockaddr_in tempAddr;
-    if(recvMessage(sock, receivedDatagram, &tempAddr) < 0)
-    {
-        printf("Failed to disconnect from client\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if(receivedDatagram->flag == FIN)
-    {
-        *dest = tempAddr;
-        setHeader(sendTo, ACK, receivedDatagram);
-        if(sendMessage(sock, sendTo, *dest) < 0)
-        {
-            printf("Failed to disconnect from client\n");
-            exit(EXIT_FAILURE);
-        }
-
-        setHeader(sendTo, FIN, receivedDatagram);
-    }
-    
-
-	while(1)
+	if ((receivedDatagram->flag == FIN)) 
 	{
-        if (sendMessage(sock, sendTo, *dest) < 0)
-        {
-            printf("Failed to disconnect from client");
-            exit(EXIT_FAILURE);
-        }
-        
-
-        if(receivedDatagram->flag == ACK)
-        {
-            printf("\nDisconnected\n");
-
-            return 1;
-
-        }
-
-	
-        recvMessage(sock, receivedDatagram, &tempAddr);
+		Datagram toSend = initDatagram();
+    	setHeader(toSend, FIN, receivedDatagram);
+		if (sendMessage(client->sock, toSend, client->addr) < 0)
+		{
+			printf("Failed to disconnect client\n");
+			return ERORRCODE;
+		}
+		clock_gettime(CLOCK_MONOTONIC_RAW, &client->FIN_SET_time);
 	}
 
+	//Fully disconnect client by removing and closing socket.
+	else if ((receivedDatagram->flag == ACK && isFINSet(*client)) || (isFINSet(*client) && client->FIN_SET_time.tv_sec > 4 * RTT))
+	{
+        printf("\nDisconnectedclient %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
+		close(client->sock);
+		FD_CLR(client->sock, activeFdSet);
+		removeFromClientList(clientList, client->addr);
+	}
 
+	// Resend FIN
+	//? Needs to be last if-state as this checks for a shorter elapsed time
+	//? than previous one
+	else if (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)
+	{
+		Datagram toSend = initDatagram();
+		setHeader(toSend, FIN, receivedDatagram);
+		if (sendMessage(client->sock, toSend, client->addr) < 0)
+		{
+			printf("Failed to disconnect client\n");
+			return ERORRCODE;
+		}
+	}
+
+	return 1;
 }
 
 int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr)
@@ -745,3 +740,53 @@ void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq)
 	datagramToSend->sequence = currentSeq;
     strncpy(datagramToSend->message, messageToSend, strlen(messageToSend));
 }
+
+
+
+int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
+{
+    int SRwindow = 0;
+	Datagram toSend = initDatagram();
+	packMessage(toSend, message, *currentSeq);
+    
+
+	
+
+    
+    
+
+
+    while(1)
+    {
+        
+
+        if(SRwindow < WINDOWSIZE)
+        {
+            server.buffer[currentSeq] = *message;
+            if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
+            *currentSeq = (*currentSeq + 1) % MAXSEQNUM;      
+            SRwindow++;
+            //* Start TIMER
+            printf("Implement later\n");
+            return 1;
+        }
+
+        else if(SRwindow >= WINDOWSIZE && message->ackNum == server.baseSeqNum) 
+        {
+            server.buffer[message->ackNum] = '\0';
+            server.baseSeqNum++;
+            SRwindow--;
+        }
+        
+
+
+
+        recvMessage(server.sock, message, &server.addr);
+    }
+
+
+    
+}
+
+
+

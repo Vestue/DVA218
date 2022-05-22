@@ -107,15 +107,5 @@ int writeMessageGBN(ConnectionInfo server, char* message, int* currentSeq)
 	return 1;
 }
 
-int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
-{
-	Datagram toSend = initDatagram();
-	packMessage(toSend, message, *currentSeq);
 
-	//* Start TIMER
-	printf("Implement later\n");
 
-	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
-	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
-	return 1;
-}
