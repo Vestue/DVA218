@@ -20,11 +20,8 @@
 #define WINDOWSIZE 64
 #define MAXSEQNUM 128
 #define STARTSEQ 42
-#define ERRORCODE -1
+#define ERORRCODE -1
 #define SWMETHOD 0
-#define MESSAGELENGTH 256
-#define RTT 3
-
 /*
 	Set if Go-Back-N or Selective Repeat should
 	be used as the method for sliding windows.
@@ -34,27 +31,19 @@
 */
 
 /* Enums */
-typedef enum 
-{
-	 GBN = 0, 
-	 SR = 1 
-}slidingWindowMethods;
-typedef enum 
-{ 
-	SNDR = 0,
-	RCVR = 1
-}whoIs;
+enum slidingWindowMethods { GBN = 0, SR = 1 };
 
 //! Enum itself can't be used as variable.
 //! Remove comment when everyone has read.
 typedef enum 
 { 
-	DATA=0,
+	UNSET=0,
 	SYN=1,
 	ACK=2,
 	SYNACK=3,
 	FIN=4,
 }flag;
+
 
 /* Struct definitions */
 
@@ -64,24 +53,15 @@ typedef struct
 	uint32_t sequence;
     uint32_t ackNum;
 	uint8_t flag;
-	uint32_t checksum;
+	uint16_t checksum;
     char message[MAXLENGTH];
 }Header;
 
-/*
-	Message should be set to '\0' per default.
-
-	If a message is sent/received it should be 
-	put into the buffer with the time that it
-	was sent/received.
-
-	Get the timestamp by doing time(&timeStamp);
-*/
-struct messageBuffer
-{
-	char message[MESSAGELENGTH];
-	struct timespec timeStamp;
-};
+// struct Packet
+// {
+// 	struct Header header;
+// 	char message[MAXLENGTH];
+// };
 
 typedef struct
 {
@@ -89,8 +69,6 @@ typedef struct
 	int sock;
 	int baseSeqNum;
 	int FIN_SET;
-	struct timespec FIN_SET_time;
-	struct messageBuffer buffer[MAXSEQNUM];
 }ConnectionInfo;
 
 
@@ -158,7 +136,7 @@ int acceptClientConnection(int serverSock, ClientList* list);
     Returns 1 if successful, ERRORCODE if not.
 	Put server information into the ConnectionInfo in the ClientList upon connection.
 */
-int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list);
+int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in dest, ClientList* list);
 
 /**
  *
@@ -169,7 +147,7 @@ void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr);
 
-int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet);
+int DisconnectServerSide(int sock, Datagram disconnRequest, struct sockaddr_in* dest);
 
 int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr, int nextSeq);
 
@@ -200,7 +178,7 @@ void stopTimer(Datagram timedConnection, int seqNum);
 void restartTimer(Datagram timedConnection, int seqNum);
 
 //!  Feeling cute might delete later :3
-void timeoutTest(int signum);
+void timeoutTest();
 
 
 /*
@@ -237,7 +215,7 @@ int setFIN(struct sockaddr_in addr, ClientList* list);
 	0 if it isn't.
     Return ERRORCODE if client can't be found.
 */
-int isFINSet(ConnectionInfo connection);
+int isFINSet(struct sockaddr_in addr, ClientList* list);
 
 
 /*
@@ -263,13 +241,6 @@ void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram);
 */
 void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
 
-/*
-	Resolve which client initiated the connection and send the
-	forward into GBN or SR depending on which method is to be used.
-
-	Also check if FIN is set in the received message. 
-	If that is the case: trigger disconnect process.
-*/
 void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSet);
 
 /*
@@ -280,7 +251,7 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	Main function of GBN, this takes the data and then does different
 	things depending on what flag is in the datagram.
 */
-void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList);
+void interpretWith_GBN_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients);
 //         switch (receivedMessage->header.flag)
             //{
             //	case SYN:
@@ -311,7 +282,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 *   Selective repeat functions
 */
 
-void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients);
+void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients);
 
 /*
 	Allocate memory to a list used for client connection info.
@@ -356,13 +327,5 @@ int isInClientList(ClientList *list, struct sockaddr_in addr);
     Return NULL if it can't be found. 
 */
 ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr);
-
-/*
-	Find the client that matches given sock.
-
-	Return pointer to ConnectionInfo if found.
-	Return NULL if not.
-*/
-ConnectionInfo* findClientFromSock(ClientList *list, int sock);
 
 #endif

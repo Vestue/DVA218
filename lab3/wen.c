@@ -33,6 +33,7 @@
 #define SYN 1
 #define ACK 2
 #define FIN 4
+int SRwindow = 0;
 
 uint32_t calcChecksum(const void* message, uint32_t length)
 {
@@ -437,14 +438,34 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 //!Abstract
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
-	
-    if(packet->sequence == client->baseSeqNum)
+
+    
+    struct sockaddr_in recvAddr;
+
+
+    while(1)
     {
+<<<<<<< HEAD
         Datagram toSend = initDatagram();
         setHeader(toSend, ACK, 0, packet->sequence);
         client->baseSeqNum++;
+=======
+
+        recvMessage(sock, packet, &client.addr);
+	
+        if(packet->sequence == client->baseSeqNum)
+        {
+            Datagram toSend = initDatagram();
+            setHeader(toSend, ACK, packet);
+            printf("received packet, sending back ACK\n");
+            sendMessage(sock, packet, client->addr);
+            client->baseSeqNum++;
+        }
+
+        
+
+>>>>>>> 8522c424cd4a6c76f486d11adac16540bb4000d6
     }
-    
 }
 
 
@@ -701,8 +722,9 @@ int isFINSet(ConnectionInfo connection)
 
 int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 {
-    int SRwindow = 0;
+    
 	Datagram toSend = initDatagram();
+    Datagram messageReceived = initDatagram();
 	packMessage(toSend, message, *currentSeq);
 
     while(1)
@@ -711,28 +733,52 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 
         if(SRwindow < WINDOWSIZE)
         {
+<<<<<<< Updated upstream
 			strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
+<<<<<<< HEAD
             if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
+=======
+            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERORRCODE;
+=======
+
+>>>>>>> Stashed changes
+>>>>>>> 8522c424cd4a6c76f486d11adac16540bb4000d6
             *currentSeq = (*currentSeq + 1) % MAXSEQNUM;      
-            SRwindow++;
+            server.buffer->message[*currentSeq] = *message;
+            if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
+            printf("Sending package: %s Sequence: %d Window Size: %d\n", toSend->message, *currentSeq, SRwindow);
             //* Start TIMER
             printf("Implement later\n");
+            SRwindow++;
             return 1;
         }
+        recvMessage(server.sock, messageReceived, &server.addr);
 
+<<<<<<< Updated upstream
 		/* 
 		! What is message->ackNum? Gives errors
         else if(SRwindow >= WINDOWSIZE && message->ackNum == server.baseSeqNum) 
         {
             server->buffer[message->ackNum].message = '\0';
             server->baseSeqNum++;
+=======
+        if(messageReceived->ackNum == server.baseSeqNum) 
+        {
+            printf("Received ACK!");
+            server.buffer->message[server.baseSeqNum] = '\0';
+            server.baseSeqNum++;
+>>>>>>> Stashed changes
             SRwindow--;
         }
         */
 
 
 
+<<<<<<< Updated upstream
         //recvMessage(server->sock, message, &server->addr);
+=======
+        
+>>>>>>> Stashed changes
     }
 
 

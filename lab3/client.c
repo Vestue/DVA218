@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     */
     ConnectionInfo serverInfo = connectToServer(sock, hostName);
 	serverInfo.baseSeqNum = serverInfo.baseSeqNum % MAXSEQNUM;
+	
     printf("%d\n", serverInfo.baseSeqNum);
 
 	fd_set activeFdSet, readFdSet;
@@ -41,6 +42,7 @@ int main(int argc, char *argv[])
 
 	char message[MESSAGELENGTH] = { '\0' };
 	int currentSeq = serverInfo.baseSeqNum;
+	int currentWindow = serverInfo.windowCount;
 	int retval = 0;
 	printf("\n>");
 	fflush(stdout);
@@ -90,7 +92,7 @@ int main(int argc, char *argv[])
 int writeMessage(ConnectionInfo *server, char* message, int* currentSeq)
 {
 	int retval;
-	if (SWMETHOD == GBN) retval = writeMessageGBN(server, message, currentSeq);
+	if (SWMETHOD == SR) retval = writeMessageGBN(server, message, currentSeq);
 	else retval = writeMessageSR(server, message, currentSeq);
 	return retval;
 }
