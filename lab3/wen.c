@@ -357,32 +357,13 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	ConnectionInfo *client = findClientFromSock(clientList, sock);
 	printf("I got into interpret!\n");
 	printf("clientSoc %d, sock %d\n",client->sock, sock);
-	//recvMessage(client->sock, receivedDatagram, &client->addr);
+	recvMessage(client->sock, receivedDatagram, &client->addr);
 
 	//* Start disconnect process
-	if (receivedDatagram->flag == FIN) 
+	if (receivedDatagram->flag == FIN || (receivedDatagram->flag == ACK && isFINSet(*client))
+		|| (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)) 
 	{
-		if(DisconnectServerSide(client, receivedDatagram)) printf("Failed to disconnect client\n");
-	}
-
-	//Fully disconnect client by removing and closing socket.
-	else if ((receivedDatagram->flag == ACK && isFINSet(*client)) || (isFINSet(*client) && client->FIN_SET_time.tv_sec > 4 * RTT))
-	{
-        printf("\nDisconnectedclient %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
-		close(client->sock);
-		FD_CLR(client->sock, activeFdSet);
-		removeFromClientList(clientList, client->addr);
-	}
-
-	// Resend FIN
-	else if (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)
-	{
-		Datagram toSend = initDatagram();
-		setHeader(toSend, FIN, receivedDatagram);
-		if (sendMessage(client->sock, toSend, client->addr) < 0)
-		{
-			printf("Failed to disconnect client\n");
-		}
+		DisconnectServerSide(client, receivedDatagram, clientList, activeFdSet);
 	}
 	else if (receivedDatagram->flag == ACK) return; // What is the client ACKing?
 
@@ -404,7 +385,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 		}
 	}*/
 
-	if (receivedDatagram->sequence == client->baseSeqNum) //TODO || non-corrupt(PKT)
+	if ((receivedDatagram->sequence == client->baseSeqNum) || (!corrupt(receivedDatagram)))
 	{
 		Datagram toSend = initDatagram();
 		setHeader(toSend, ACK, receivedDatagram);
@@ -556,16 +537,43 @@ int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr
     return datagramToSend->sequence;
 }
 
-int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram)
+int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet)
 {
-	Datagram toSend = initDatagram();
-    setHeader(toSend, FIN, receivedDatagram);
-	if (sendMessage(client->sock, toSend, client->addr) < 0)
+	if ((receivedDatagram->flag == FIN)) 
 	{
-		printf("Failed to disconnect client\n");
-		return ERORRCODE;
+		Datagram toSend = initDatagram();
+    	setHeader(toSend, FIN, receivedDatagram);
+		if (sendMessage(client->sock, toSend, client->addr) < 0)
+		{
+			printf("Failed to disconnect client\n");
+			return ERORRCODE;
+		}
+		clock_gettime(CLOCK_MONOTONIC_RAW, &client->FIN_SET_time);
 	}
-	clock_gettime(CLOCK_MONOTONIC_RAW, &client->FIN_SET_time);
+
+	//Fully disconnect client by removing and closing socket.
+	else if ((receivedDatagram->flag == ACK && isFINSet(*client)) || (isFINSet(*client) && client->FIN_SET_time.tv_sec > 4 * RTT))
+	{
+        printf("\nDisconnectedclient %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
+		close(client->sock);
+		FD_CLR(client->sock, activeFdSet);
+		removeFromClientList(clientList, client->addr);
+	}
+
+	// Resend FIN
+	//? Needs to be last if-state as this checks for a shorter elapsed time
+	//? than previous one
+	else if (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)
+	{
+		Datagram toSend = initDatagram();
+		setHeader(toSend, FIN, receivedDatagram);
+		if (sendMessage(client->sock, toSend, client->addr) < 0)
+		{
+			printf("Failed to disconnect client\n");
+			return ERORRCODE;
+		}
+	}
+
 	return 1;
 }
 

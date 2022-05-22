@@ -162,7 +162,7 @@ void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr);
 
-int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram);
+int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet);
 
 int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in dest);
 
