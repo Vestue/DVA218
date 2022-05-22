@@ -105,7 +105,7 @@ int writeMessage(ConnectionInfo *server, char* message, int* currentSeq)
 int writeMessageGBN(ConnectionInfo *server, char* message, int* currentSeq)
 {
 	// Don't send if window full
-	if(abs(server->baseSeqNum - *currentSeq) > WINDOWSIZE) return 0;
+	if(*currentSeq > (server->baseSeqNum + WINDOWSIZE) % MAXSEQNUM) return 0;
 
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
