@@ -159,9 +159,38 @@ void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 	else printf("Received a corrupt packet!\n");
 }
 
+
+int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
+{
+    
+	Datagram toSend = initDatagram();
+	packMessage(toSend, message, *currentSeq);
+
+    
+        if(*currentSeq > (server->baseSeqNum + WINDOWSIZE) % MAXSEQNUM) return 0;
+
+		
+        if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
+        printf("Sending package: %s Sequence(%d)\n", toSend->message, *currentSeq);
+		strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
+        //* Start TIMER
+        printf("Implement later\n");
+		    
+        
+        return 1;
+        
+    
+    
+}
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 {
-	
+	if(receivedDatagram->flag == ACK && !corrupt(receivedDatagram ))
+	{
+		strncpy(server->buffer[receivedDatagra].message, '\0', sizeof(char));
+		server->baseSeqNum++;
+		
+
+	}
 }
 
 void resendTimedOutPacks(ConnectionInfo *server, int *currentSeq)

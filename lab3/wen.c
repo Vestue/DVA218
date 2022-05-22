@@ -458,24 +458,21 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 //!Abstract
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
-    while(1)
-    {
-
-        recvMessage(sock, packet, &client->addr);
+    
 	
-        if(packet->sequence == client->baseSeqNum)
+        if(packet->sequence == client->baseSeqNum || (!corrupt(packet)))
         {
             Datagram toSend = initDatagram();
 			//TODO: Check if function is used correctly
             setHeader(toSend, ACK, 0, packet->sequence);
             printf("received packet, sending back ACK\n");
-            sendMessage(sock, packet, client->addr);
+            sendMessage(sock, toSend, client->addr);
             client->baseSeqNum++;
         }
 
         
 
-    }
+    
 }
 
 
@@ -790,57 +787,7 @@ int isFINSet(ConnectionInfo connection)
     * Functions to set neccessary information in header depending on flag.
 */
 
-int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
-{
-    
-	Datagram toSend = initDatagram();
-    Datagram messageReceived = initDatagram();
-	packMessage(toSend, message, *currentSeq);
 
-    while(1)
-    {
-        
-
-        if(SRwindow < WINDOWSIZE)
-        {
-
-			strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
-
-            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
-
-            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
-
-            *currentSeq = (*currentSeq + 1) % MAXSEQNUM;      
-            server->buffer->message[*currentSeq] = *message;
-            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
-            printf("Sending package: %s Sequence: %d Window Size: %d\n", toSend->message, *currentSeq, SRwindow);
-            //* Start TIMER
-            printf("Implement later\n");
-            SRwindow++;
-            return 1;
-        }
-        recvMessage(server->sock, messageReceived, &server->addr);
-
-		/* 
-		! What is message->ackNum? Gives errors
-        else if(SRwindow >= WINDOWSIZE && message->ackNum == server->baseSeqNum) 
-        {
-            server->buffer[message->ackNum].message = '\0';
-            server->baseSeqNum++;
-        if(messageReceived->ackNum == server->baseSeqNum) 
-        {
-            printf("Received ACK!");
-            server->buffer->message[server->baseSeqNum] = '\0';
-            server->baseSeqNum++;
-            SRwindow--;
-        }
-        */
-
-
-
-        //recvMessage(server->sock, message, &server->addr);
-    }
-}
 
 
 
