@@ -120,6 +120,7 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int* currentSeq)
 	time_t currTime;
 	time(&currTime);
 	printf("Message sent at: %s", ctime(&currTime));
+	printf("-with SEQ(%d)\n", toSend->sequence);
 	return 1;
 }
 
