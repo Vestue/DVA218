@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 			{
 				fgets(message, MESSAGELENGTH, stdin);
 				message[MESSAGELENGTH - 1] = '\0';
-				retval = writeMessage(serverInfo, message, &currentSeq);
+				retval = writeMessage(&serverInfo, message, &currentSeq);
 				if (retval == 1) printf("\nMessage sent!\n");
 				else if (retval == ERORRCODE) printf("Could not send message!\n");
 				else printf("Window is full!\n");
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 }
 
 //? Move this when testing is done
-int writeMessage(ConnectionInfo server, char* message, int* currentSeq)
+int writeMessage(ConnectionInfo *server, char* message, int* currentSeq)
 {
 	int retval;
 	if (SWMETHOD == GBN) retval = writeMessageGBN(server, message, currentSeq);
@@ -95,14 +95,14 @@ int writeMessage(ConnectionInfo server, char* message, int* currentSeq)
 	return retval;
 }
 
-int writeMessageGBN(ConnectionInfo server, char* message, int* currentSeq)
+int writeMessageGBN(ConnectionInfo *server, char* message, int* currentSeq)
 {
 	// Don't send if window full
-	if(abs(server.baseSeqNum - *currentSeq) > WINDOWSIZE) return 0;
+	if(abs(server->baseSeqNum - *currentSeq) > WINDOWSIZE) return 0;
 
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
-	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
+	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERORRCODE;
 	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
 	return 1;
 }

@@ -369,7 +369,7 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 
 	//* Send to GBN or SR to handle DATA in package
 	if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
-	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clientList);
+	else interpretWith_SR_receiver(sock, receivedDatagram, client, clientList);
 }
 
 void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
@@ -743,18 +743,11 @@ void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq)
 
 
 
-int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
+int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 {
     int SRwindow = 0;
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
-    
-
-	
-
-    
-    
-
 
     while(1)
     {
@@ -762,8 +755,8 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
 
         if(SRwindow < WINDOWSIZE)
         {
-            server.buffer[currentSeq] = *message;
-            if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
+			strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
+            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERORRCODE;
             *currentSeq = (*currentSeq + 1) % MAXSEQNUM;      
             SRwindow++;
             //* Start TIMER
@@ -771,17 +764,20 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
             return 1;
         }
 
+		/* 
+		! What is message->ackNum? Gives errors
+
         else if(SRwindow >= WINDOWSIZE && message->ackNum == server.baseSeqNum) 
         {
-            server.buffer[message->ackNum] = '\0';
-            server.baseSeqNum++;
+            server->buffer[message->ackNum].message = '\0';
+            server->baseSeqNum++;
             SRwindow--;
         }
-        
+        */
 
 
 
-        recvMessage(server.sock, message, &server.addr);
+        //recvMessage(server->sock, message, &server->addr);
     }
 
 
