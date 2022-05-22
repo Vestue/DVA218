@@ -177,18 +177,22 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
         printf("Implement later\n");
 		    
         
-        return 1;
+	return 1;
         
     
     
 }
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 {
-	if(receivedDatagram->flag == ACK && !corrupt(receivedDatagram ))
+	printf("In sender SR\n");
+	if(receivedDatagram->flag == ACK)
 	{
-		strncpy(server->buffer[receivedDatagra].message, '\0', sizeof(char));
+		printf("Received ACK, baseSeq is %d\n", server->baseSeqNum);
+		printf("Ack Number is: %d\n", receivedDatagram->ackNum);
+		for (int i = 0; i < MESSAGELENGTH; i++)
+			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
 		server->baseSeqNum++;
-		
+		printf("New baseSeq is %d\n", server->baseSeqNum);
 
 	}
 }
