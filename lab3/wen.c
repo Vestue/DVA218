@@ -265,7 +265,7 @@ int initHandshakeWithServer(int sock, Datagram toSend, struct sockaddr_in dest, 
 	free(messageToReceive);
 	return ERORRCODE;
 }
-//?Maybe split up into smaller more precise functions
+//?Split up into smaller more precise functions
 int acceptClientConnection(int serverSock, ClientList* list)
 {
 	Datagram receivedDatagram = initDatagram();
