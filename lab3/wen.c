@@ -396,10 +396,12 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 	// else discard
 }
 
-void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
+void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
-	Datagram messageToSend = initDatagram();
-    printf("%d", messageToSend->windowSize); //? Just to get rid of warnings
+	Datagram ToSend = initDatagram();
+    
+    if(packet->sequence == client->baseSeqNum)
+    
 }
 
 
@@ -745,3 +747,45 @@ void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq)
 	datagramToSend->sequence = currentSeq;
     strncpy(datagramToSend->message, messageToSend, strlen(messageToSend));
 }
+
+
+
+int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
+{
+    int SRwindow = 0;
+	Datagram toSend = initDatagram();
+	packMessage(toSend, message, *currentSeq);
+    
+
+	
+
+    
+    
+
+
+    while(1)
+    {
+
+        if(SRwindow < WINDOWSIZE)
+        {
+            if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
+            *currentSeq = (*currentSeq + 1) % MAXSEQNUM;
+            SRwindow++;
+            //* Start TIMER
+            printf("Implement later\n");
+            return 1;
+        }
+
+        
+
+
+
+
+    }
+
+
+    
+}
+
+
+

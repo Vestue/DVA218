@@ -303,7 +303,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 *   Selective repeat functions
 */
 
-void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients);
+void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients);
 
 /*
 	Allocate memory to a list used for client connection info.
