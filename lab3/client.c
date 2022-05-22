@@ -109,3 +109,24 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int* currentSeq)
 	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
 	return 1;
 }
+
+void interpretPack_sender(ConnectionInfo *server, int *currentSeq)
+{
+	printf("In interpret sender!\n");
+	Datagram receivedDatagram = initDatagram();
+	recvMessage(server->sock, receivedDatagram, &server->addr);
+
+	//* Send to GBN or SR to handle DATA in package
+	if (SWMETHOD == GBN) interpretPack_sender_GBN(receivedDatagram, server);
+	else interpretPack_sender_SR(receivedDatagram, server);
+}
+
+void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
+{
+
+}
+
+void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
+{
+	
+}
