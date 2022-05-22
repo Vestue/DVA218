@@ -412,7 +412,7 @@ void interpretPack_receiver(int sock, ClientList *clientList)
 
 	//* Send to GBN or SR to handle DATA in package
 	if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
-	else interpretWith_SR_receiver(sock, receivedDatagram, client->addr, clientList);
+	else interpretWith_SR_receiver(sock, receivedDatagram, client, clientList);
 }
 
 //!Abstract
@@ -773,18 +773,60 @@ int isFINSet(ConnectionInfo connection)
     * Functions to set neccessary information in header depending on flag.
 */
 
+<<<<<<< HEAD
 int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
+=======
+void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram)
+{
+    datagramToSend->windowSize = WINDOWSIZE;
+	datagramToSend->message[0] = '\0';
+	//! Sequence numbers should be moved as they work diffrent depending on GBN/SR and sender/receiver
+	//? SYN and SYN + ACK can still be used though
+    switch (flag)
+    {
+        case SYN:
+            datagramToSend->flag = SYN;
+            datagramToSend->sequence = MAXSEQNUM - 1;
+            datagramToSend->ackNum = 0;
+            break;
+        case ACK:
+            datagramToSend->flag = ACK;
+            datagramToSend->ackNum = receivedDatagram->sequence + 1;
+            break;
+        case (SYN + ACK):
+            datagramToSend->flag = SYN + ACK;
+            datagramToSend->ackNum = receivedDatagram->sequence + 1;
+            datagramToSend->sequence = STARTSEQ;
+            break;
+        case FIN:
+            datagramToSend->flag = FIN;
+            datagramToSend->sequence = receivedDatagram->ackNum;
+            datagramToSend->ackNum = receivedDatagram->sequence + 1;
+            break;
+        default:
+            datagramToSend->flag = UNSET;
+            datagramToSend->sequence = receivedDatagram->ackNum;
+            datagramToSend->ackNum = receivedDatagram->sequence + 1;
+            break;
+    }
+}
+
+//! Change to use setHeader when brain starts working again
+void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq)
+{
+	datagramToSend->windowSize = WINDOWSIZE;
+	datagramToSend->sequence = currentSeq;
+    strncpy(datagramToSend->message, messageToSend, strlen(messageToSend));
+}
+
+
+
+int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
+>>>>>>> main
 {
     int SRwindow = 0;
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
-    
-
-	
-
-    
-    
-
 
     while(1)
     {
@@ -792,8 +834,8 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
 
         if(SRwindow < WINDOWSIZE)
         {
-            server.buffer[currentSeq] = *message;
-            if (sendMessage(server.sock, toSend, server.addr) < 0) return ERORRCODE;
+			strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
+            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERORRCODE;
             *currentSeq = (*currentSeq + 1) % MAXSEQNUM;      
             SRwindow++;
             //* Start TIMER
@@ -801,17 +843,20 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
             return 1;
         }
 
+		/* 
+		! What is message->ackNum? Gives errors
+
         else if(SRwindow >= WINDOWSIZE && message->ackNum == server.baseSeqNum) 
         {
-            server.buffer[message->ackNum] = '\0';
-            server.baseSeqNum++;
+            server->buffer[message->ackNum].message = '\0';
+            server->baseSeqNum++;
             SRwindow--;
         }
-        
+        */
 
 
 
-        recvMessage(server.sock, message, &server.addr);
+        //recvMessage(server->sock, message, &server->addr);
     }
 
 
