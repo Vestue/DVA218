@@ -49,7 +49,7 @@ typedef enum
 //! Remove comment when everyone has read.
 typedef enum 
 { 
-	UNSET=0,
+	DATA=0,
 	SYN=1,
 	ACK=2,
 	SYNACK=3,
@@ -157,7 +157,7 @@ int acceptClientConnection(int serverSock, ClientList* list);
     Returns 1 if successful, ERRORCODE if not.
 	Put server information into the ConnectionInfo in the ClientList upon connection.
 */
-int initHandshakeWithServer(int sock, Datagram connRequest, struct sockaddr_in dest, ClientList* list);
+int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list);
 
 /**
  *
@@ -244,18 +244,10 @@ int isFINSet(ConnectionInfo connection);
 
 	Fill datagram with default information about
 	window size, sequence number.
-	Set flag to UNSET and set message to '\0'.
+	Set flag to DATA and set message to '\0'.
 */
 void setDefaultHeader(Datagram messageToSend);
 
-/*
-    * Pack flags into Datagram.
-    * Include seqNum and ACKNum that was last received from the intended recepient of the package.
-    * 
-    * Use NULL as input for receivedDatagram if no datagram has been received yet.
-    * (NULL should only be used for SYN)
-*/
-void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram);
 
 /*
     Pack message into datagram and set correct information for a data packet.
