@@ -8,7 +8,6 @@
  ****************************************************************/ 
 
 #include <stdio.h>
-#include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,17 +33,6 @@
 #define SYN 1
 #define ACK 2
 #define FIN 4
-
-/*
-	!Has to be first in file
-	Error handling function
-	Exits program after printing error message
-*/
-
-void errorHandler(char* errmsg, int errCode)
-{
-
-}
 
 uint32_t calcChecksum(const void* message, uint32_t length)
 {
@@ -254,7 +242,7 @@ int initHandshakeWithServer(int sock, Datagram toSend, struct sockaddr_in dest, 
             setHeader(toSend, ACK, messageToReceive);
 			if(sendMessage(sock, toSend, dest) == ERORRCODE)
 			{
-				perror("Could not send message to server\n");
+				printf("Could not send message to server\n");
 				free(messageToReceive);
 				return ERORRCODE;
 			}
@@ -437,7 +425,7 @@ ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in 
 	else if (receivedDatagram->flag == SYN + ACK) tempInfo.baseSeqNum = receivedDatagram->ackNum;
 	else
 	{
-		printf("\nWrong usage of initConnectionInfo\n");
+		perror("\nWrong usage of initConnectionInfo\n");
 		exit(EXIT_FAILURE);
 	}
 	tempInfo.addr = recvAddr;
@@ -540,7 +528,7 @@ int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr
 
     if(DisconnectClientSide(sock, datagramToSend, *destAddr) != 1)
     {
-        printf("Failed disconnect handshake");
+        perror("Failed disconnect handshake");
         exit(EXIT_FAILURE);
 
     }
@@ -555,7 +543,7 @@ int DisconnectServerSide(int sock, Datagram sendTo, struct sockaddr_in* dest)
 	struct sockaddr_in tempAddr;
     if(recvMessage(sock, receivedDatagram, &tempAddr) < 0)
     {
-        printf("Failed to disconnect from client\n");
+        perror("Failed to disconnect from client\n");
         exit(EXIT_FAILURE);
     }
 
@@ -565,7 +553,7 @@ int DisconnectServerSide(int sock, Datagram sendTo, struct sockaddr_in* dest)
         setHeader(sendTo, ACK, receivedDatagram);
         if(sendMessage(sock, sendTo, *dest) < 0)
         {
-            printf("Failed to disconnect from client\n");
+            perror("Failed to disconnect from client\n");
             exit(EXIT_FAILURE);
         }
 
@@ -577,7 +565,7 @@ int DisconnectServerSide(int sock, Datagram sendTo, struct sockaddr_in* dest)
 	{
         if (sendMessage(sock, sendTo, *dest) < 0)
         {
-            printf("Failed to disconnect from client");
+            perror("Failed to disconnect from client");
             exit(EXIT_FAILURE);
         }
         
@@ -607,7 +595,7 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr)
 	setHeader(sendTo, FIN, messageReceived);
 	if(sendMessage(sock, sendTo, destAddr) < 0)
 	{
-		printf("Failed to disconnect from server");
+		perror("Failed to disconnect from server");
 		exit(EXIT_FAILURE);
 	}
  
