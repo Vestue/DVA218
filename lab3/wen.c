@@ -642,7 +642,8 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 		clock_gettime(CLOCK_MONOTONIC_RAW, &client->FIN_SET_time);
 	}
 
-	//Fully disconnect client by removing and closing socket.
+	// Fully disconnect client by removing and closing socket.
+	// This timeout is used if all ACKs gets lost from the client
 	else if ((receivedDatagram->flag == ACK && isFINSet(*client)) 
 		|| (isFINSet(*client) && (currTime.tv_sec - client->FIN_SET_time.tv_sec) > 4 * RTT))
 	{
@@ -674,46 +675,50 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr,
 {
     Datagram messageReceived = initDatagram();
     struct sockaddr_in tempAddr;
-    int counter = 0;
 	
     printf("In disconnect clientside\n");
 	//TODO: Check if function is used correctly
+
 	setHeader(sendTo, FIN, nextSeq, nextSeq);
-	if(sendMessage(sock, sendTo, destAddr) < 0)
+	struct timespec time_current, time_FIN_sent, time_FIN_received;
+	time_FIN_received.tv_sec = 0;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &time_FIN_sent);
+	do
 	{
-		printf("Failed to disconnect from server");
-		exit(EXIT_FAILURE);
-	}
- 
+		clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
+		if (time_current.tv_sec - time_FIN_sent.tv_sec > 2 * RTT)
+		{
+			printf("Sending FIN..\n");
+			if(sendMessage(sock, sendTo, destAddr) < 0)
+			{
+				printf("Failed to disconnect from server");
+				exit(EXIT_FAILURE);
+			}
+			clock_gettime(CLOCK_MONOTONIC_RAW, &time_FIN_sent);
+		}
+		recvMessage(sock, messageReceived, &tempAddr);
+	} while (messageReceived->flag != ACK || messageReceived->flag != FIN);
 
 	while(1)
 	{
+		if (messageReceived->flag == ACK) printf("Received ACK\n");
+		else if(messageReceived->flag == FIN)
+		{
+			//TODO: Check if function is used correctly
+			setHeader(sendTo, ACK, 0, messageReceived->sequence);
+			sendMessage(sock, sendTo, destAddr);
+			clock_gettime(CLOCK_MONOTONIC_RAW, &time_FIN_received);
+		}
+
+		clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
+		if (time_current.tv_sec - time_FIN_received.tv_sec > 2 * RTT)
+		{
+			printf("\nTimeout reached\nDisconnecting..\n\n");
+			free(messageReceived);
+			exit(EXIT_SUCCESS);
+		}
 
 		recvMessage(sock, messageReceived, &tempAddr);
-
-		if(messageReceived->flag == FIN && counter == 0)
-		{
-           
-			counter++;
-			//TODO: Check if function is used correctly
-			setHeader(sendTo, ACK, 0, messageReceived->sequence);
-			sendMessage(sock, sendTo, destAddr);
-			 //Timer should be 2 * MSL
-
-		}
-		if(messageReceived->flag == FIN && counter > 0) //if counter is more than 0 that means it is the second FIN received
-		{
-			//TODO: Check if function is used correctly
-			setHeader(sendTo, ACK, 0, messageReceived->sequence);
-            printf("\nDisconnected\n");
-			sendMessage(sock, sendTo, destAddr);
-			 //restarts timer, if timer runs out client disconnects
-            
-			return 1; //temporary return
-		}
-		
-		if(messageReceived->flag == ACK)
-            counter++;
 	}
 }
 
