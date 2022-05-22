@@ -52,9 +52,12 @@ int main(int argc, char *argv[])
 	fflush(stdout);
 	while(1)
 	{
-		//? Move this into the part where window gets moved
+		//! Move this into the part where window gets moved
 		serverInfo.baseSeqNum = serverInfo.baseSeqNum % MAXSEQNUM;
 		readFdSet = activeFdSet;
+
+		resendTimedOutPacks(&serverInfo, &currentSeq);
+
 		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
 		{
 			perror("\nFailed to monitor set");
@@ -81,6 +84,7 @@ int main(int argc, char *argv[])
 				retval = writeMessage(&serverInfo, message, &currentSeq);
 				if (retval == ERRORCODE) printf("Could not send message!\n");
 				else if (retval == 0) printf("Window is full!\n");
+				else currentSeq = (currentSeq + 1) % MAXSEQNUM;
 				printCursorThingy();
 			}
 		}
@@ -97,27 +101,26 @@ void printCursorThingy()
 }
 
 //? Move this when testing is done
-int writeMessage(ConnectionInfo *server, char* message, int* currentSeq)
+int writeMessage(ConnectionInfo *server, char* message, int *currentSeq)
 {
 	int retval;
-	if (SWMETHOD == GBN) retval = writeMessageGBN(server, message, currentSeq);
+	if (SWMETHOD == GBN) retval = writeMessageGBN(server, message, *currentSeq);
 	else retval = writeMessageSR(server, message, currentSeq);
 	return retval;
 }
 
-int writeMessageGBN(ConnectionInfo *server, char* message, int* currentSeq)
+int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
 {
 	// Don't send if window full
-	if(*currentSeq > (server->baseSeqNum + WINDOWSIZE) % MAXSEQNUM) return 0;
+	if(currentSeq > (server->baseSeqNum + WINDOWSIZE) % MAXSEQNUM) return 0;
 
 	Datagram toSend = initDatagram();
-	packMessage(toSend, message, *currentSeq);
+	packMessage(toSend, message, currentSeq);
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
 
 	// Add message to buffer and move window
-	strncpy(server->buffer[*currentSeq].message, message, strlen(message));
+	strncpy(server->buffer[currentSeq].message, message, strlen(message));
 	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer->timeStamp);
-	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
 
 	// Print timestamp for labspec
 	time_t currTime;
@@ -160,7 +163,15 @@ void resendTimedOutPacks(ConnectionInfo *server, int *currentSeq)
 
 void resendTimedOutPacks_GBN(ConnectionInfo *server, int *currentSeq)
 {
-
+	struct timespec currTime;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
+	if (currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
+	{
+		for (int seq = server->baseSeqNum; seq < *currentSeq; seq++)
+		{
+			writeMessageGBN(server, server->buffer[seq].message, seq);
+		}
+	}
 }
 
 void resendTimedOutPacks_SR(ConnectionInfo *server, int *currentSeq)
