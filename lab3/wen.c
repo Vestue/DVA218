@@ -416,7 +416,13 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	ConnectionInfo *client = findClientFromSock(clientList, sock);
 	printf("I got into interpret!\n");
 	printf("clientSoc %d, sock %d\n",client->sock, sock);
-	recvMessage(client->sock, receivedDatagram, &client->addr);
+
+	int retval;
+	retval = recvMessage(client->sock, receivedDatagram, &client->addr);
+	if (retval == 1) printf("Read new package\n");
+	else if (retval == 0) printf("No data to read.\n");
+	else if (retval == ERRORCODE) printf("Package corrupted!");
+
 
 	//* Start disconnect process
 	if (receivedDatagram->flag == FIN || (receivedDatagram->flag == ACK && isFINSet(*client))
@@ -427,7 +433,7 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	else if (receivedDatagram->flag == ACK) return; // What is the client ACKing?
 
 	//* Send to GBN or SR to handle DATA in package
-	if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
+	else if (SWMETHOD == GBN) interpretWith_GBN_receiver(receivedDatagram, client, clientList);
 	else interpretWith_SR_receiver(sock, receivedDatagram, client, clientList);
 }
 
