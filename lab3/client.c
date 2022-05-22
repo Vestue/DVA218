@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 	char message[MESSAGELENGTH] = { '\0' };
 	int currentSeq = serverInfo.baseSeqNum;
 	int retval = 0;
-	printf("\n>");
+	printCursorThingy();
 	fflush(stdout);
 	while(1)
 	{
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 			perror("\nFailed to monitor set");
 			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
 			FD_ZERO(&readFdSet);
-			printf("\n>");
+			printCursorThingy();
 			//exit(EXIT_FAILURE);
 		}
 
@@ -76,10 +76,9 @@ int main(int argc, char *argv[])
 				fgets(message, MESSAGELENGTH, stdin);
 				message[MESSAGELENGTH - 1] = '\0';
 				retval = writeMessage(&serverInfo, message, &currentSeq);
-				if (retval == 1) printf("\nMessage sent!\n");
-				else if (retval == ERRORCODE) printf("Could not send message!\n");
-				else printf("Window is full!\n");
-				printf("\n>");
+				if (retval == ERRORCODE) printf("Could not send message!\n");
+				else if (retval == 0) printf("Window is full!\n");
+				printCursorThingy();
 			}
 		}
 		fflush(stdout);
@@ -89,11 +88,16 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+void printCursorThingy()
+{
+	printf("\n(Type \"EXIT\" to disconnect)\n\n\n>");
+}
+
 //? Move this when testing is done
 int writeMessage(ConnectionInfo *server, char* message, int* currentSeq)
 {
 	int retval;
-	if (SWMETHOD == SR) retval = writeMessageGBN(server, message, currentSeq);
+	if (SWMETHOD == GBN) retval = writeMessageGBN(server, message, currentSeq);
 	else retval = writeMessageSR(server, message, currentSeq);
 	return retval;
 }
@@ -106,7 +110,16 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int* currentSeq)
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
+
+	// Add message to buffer and move window
+	strncpy(server->buffer[*currentSeq].message, message, strlen(message));
+	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer->timeStamp);
 	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
+
+	// Print timestamp for labspec
+	time_t currTime;
+	time(&currTime);
+	printf("Message sent at: %s", ctime(&currTime));
 	return 1;
 }
 
