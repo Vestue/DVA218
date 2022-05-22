@@ -398,9 +398,13 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
-	Datagram ToSend = initDatagram();
-    
+	
     if(packet->sequence == client->baseSeqNum)
+    {
+        Datagram toSend = initDatagram();
+        setHeader(toSend, ACK, packet);
+        client->baseSeqNum++;
+    }
     
 }
 
@@ -765,6 +769,7 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
 
     while(1)
     {
+        
 
         if(SRwindow < WINDOWSIZE)
         {
@@ -780,7 +785,7 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
 
 
 
-
+        recvMessage(server.sock, message, &server.addr);
     }
 
 
