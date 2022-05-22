@@ -43,6 +43,9 @@ int main(int argc, char *argv[])
 	FD_SET(serverInfo.sock, &activeFdSet);
 
 	char message[MESSAGELENGTH] = { '\0' };
+
+	//todo: currentSeq will probably need to be renamed to nextSeqNum
+	//todo: to match with our labb 3a report. 
 	int currentSeq = serverInfo.baseSeqNum;
 	int retval = 0;
 	printCursorThingy();
@@ -143,4 +146,24 @@ void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 {
 	
+}
+
+void resendTimedOutPacks(ConnectionInfo *server, int *currentSeq)
+{
+	/*
+		Simple redirecting switch as they are handled different depending
+		on which sliding window is to be used.
+	*/
+	if (SWMETHOD == GBN) resendTimedOutPacks_GBN(server, currentSeq);
+	else resendTimedOutPacks_SR(server, currentSeq);
+}
+
+void resendTimedOutPacks_GBN(ConnectionInfo *server, int *currentSeq)
+{
+
+}
+
+void resendTimedOutPacks_SR(ConnectionInfo *server, int *currentSeq)
+{
+
 }
