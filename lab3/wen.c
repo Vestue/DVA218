@@ -781,6 +781,12 @@ int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
             return 1;
         }
 
+        else if(SRwindow >= WINDOWSIZE && message->ackNum == server.baseSeqNum) 
+        {
+
+            server.baseSeqNum++;
+            SRwindow--;
+        }
         
 
 
