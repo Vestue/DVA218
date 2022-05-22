@@ -262,15 +262,27 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 		perror("Could not send message to server.\n");
 		exit(EXIT_FAILURE);
 	}
+	struct timespec time_SYN_sent, time_current;
+	clock_gettime(CLOCK_MONOTONIC_RAW ,&time_SYN_sent);
+	time_current.tv_sec = 0;
 
     Datagram messageToReceive = initDatagram();
     struct sockaddr_in recvAddr;
 
 	while(1)
 	{
-		//!TIMER
-		signal(SIGALRM, timeoutTest);
-		alarm(2);
+		// Resend SYN upon timeout
+		clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
+		if (time_current.tv_sec - time_SYN_sent.tv_sec > 2 * RTT)
+		{
+			printf("Sending SYN..\n");
+			if(sendMessage(sock, messageToSend, dest) < 0)
+			{
+				perror("Could not send message to server.\n");
+				exit(EXIT_FAILURE);
+			}
+			clock_gettime(CLOCK_MONOTONIC_RAW, &time_SYN_sent);
+		}
 
         if (recvMessage(sock, messageToReceive, &recvAddr) == 0)
         {
@@ -324,6 +336,9 @@ int acceptClientConnection(int serverSock, ClientList* list)
 
     struct sockaddr_in ACKaddr;
 	Datagram toSend = initDatagram();
+	struct timespec time_SYNACK_sent, time_current;
+	time_SYNACK_sent.tv_sec = 0;
+	time_current.tv_sec = 0;
 
 	/*	Socket is created here to avoid creating several sockets
 		if the SYN+ACK gets lost.
@@ -349,6 +364,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 			    perror("Could not send message to client\n");
 			    exit(EXIT_FAILURE);
 			}
+			clock_gettime(CLOCK_MONOTONIC_RAW, &time_SYNACK_sent);
 		}
         else	// First message from a new client must be SYN
 		{
@@ -368,12 +384,12 @@ int acceptClientConnection(int serverSock, ClientList* list)
             if so then the server will resend SYN+ACK and then wait here again.
         */
         recvMessage(serverSock, receivedDatagram, &ACKaddr);
-		
+		clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
         //* Make sure that ACK is coming from expected adress
-		//! Timeout need to trigger this state aswell
-    	if(receivedDatagram->flag == ACK 
+    	if((receivedDatagram->flag == ACK 
             && ACKaddr.sin_addr.s_addr == recvAddr.sin_addr.s_addr
             && ACKaddr.sin_port == recvAddr.sin_port)
+			|| (time_current.tv_sec - time_SYNACK_sent.tv_sec > 2 * RTT))
         {
 			printf("Recieved ACK for SYN+ACK\n");
 			if (addToClientList(list, initConnectionInfo(receivedDatagram, recvAddr, clientSock)))
@@ -495,13 +511,15 @@ ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in 
 	}
 	tempInfo.addr = recvAddr;
 	tempInfo.FIN_SET = 0;
+	tempInfo.FIN_SET_time.tv_nsec = 0;
+	tempInfo.FIN_SET_time.tv_sec = 0;
 	tempInfo.sock = sock;
 	for (int i = 0; i < MAXSEQNUM; i++) tempInfo.buffer[i].message[0] = '\0';
 	for (int i = 0; i < MAXSEQNUM; i++)
 	{
 		tempInfo.buffer[i].timeStamp.tv_nsec = 0;
 		tempInfo.buffer[i].timeStamp.tv_sec = 0;
-	} 
+	}
 	return tempInfo;
 }
 
@@ -608,6 +626,9 @@ int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr
 
 int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet)
 {
+	struct timespec currTime;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
+
 	if ((receivedDatagram->flag == FIN)) 
 	{
 		Datagram toSend = initDatagram();
@@ -622,7 +643,8 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 	}
 
 	//Fully disconnect client by removing and closing socket.
-	else if ((receivedDatagram->flag == ACK && isFINSet(*client)) || (isFINSet(*client) && client->FIN_SET_time.tv_sec > 4 * RTT))
+	else if ((receivedDatagram->flag == ACK && isFINSet(*client)) 
+		|| (isFINSet(*client) && (currTime.tv_sec - client->FIN_SET_time.tv_sec) > 4 * RTT))
 	{
         printf("\nDisconnectedclient %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
 		close(client->sock);
@@ -633,7 +655,7 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 	// Resend FIN
 	//? Needs to be last if-state as this checks for a shorter elapsed time
 	//? than previous one
-	else if (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)
+	else if (isFINSet(*client) && (currTime.tv_sec - client->FIN_SET_time.tv_sec) > 2 * RTT)
 	{
 		Datagram toSend = initDatagram();
 		//TODO: Check if function is used correctly
