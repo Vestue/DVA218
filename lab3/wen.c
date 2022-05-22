@@ -704,6 +704,7 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr,
 		if (messageReceived->flag == ACK) printf("Received ACK\n");
 		else if(messageReceived->flag == FIN)
 		{
+			printf("Received FIN\n");
 			//TODO: Check if function is used correctly
 			setHeader(sendTo, ACK, 0, messageReceived->sequence);
 			sendMessage(sock, sendTo, destAddr);
@@ -713,7 +714,7 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr,
 		clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
 		if (time_current.tv_sec - time_FIN_received.tv_sec > 2 * RTT)
 		{
-			printf("\nTimeout reached\nDisconnecting..\n\n");
+			printf("\nTimeout reached!\nDisconnecting..\n\n");
 			free(messageReceived);
 			exit(EXIT_SUCCESS);
 		}
