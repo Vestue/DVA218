@@ -24,15 +24,17 @@ int main(int argc, char *argv[])
 
     int sock = createSocket(CLIENTPORT);
 
+	// Print startup time for demonstration
+	time_t startupTime;
+	time(&startupTime);
+	printf("\nStarting client: %s\n", ctime(&startupTime));
+
     /*
         Begin connection attempt.
         Return value does not need to be checked as program will
         close upon error.
     */
     ConnectionInfo serverInfo = connectToServer(sock, hostName);
-	serverInfo.baseSeqNum = serverInfo.baseSeqNum % MAXSEQNUM;
-	
-    printf("%d\n", serverInfo.baseSeqNum);
 
 	fd_set activeFdSet, readFdSet;
 	FD_ZERO(&activeFdSet);

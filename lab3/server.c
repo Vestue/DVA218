@@ -24,11 +24,11 @@ int main()
 	// Timers and clocks to test things
 	struct timespec start, stop;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+
+	// Print startup time for demonstration
 	time_t beforeLoopTime;
 	time(&beforeLoopTime);
-	printf("\nTime before loop: %s", ctime(&beforeLoopTime));
-	printf("Started at: %lu\n", start.tv_sec);
-
+	printf("\nStarting server: %s", ctime(&beforeLoopTime));
 	while (1) 
 	{
 		// Copy active set to read-set for select on read-set

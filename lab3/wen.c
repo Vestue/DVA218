@@ -256,6 +256,7 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
     // strncpy(messageToSend->message, "LINE:257!\0", strlen("LINE:257!\0")); //! Test message, remove later
 	messageToSend->checksum = calcChecksum(messageToSend, sizeof(*messageToSend));
 
+	printf("Sending SYN..\n");
 	if(sendMessage(sock, messageToSend, dest) < 0)
 	{
 		perror("Could not send message to server.\n");
@@ -271,20 +272,22 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 		signal(SIGALRM, timeoutTest);
 		alarm(2);
 
-        if (recvMessage(sock, messageToReceive, &recvAddr))
+        if (recvMessage(sock, messageToReceive, &recvAddr) == 0)
         {
-            printf("\nReceived from server: ");
-            puts(messageToReceive->message);
-            printf("%d", messageToReceive->flag);
+            free(messageToReceive);
+			return ERRORCODE;
         }
 
 		if(messageToReceive->flag == SYN + ACK)
 		{
+			printf("Received SYN+ACK\n");
+
 			//TODO: Check if function is used correctly
             setHeader(messageToSend, ACK, 0, messageToReceive->sequence);
 			// strncpy(messageToSend->message, "LINE:285!\0", strlen("LINE:285!\0")); //! Test message, remove later
 			messageToSend->checksum = calcChecksum(messageToSend, sizeof(*messageToSend));
 
+			printf("Responding with ACK\n");
 			if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
 			{
 				printf("Could not send message to server\n");
@@ -293,7 +296,7 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 			}
 			if (addToClientList(list, initConnectionInfo(messageToReceive, recvAddr, sock)))
 			{
-				printf("Connection established\n");
+				printf("\nConnection established!\n\n");
 				free(messageToReceive);
 				return 1;
 			}
@@ -318,12 +321,6 @@ int acceptClientConnection(int serverSock, ClientList* list)
 		printf("\nLINE 316: Refused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
 		return ERRORCODE;
 	}
-	// if (isInClientList(list, recvAddr))
-	// {
-	// 	free(receivedDatagram);
-	// 	printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
-	// 	return ERRORCODE;
-	// }
 
     struct sockaddr_in ACKaddr;
 	Datagram toSend = initDatagram();
@@ -336,11 +333,11 @@ int acceptClientConnection(int serverSock, ClientList* list)
 	{		
 		if (receivedDatagram->flag == SYN)
 		{
-			printf("\nReceived SYN");
+			printf("Received SYN\n");
 			//TODO: Check if function is used correctly
 			setHeader(toSend, SYN + ACK, STARTSEQ, receivedDatagram->sequence);
 			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
-			
+			printf("Sending SYN+ACK..\n");
 
 			// Send using the clientSock so client gets address of
 			// designated port.
@@ -358,7 +355,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 			free(toSend);
 			free(receivedDatagram);
 			close(clientSock);
-			printf("\nLINE 361: Refused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+			printf("\nLINE 358: Refused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
 			return ERRORCODE;
 		} 
 
@@ -378,9 +375,10 @@ int acceptClientConnection(int serverSock, ClientList* list)
             && ACKaddr.sin_addr.s_addr == recvAddr.sin_addr.s_addr
             && ACKaddr.sin_port == recvAddr.sin_port)
         {
+			printf("Recieved ACK for SYN+ACK\n");
 			if (addToClientList(list, initConnectionInfo(receivedDatagram, recvAddr, clientSock)))
 			{
-				printf("\nConnection established with client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+				printf("\nConnection established with client %s, port %d\n\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
 				free(receivedDatagram);
 				free(toSend);
             	return clientSock;
@@ -388,7 +386,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 			free(toSend);
 			free(receivedDatagram);
 			close(clientSock);
-            printf("\nRefused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+            printf("\nLINE 389: Refused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
 			return ERRORCODE;
         }
 		recvAddr = ACKaddr;
