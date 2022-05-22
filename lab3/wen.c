@@ -66,10 +66,6 @@ int corrupt(Datagram toCheck)
 }
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 0d933449c2c1fb8d9538095d963902827baa7ea3
 void setSeqNum(Datagram datagram, int seqNum)
 {
 	datagram->sequence = seqNum % MAXSEQNUM;
@@ -394,7 +390,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 }
 
 //!Abstract
-void interpretPack_receiver(int sock, ClientList *clientList)
+void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSet)
 {
 	Datagram receivedDatagram = initDatagram();
 	ConnectionInfo *client = findClientFromSock(clientList, sock);
@@ -439,13 +435,13 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 }
 
 //!Abstract
-void interpretWith_SR_receiver(int sock, Datagram packet, struct sockaddr_in destAddr, ClientList *clients)
+void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
 	
     if(packet->sequence == client->baseSeqNum)
     {
         Datagram toSend = initDatagram();
-        setHeader(toSend, ACK, packet);
+        setHeader(toSend, ACK, 0, packet->sequence);
         client->baseSeqNum++;
     }
     
@@ -586,95 +582,26 @@ int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr
     destAddr->sin_addr = *(struct in_addr *)hostInfo->h_addr;
     Datagram datagramToSend = initDatagram();
 
-    if(DisconnectClientSide(sock, datagramToSend, *destAddr) != 1)
+    if(DisconnectClientSide(sock, datagramToSend, *destAddr, 0) != 1)
     {
         perror("Failed disconnect handshake");
         exit(EXIT_FAILURE);
 
     }
-
     return datagramToSend->sequence;
 }
 
-int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet)
-{
-
-    Datagram receivedDatagram = initDatagram();
-	struct sockaddr_in tempAddr;
-    if(recvMessage(sock, receivedDatagram, &tempAddr) < 0)
-    {
-        perror("Failed to disconnect from client\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if(receivedDatagram->flag == FIN)
-    {
-        *dest = tempAddr;
-        setHeader(sendTo, ACK, 0, receivedDatagram->sequence);
-        if(sendMessage(sock, sendTo, *dest) < 0)
-        {
-            perror("Failed to disconnect from client\n");
-            exit(EXIT_FAILURE);
-        }
-
-        setHeader(sendTo, FIN, receivedDatagram->ackNum+1, receivedDatagram->sequence);
-    }
-    
-
-	while(1)
-	{
-        if (sendMessage(sock, sendTo, *dest) < 0)
-        {
-            perror("Failed to disconnect from client");
-            exit(EXIT_FAILURE);
-        }
-        
-
-        if(receivedDatagram->flag == ACK)
-        {
-            printf("\nDisconnected\n");
-
-            return 1;
-
-        }
-
-	//Fully disconnect client by removing and closing socket.
-	else if ((receivedDatagram->flag == ACK && isFINSet(*client)) || (isFINSet(*client) && client->FIN_SET_time.tv_sec > 4 * RTT))
-	{
-        printf("\nDisconnectedclient %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
-		close(client->sock);
-		FD_CLR(client->sock, activeFdSet);
-		removeFromClientList(clientList, client->addr);
-	}
-
-	// Resend FIN
-	//? Needs to be last if-state as this checks for a shorter elapsed time
-	//? than previous one
-	else if (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)
-	{
-		Datagram toSend = initDatagram();
-		setHeader(toSend, FIN, receivedDatagram);
-		if (sendMessage(client->sock, toSend, client->addr) < 0)
-		{
-			printf("Failed to disconnect client\n");
-			return ERORRCODE;
-		}
-	}
-
-	return 1;
-}
-
-int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr)
+int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr, int nextSeq)
 {
     Datagram messageReceived = initDatagram();
     struct sockaddr_in tempAddr;
     int counter = 0;
 	
     printf("In disconnect clientside\n");
-	setHeader(sendTo, FIN, messageReceived->sequence, messageReceived->ackNum);
+	setHeader(sendTo, FIN, nextSeq, nextSeq);
 	if(sendMessage(sock, sendTo, destAddr) < 0)
 	{
-		perror("Failed to disconnect from server");
+		printf("Failed to disconnect from server");
 		exit(EXIT_FAILURE);
 	}
  
@@ -688,14 +615,14 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr)
 		{
            
 			counter++;
-			setHeader(sendTo, ACK, messageReceived->sequence, messageReceived->ackNum);
+			setHeader(sendTo, ACK, 0, messageReceived->sequence);
 			sendMessage(sock, sendTo, destAddr);
 			 //Timer should be 2 * MSL
 
 		}
 		if(messageReceived->flag == FIN && counter > 0) //if counter is more than 0 that means it is the second FIN received
 		{
-			setHeader(sendTo, ACK, messageReceived->sequence, messageReceived->ackNum);
+			setHeader(sendTo, ACK, 0, messageReceived->sequence);
             printf("\nDisconnected\n");
 			sendMessage(sock, sendTo, destAddr);
 			 //restarts timer, if timer runs out client disconnects
@@ -706,7 +633,6 @@ int DisconnectClientSide(int sock, Datagram sendTo, struct sockaddr_in destAddr)
 		if(messageReceived->flag == ACK)
             counter++;
 	}
-
 }
 
 /*
@@ -773,56 +699,7 @@ int isFINSet(ConnectionInfo connection)
     * Functions to set neccessary information in header depending on flag.
 */
 
-<<<<<<< HEAD
-int writeMessageSR(ConnectionInfo server, char* message, int* currentSeq)
-=======
-void setHeader(Datagram datagramToSend, int flag, Datagram receivedDatagram)
-{
-    datagramToSend->windowSize = WINDOWSIZE;
-	datagramToSend->message[0] = '\0';
-	//! Sequence numbers should be moved as they work diffrent depending on GBN/SR and sender/receiver
-	//? SYN and SYN + ACK can still be used though
-    switch (flag)
-    {
-        case SYN:
-            datagramToSend->flag = SYN;
-            datagramToSend->sequence = MAXSEQNUM - 1;
-            datagramToSend->ackNum = 0;
-            break;
-        case ACK:
-            datagramToSend->flag = ACK;
-            datagramToSend->ackNum = receivedDatagram->sequence + 1;
-            break;
-        case (SYN + ACK):
-            datagramToSend->flag = SYN + ACK;
-            datagramToSend->ackNum = receivedDatagram->sequence + 1;
-            datagramToSend->sequence = STARTSEQ;
-            break;
-        case FIN:
-            datagramToSend->flag = FIN;
-            datagramToSend->sequence = receivedDatagram->ackNum;
-            datagramToSend->ackNum = receivedDatagram->sequence + 1;
-            break;
-        default:
-            datagramToSend->flag = UNSET;
-            datagramToSend->sequence = receivedDatagram->ackNum;
-            datagramToSend->ackNum = receivedDatagram->sequence + 1;
-            break;
-    }
-}
-
-//! Change to use setHeader when brain starts working again
-void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq)
-{
-	datagramToSend->windowSize = WINDOWSIZE;
-	datagramToSend->sequence = currentSeq;
-    strncpy(datagramToSend->message, messageToSend, strlen(messageToSend));
-}
-
-
-
 int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
->>>>>>> main
 {
     int SRwindow = 0;
 	Datagram toSend = initDatagram();
@@ -835,7 +712,7 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
         if(SRwindow < WINDOWSIZE)
         {
 			strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
-            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERORRCODE;
+            if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
             *currentSeq = (*currentSeq + 1) % MAXSEQNUM;      
             SRwindow++;
             //* Start TIMER
@@ -845,7 +722,6 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 
 		/* 
 		! What is message->ackNum? Gives errors
-
         else if(SRwindow >= WINDOWSIZE && message->ackNum == server.baseSeqNum) 
         {
             server->buffer[message->ackNum].message = '\0';

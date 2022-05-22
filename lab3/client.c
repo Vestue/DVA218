@@ -102,11 +102,7 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int* currentSeq)
 
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
-<<<<<<< HEAD
 	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERRORCODE;
-=======
-	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERORRCODE;
->>>>>>> main
 	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
 	return 1;
 }
