@@ -57,7 +57,7 @@ int main()
 				printf("\nConnection request after: %lu seconds\n", stop.tv_sec - start.tv_sec);
 
 				clientSock = acceptClientConnection(serverSock, &clients);
-				if (clientSock != ERORRCODE) FD_SET(clientSock, &activeFdSet);
+				if (clientSock != ERRORCODE) FD_SET(clientSock, &activeFdSet);
 			}
 			// * Receiving from connected client
 			else if (FD_ISSET(currSock, &readFdSet))

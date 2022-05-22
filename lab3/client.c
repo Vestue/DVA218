@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 				message[MESSAGELENGTH - 1] = '\0';
 				retval = writeMessage(&serverInfo, message, &currentSeq);
 				if (retval == 1) printf("\nMessage sent!\n");
-				else if (retval == ERORRCODE) printf("Could not send message!\n");
+				else if (retval == ERRORCODE) printf("Could not send message!\n");
 				else printf("Window is full!\n");
 				printf("\n>");
 			}
@@ -102,10 +102,18 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int* currentSeq)
 
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
+<<<<<<< HEAD
+	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERRORCODE;
+=======
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERORRCODE;
+>>>>>>> main
 	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
 	return 1;
 }
 
 
+
+	if (sendMessage(server.sock, toSend, server.addr) < 0) return ERRORCODE;
+	*currentSeq = (*currentSeq + 1) % MAXSEQNUM;
+	return 1;
 
