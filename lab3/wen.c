@@ -415,8 +415,7 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	Datagram receivedDatagram = initDatagram();
 	ConnectionInfo *client = findClientFromSock(clientList, sock);
 
-	int retval;
-	retval = recvMessage(client->sock, receivedDatagram, &client->addr);
+	int retval = recvMessage(client->sock, receivedDatagram, &client->addr);
 	if (retval == 1) printf("Reading package..\n");
 	else if (retval == 0) printf("No data to read.\n");
 	else if (retval == ERRORCODE) printf("Package corrupted!");
