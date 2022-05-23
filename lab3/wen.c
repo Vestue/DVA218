@@ -474,7 +474,7 @@ void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client
             Datagram toSend = initDatagram();
 			//TODO: Check if function is used correctly
             setHeader(toSend, ACK, 0, packet->sequence);
-			toSend->checksum = calcChecksum(toSend, sizeof(toSend->message));
+			toSend->checksum = calcChecksum(toSend, sizeof(toSend));
             sendMessage(sock, toSend, client->addr);
 			printf("Sending ACK(%d)\n", toSend->ackNum);
             
