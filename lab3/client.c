@@ -145,7 +145,7 @@ void interpretPack_sender(ConnectionInfo *server, int *currentSeq)
 
 void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 {
-	if (receivedDatagram->flag == ACK) //&& !corrupt(receivedDatagram))
+	if (receivedDatagram->flag == ACK && !corrupt(receivedDatagram))
 	{
 		printf("Received ACK(%d)\n\n", receivedDatagram->ackNum);
 
