@@ -281,12 +281,20 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 
     Datagram messageToReceive = initDatagram();
     struct sockaddr_in recvAddr;
+	fd_set activeFdSet, readFdSet;
+	FD_ZERO(&activeFdSet);
+	FD_ZERO(&readFdSet);
+	FD_SET(sock, &activeFdSet);
+	struct timeval selectTime;
+	selectTime.tv_sec = 2 * RTT;
+	selectTime.tv_usec = 0;
 
 	while(1)
 	{
+		readFdSet = activeFdSet;
 		// Resend SYN upon timeout
 		clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
-		if (time_current.tv_sec - time_SYN_sent.tv_sec > 2 * RTT)
+		if (time_current.tv_sec - time_SYN_sent.tv_sec >= 2 * RTT)
 		{
 			printf("Sending SYN..\n");
 			if(sendMessage(sock, messageToSend, dest) < 0)
@@ -297,11 +305,21 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 			clock_gettime(CLOCK_MONOTONIC_RAW, &time_SYN_sent);
 		}
 
-        if (recvMessage(sock, messageToReceive, &recvAddr) == 0)
-        {
-            free(messageToReceive);
-			return ERRORCODE;
-        }
+		if ((select(FD_SETSIZE, &readFdSet, NULL, NULL, &selectTime) < 0))
+		{
+			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
+			
+			FD_ZERO(&readFdSet);
+		}
+		if (FD_ISSET(sock, &readFdSet))
+		{
+			if (recvMessage(sock, messageToReceive, &recvAddr) == 0)
+			{
+				free(messageToReceive);
+				return ERRORCODE;
+			}
+		}
+        
 
 		if(messageToReceive->flag == SYN + ACK)
 		{
