@@ -466,20 +466,22 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 //!Abstract
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
+	int isCorrupt = corrupt(packet);
 
-        if(packet->sequence == client->baseSeqNum || (!corrupt(packet)))
-        {
-			time_t currTime;
-			time(&currTime);
-			printf("Received Datagram at: %s", ctime(&currTime));
-			printf("-With Sequence(%d)\n", packet->sequence);
-            Datagram toSend = initDatagram();
-			//TODO: Check if function is used correctly
-            setHeader(toSend, ACK, 0, packet->sequence);
-			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
-            sendMessage(sock, toSend, client->addr);
-			printf("Sending ACK(%d)\n", toSend->ackNum);
-        }
+	if(packet->sequence == client->baseSeqNum || (!isCorrupt))
+	{
+		time_t currTime;
+		time(&currTime);
+		printf("Received Datagram at: %s", ctime(&currTime));
+		printf("-With Sequence(%d)\n", packet->sequence);
+		Datagram toSend = initDatagram();
+		//TODO: Check if function is used correctly
+		setHeader(toSend, ACK, 0, packet->sequence);
+		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
+		sendMessage(sock, toSend, client->addr);
+		printf("Sending ACK(%d)\n", toSend->ackNum);
+	}
+	else if(isCorrupt) printf("Received corrupt packet!\n");
 }
 
 
@@ -506,6 +508,7 @@ ClientList initClientList()
 ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in recvAddr, int sock)
 {
 	ConnectionInfo tempInfo;
+	memset(&tempInfo, 0, sizeof(tempInfo));
 	if (receivedDatagram->flag == ACK) tempInfo.baseSeqNum = STARTSEQ;
 	else if (receivedDatagram->flag == SYN + ACK) tempInfo.baseSeqNum = receivedDatagram->ackNum;
 	else

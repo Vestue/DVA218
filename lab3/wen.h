@@ -17,8 +17,8 @@
 #define CLIENTPORT 0
 
 // Receiver sets window size and maximum sequence number
-#define WINDOWSIZE 64
-#define MAXSEQNUM 128
+#define WINDOWSIZE 5
+#define MAXSEQNUM 10
 #define STARTSEQ 0
 #define ERRORCODE -1
 #define MESSAGELENGTH 256

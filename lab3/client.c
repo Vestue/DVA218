@@ -116,8 +116,8 @@ int writeMessage(ConnectionInfo *server, char* message, int *currentSeq)
 int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
 {
 	// Don't send if window full
-	for(int i = server->baseSeqNum, count = 0; i < currentSeq; i = (i+1 % MAXSEQNUM), count++)
-		if (count > WINDOWSIZE) return 0;
+	for(int i = server->baseSeqNum, count = 0; i != currentSeq; i = (i+1) % MAXSEQNUM, count++)
+		if (count >= WINDOWSIZE) return 0;
 
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, currentSeq);
@@ -169,9 +169,18 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 	time_t currTime;
 	time(&currTime);
 	
-	for(int i = server->baseSeqNum, count = 0; i < *currentSeq; i = (i+1 % MAXSEQNUM), count++)
+	/*
+	for (int i = server->baseSeqNum, count = 0;  == 0; i = ((i+1) % MAXSEQNUM), count++)
+	{
+		if (server->buffer[i+1].message[0] == '\0')
+			printf("Count is: %d", count);
 		if (count > WINDOWSIZE) return 0;
+	}*/
 
+	for(int i = server->baseSeqNum, count = 0; i != *currentSeq; i = (i+1) % MAXSEQNUM, count++)
+		if (count >= WINDOWSIZE) return 0;
+		
+	
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
     printf("Message sent at: %s", ctime(&currTime));
 	printf("-with SEQ(%d)\n", toSend->sequence);
@@ -212,7 +221,10 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, 
 			
 		printf("New baseSeq(%d)\n", server->baseSeqNum);
 	}
-	else if (isCorrupt) printf("Received corrupt message!\n");
+	else if (isCorrupt)
+	{
+		printf("Received corrupt package\n");
+	} 
 }
 
 void checkTimedOutPacks(ConnectionInfo *server, int *currentSeq)
