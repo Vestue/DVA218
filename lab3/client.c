@@ -51,18 +51,20 @@ int main(int argc, char *argv[])
 	printCursorThingy();
 	fflush(stdout);
 	clock_gettime(CLOCK_MONOTONIC_RAW, &serverInfo.buffer[currentSeq].timeStamp);
-	
+	struct timeval t;
+	t.tv_sec = 1;
+	t.tv_usec = 0;
 	while(1)
 	{
 		readFdSet = activeFdSet;
 		checkTimedOutPacks(&serverInfo, &currentSeq);
-
-		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
+		
+		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, &t) < 0)
 		{
-			perror("\nFailed to monitor set");
+			//perror("\nFailed to monitor set");
 			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
 			FD_ZERO(&readFdSet);
-			printCursorThingy();
+			//printCursorThingy();
 			//exit(EXIT_FAILURE);
 		}
 
@@ -177,10 +179,6 @@ void interpretPack_sender(ConnectionInfo *server, int currentSeq)
 void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 {
 	int isCorrupt = corrupt(receivedDatagram);
-	if (isCorrupt == LOSTPACKET)
-	{
-
-	}
 	if (receivedDatagram->flag == ACK && !isCorrupt && receivedDatagram->ackNum == server->baseSeqNum)
 	{
 		printf("\nReceived ACK(%d)\n\n", receivedDatagram->ackNum);
@@ -272,9 +270,15 @@ void checkTimeout_SR(ConnectionInfo *server, int *currentSeq)
 	{
 		if(currTime.tv_sec - server->buffer[seq].timeStamp.tv_sec > 2 * RTT)
 		{
+			if (server->buffer[seq].timeStamp.tv_sec == 0) continue;
 			printf("\nSending timed out packet\n");
 			writeMessageSR(server, server->buffer[seq].message, &seq);
 			clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[seq].timeStamp);
 		}
 	}
+}
+
+void selectTimeout(int signal)
+{
+	return;
 }
