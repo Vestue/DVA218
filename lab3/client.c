@@ -54,7 +54,6 @@ int main(int argc, char *argv[])
 	
 	while(1)
 	{
-		serverInfo.baseSeqNum = serverInfo.baseSeqNum % MAXSEQNUM;
 		readFdSet = activeFdSet;
 		checkTimedOutPacks(&serverInfo, &currentSeq);
 
@@ -135,33 +134,6 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
 	return 1;
 }
 
-void interpretPack_sender(ConnectionInfo *server, int currentSeq)
-{
-	Datagram receivedDatagram = initDatagram();
-	recvMessage(server->sock, receivedDatagram, &server->addr);
-
-	//* Send to GBN or SR to handle DATA in package
-	if (SWMETHOD == GBN) interpretPack_sender_GBN(receivedDatagram, server);
-	else interpretPack_sender_SR(receivedDatagram, server, currentSeq);
-}
-
-void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
-{
-	if (receivedDatagram->flag == ACK && !corrupt(receivedDatagram))
-	{
-		printf("\nReceived ACK(%d)\n\n", receivedDatagram->ackNum);
-
-		//* Reset data on buffer-spot and move window
-		server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
-		server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
-		for (int i = 0; i < MESSAGELENGTH; i++)
-			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
-		server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
-	}
-	else printf("\nReceived a corrupt packet!\n");
-}
-
-
 int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 {
 	Datagram toSend = initDatagram();
@@ -191,7 +163,39 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
         
 	return 1;
 }
- 
+
+void interpretPack_sender(ConnectionInfo *server, int currentSeq)
+{
+	Datagram receivedDatagram = initDatagram();
+	recvMessage(server->sock, receivedDatagram, &server->addr);
+
+	//* Send to GBN or SR to handle DATA in package
+	if (SWMETHOD == GBN) interpretPack_sender_GBN(receivedDatagram, server);
+	else interpretPack_sender_SR(receivedDatagram, server, currentSeq);
+}
+
+void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
+{
+	int isCorrupt = corrupt(receivedDatagram);
+	if (isCorrupt == LOSTPACKET)
+	{
+
+	}
+	if (receivedDatagram->flag == ACK && !isCorrupt && receivedDatagram->ackNum == server->baseSeqNum)
+	{
+		printf("\nReceived ACK(%d)\n\n", receivedDatagram->ackNum);
+
+		//* Reset data on buffer-spot and move window
+		server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
+		server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
+		for (int i = 0; i < MESSAGELENGTH; i++)
+			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
+		// server->baseSeqNum = receivedDatagram->ackNum;
+		server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
+	}
+	else printf("\nReceived a corrupt packet!\n");
+}
+
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, int currentSeq)
 {
 	time_t currTime;
@@ -244,13 +248,18 @@ void checkTimeout_GBN(ConnectionInfo *server, int *currentSeq)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
 	if (currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
 	{
-		for (int seq = server->baseSeqNum; seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
+		
+		// printf("\nSending timed out packet\n");
+		// writeMessageGBN(server, server->buffer[server->baseSeqNum].message, server->baseSeqNum);
+		// clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[server->baseSeqNum].timeStamp);
+	
+		for (int seq = (server->baseSeqNum); seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
 		{
 			printf("\nSending timed out packet\n");
 			writeMessageGBN(server, server->buffer[seq].message, seq);
-			//! Delete this if things go wrong
 			clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[seq].timeStamp);
 		}
+	
 	}
 }
 
@@ -258,8 +267,13 @@ void checkTimeout_SR(ConnectionInfo *server, int *currentSeq)
 {
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
-
-	for (int seq = server->baseSeqNum; seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
+	if(currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
+	{
+		printf("\nSending timed out packet\n");
+		writeMessageSR(server, server->buffer[server->baseSeqNum].message, &server->baseSeqNum);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[server->baseSeqNum].timeStamp);
+	}
+	for (int seq = (server->baseSeqNum+1) % MAXSEQNUM; seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
 	{
 		if(currTime.tv_sec - server->buffer[seq].timeStamp.tv_sec > 2 * RTT)
 		{

@@ -457,7 +457,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 	{
 		printf("Received message: %s\n\n", receivedDatagram->message);
 		Datagram toSend = initDatagram();
-		setHeader(toSend, ACK, 0, client->baseSeqNum);
+		setHeader(toSend, ACK, 0, receivedDatagram->sequence);
 		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 		if (sendMessage(client->sock, toSend, client->addr))
 		{	
@@ -802,4 +802,11 @@ void packMessage(Datagram datagram, char* message, int currentSeq)
 	if(message != NULL)
     	strncpy(datagram->message, message, strlen(message));
 	datagram->checksum = calcChecksum(datagram, sizeof(*datagram));
+	srand(time(0));
+	int rng = rand()%100;
+	if (rng < 10)
+	{
+		printf("cowsay this packet is corrupt\t\n");
+		datagram->checksum=rng;
+	}
 }
