@@ -185,7 +185,7 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
     printf("Message sent at: %s", ctime(&currTime));
 	printf("-with SEQ(%d)\n", toSend->sequence);
 
-	strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
+	strncpy(server->buffer[*currentSeq].message, message, strlen(message));
 	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[*currentSeq].timeStamp);
     //* Start TIMER
         
@@ -201,15 +201,16 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, 
 	{
 		printf("Received Datagram at: %s", ctime(&currTime));
 		printf("-With ACK(%d)\n", receivedDatagram->ackNum);
-		server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
-		server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
-		for (int i = 0; i < MESSAGELENGTH; i++)
-			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
+		memset(&server->buffer[receivedDatagram->ackNum], 0, sizeof(server->buffer[receivedDatagram->ackNum]));
+		// server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
+		// server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
+		// for (int i = 0; i < MESSAGELENGTH; i++)
+		// 	server->buffer[receivedDatagram->ackNum].message[i] = '\0';
 
 		printf("ackNum %d| baseSeq %d", receivedDatagram->ackNum, server->baseSeqNum);
 		if (receivedDatagram->ackNum == server->baseSeqNum)
 		{
-			for (int i = server->baseSeqNum; i < currentSeq; i= ((i+1) % MAXSEQNUM))
+			for (int i = server->baseSeqNum; i != currentSeq; i= ((i+1) % MAXSEQNUM))
 			{
 				if (server->buffer[i].timeStamp.tv_sec == 0) 
 				{
@@ -243,9 +244,9 @@ void checkTimeout_GBN(ConnectionInfo *server, int *currentSeq)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
 	if (currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
 	{
-		for (int seq = server->baseSeqNum; seq < *currentSeq; seq++)
+		for (int seq = server->baseSeqNum; seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
 		{
-			printf("\nSending timed out package\n");
+			printf("\nSending timed out packet\n");
 			writeMessageGBN(server, server->buffer[seq].message, seq);
 			//! Delete this if things go wrong
 			clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[seq].timeStamp);
@@ -258,11 +259,11 @@ void checkTimeout_SR(ConnectionInfo *server, int *currentSeq)
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
 
-	for (int seq = server->baseSeqNum; seq < *currentSeq; seq++)
+	for (int seq = server->baseSeqNum; seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
 	{
 		if(currTime.tv_sec - server->buffer[seq].timeStamp.tv_sec > 2 * RTT)
 		{
-			printf("\nSending timed out package\n");
+			printf("\nSending timed out packet\n");
 			writeMessageSR(server, server->buffer[seq].message, &seq);
 			clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[seq].timeStamp);
 		}
