@@ -20,7 +20,7 @@
 #define WINDOWSIZE 5
 #define MAXSEQNUM 10
 #define STARTSEQ 0
-#define ERRORCODE -1
+#define ERRORCODE -1 // and corrupt
 #define LOSTPACKET -2
 #define MESSAGELENGTH 256
 
