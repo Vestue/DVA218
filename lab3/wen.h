@@ -185,6 +185,12 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq);
 
 
 
+/**/
+int writeMessage(ConnectionInfo *server, char* message, int *currentSeq);
+
+int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq);
+
+int writeMessageSR(ConnectionInfo *server, char* message, int *currentSeq);
 
 //  !Everything below should be abstracted out
 //  !Everything below should be abstracted out
@@ -203,30 +209,12 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
  *  Not sure it works might get removed
  *	Executes when a timeout has occured
  */
-// void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
-
-
-
-
-/*
-	Set that FIN has been received from connection.
-	FIN_SET = 1
-    Return 1 if sucessfully changed.
-    Return ERRORCODE if client can't be found.
-*/
-// int setFIN(struct sockaddr_in addr, ClientList* list);
-
-/*
-	Read FIN_SET in chosen connection.
-	Return 1 if the FIN state is set,
-	0 if it isn't.
-*/
-// int isFINSet(ConnectionInfo connection);
+void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 /*
     Pack message into datagram and set correct information for a data packet.
 */
-// void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
+void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
 
 /*
 *   GO BACK N Functions

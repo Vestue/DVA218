@@ -8,6 +8,7 @@
  ****************************************************************/ 
 
 #include "server.h"
+#include "wen.h"
 #include <errno.h>
 
 int main() 
