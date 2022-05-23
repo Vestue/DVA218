@@ -199,10 +199,15 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, 
 
 		if (receivedDatagram->ackNum == server->baseSeqNum)
 		{
-			for (int i = server->baseSeqNum; i < currentSeq; i= (i+1 % MAXSEQNUM))
+			printf("Hello there i am in the if now!!\n");
+			for (int i = server->baseSeqNum; i < currentSeq; i= ((i+1) % MAXSEQNUM))
 			{
+				printf("At i %d\ttimestamp is:%ld", i, server->buffer[i].timeStamp.tv_sec);
 				if (server->buffer[i].timeStamp.tv_sec == 0) 
+				{
 					server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
+					printf("Test %d", server->baseSeqNum);
+				}
 			}
 		}
 			

@@ -753,6 +753,7 @@ int getExpectedSeq(struct sockaddr_in addr, ClientList* list)
     return ERRORCODE;
 }
 
+//!DELETE
 //!Abstract
 int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list)
 {
