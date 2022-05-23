@@ -99,6 +99,7 @@ int main(int argc, char *argv[])
 
 void printCursorThingy()
 {
+	printf("------------------------\n");
 	printf("\n(Type \"EXIT\" to disconnect)\n\n\n>");
 }
 
@@ -124,7 +125,7 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
 	strncpy(server->buffer[currentSeq].message, message, strlen(message));
 	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer->timeStamp);
 
-	// Print timestamp for labspec
+	// Print timestamp
 	time_t currTime;
 	time(&currTime);
 	printf("Message sent at: %s", ctime(&currTime));
@@ -134,7 +135,6 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
 
 void interpretPack_sender(ConnectionInfo *server, int *currentSeq)
 {
-	printf("In interpret sender!\n");
 	Datagram receivedDatagram = initDatagram();
 	recvMessage(server->sock, receivedDatagram, &server->addr);
 
@@ -145,7 +145,7 @@ void interpretPack_sender(ConnectionInfo *server, int *currentSeq)
 
 void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 {
-	if (receivedDatagram->flag == ACK && !corrupt(receivedDatagram))
+	if (receivedDatagram->flag == ACK) //&& !corrupt(receivedDatagram))
 	{
 		printf("Received ACK(%d)\n\n", receivedDatagram->ackNum);
 

@@ -441,9 +441,13 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 	{
 		Datagram toSend = initDatagram();
 		setHeader(toSend, ACK, 0, client->baseSeqNum);
+		toSend->checksum = calcChecksum(toSend->message, sizeof(toSend->message));
 		if (sendMessage(client->sock, toSend, client->addr))
-		{
-			printf("Responding with ACK(%d)\n", client->baseSeqNum);
+		{	
+			time_t currTime;
+			time(&currTime);
+			printf("Responding with ACK(%d)\n%s", client->baseSeqNum, ctime(&currTime));
+
 			if (receivedDatagram->sequence == client->baseSeqNum)
 				client->baseSeqNum++;
 		}
