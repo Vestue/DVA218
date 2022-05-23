@@ -35,6 +35,13 @@
 #define FIN 4
 int SRwindow = 0;
 
+
+/*
+	Calculates checksum for datagram
+	returns the result of calculation
+	
+	Usage: datagram->checksum = calcChecksum(datagram, sizeof(*datagram))
+*/
 uint32_t calcChecksum(const void* message, uint32_t length)
 {
     uint32_t poly = 0x04C11DB7;
@@ -415,7 +422,8 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	Datagram receivedDatagram = initDatagram();
 	ConnectionInfo *client = findClientFromSock(clientList, sock);
 
-	int retval = recvMessage(client->sock, receivedDatagram, &client->addr);
+	int retval;
+	retval = recvMessage(client->sock, receivedDatagram, &client->addr);
 	if (retval == 1) printf("Reading package..\n");
 	else if (retval == 0) printf("No data to read.\n");
 	else if (retval == ERRORCODE) printf("Package corrupted!");
