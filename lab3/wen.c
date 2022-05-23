@@ -133,39 +133,39 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-	srand(time(0));
-	int rng = rand()%100;
-	char flag[15];
-	switch (messageToSend->flag)
-	{
-	case DATA:
-		strncpy(flag, "DATA", 12);
-		break;
-	case SYN:
-		strncpy(flag, "SYN", 12);
-		break;
-	case ACK:
-		strncpy(flag, "ACK", 12);
-		break;
-	case SYN+ACK:
-		strncpy(flag, "SYN+ACK", 12);
-		break;
-	case FIN:
-		strncpy(flag, "FIN", 12);
-		break;
-	default:
-		break;
-	}
-	if (rng < 10)
-	{
-		printf("----- Oh nooo, ye packet is corrupt! -----\n");
-		messageToSend->checksum=rng;
-	}
-	else if(rng < 20) // Error for lost packet;
-	{
-		printf("----- Oh nooo, %s is lost at seaa! -----\n", flag);
-		return 1;
-	}
+	// srand(time(0));
+	// int rng = rand()%100;
+	// char flag[15];
+	// switch (messageToSend->flag)
+	// {
+	// case DATA:
+	// 	strncpy(flag, "DATA", 12);
+	// 	break;
+	// case SYN:
+	// 	strncpy(flag, "SYN", 12);
+	// 	break;
+	// case ACK:
+	// 	strncpy(flag, "ACK", 12);
+	// 	break;
+	// case SYN+ACK:
+	// 	strncpy(flag, "SYN+ACK", 12);
+	// 	break;
+	// case FIN:
+	// 	strncpy(flag, "FIN", 12);
+	// 	break;
+	// default:
+	// 	break;
+	// }
+	// if (rng < 10)
+	// {
+	// 	printf("----- Oh nooo, ye packet is corrupt! -----\n");
+	// 	messageToSend->checksum=rng;
+	// }
+	// else if(rng < 20) // Error for lost packet;
+	// {
+	// 	printf("----- Oh nooo, %s is lost at seaa! -----\n", flag);
+	// 	return 1;
+	// }
 
 	if (sendto(sock, (Datagram)messageToSend, sizeof(Header),
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
@@ -345,7 +345,7 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
             setHeader(messageToSend, ACK, 0, messageToReceive->sequence);
 			// strncpy(messageToSend->message, "LINE:285!\0", strlen("LINE:285!\0")); //! Test message, remove later
 			messageToSend->checksum = calcChecksum(messageToSend, sizeof(*messageToSend));
-			sleep(100);
+			// sleep(100);
 			printf("Responding with ACK\n");
 			if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
 			{
@@ -442,6 +442,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 	   	if ((select(FD_SETSIZE, &readFdSet, NULL, NULL, &selectTime) < 0))
 		{
 			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
+			
 			FD_ZERO(&readFdSet);
 		}
 		if (FD_ISSET(serverSock, &readFdSet))
