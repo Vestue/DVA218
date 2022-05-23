@@ -133,40 +133,6 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
-	// srand(time(0));
-	// int rng = rand()%100;
-	// char flag[15];
-	// switch (messageToSend->flag)
-	// {
-	// case DATA:
-	// 	strncpy(flag, "DATA", 12);
-	// 	break;
-	// case SYN:
-	// 	strncpy(flag, "SYN", 12);
-	// 	break;
-	// case ACK:
-	// 	strncpy(flag, "ACK", 12);
-	// 	break;
-	// case SYN+ACK:
-	// 	strncpy(flag, "SYN+ACK", 12);
-	// 	break;
-	// case FIN:
-	// 	strncpy(flag, "FIN", 12);
-	// 	break;
-	// default:
-	// 	break;
-	// }
-	// if (rng < 10)
-	// {
-	// 	printf("----- Oh nooo, ye packet is corrupt! -----\n");
-	// 	messageToSend->checksum=rng;
-	// }
-	// else if(rng < 20) // Error for lost packet;
-	// {
-	// 	printf("----- Oh nooo, %s is lost at seaa! -----\n", flag);
-	// 	return 1;
-	// }
-
 	if (sendto(sock, (Datagram)messageToSend, sizeof(Header),
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
@@ -347,12 +313,14 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 			messageToSend->checksum = calcChecksum(messageToSend, sizeof(*messageToSend));
 			// sleep(100);
 			printf("Responding with ACK\n");
-			if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
-			{
-				printf("Could not send message to server\n");
-				free(messageToReceive);
-				return ERRORCODE;
-			}
+
+			// if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
+			// {
+			// 	printf("Could not send message to server\n");
+			// 	free(messageToReceive);
+			// 	return ERRORCODE;
+			// }
+			
 			if (addToClientList(list, initConnectionInfo(messageToReceive, recvAddr, sock)))
 			{
 				printf("\nConnection established!\n\n");
@@ -453,9 +421,8 @@ int acceptClientConnection(int serverSock, ClientList* list)
     	if((receivedDatagram->flag == ACK 
             && ACKaddr.sin_addr.s_addr == recvAddr.sin_addr.s_addr
             && ACKaddr.sin_port == recvAddr.sin_port)
-			|| (time_current.tv_sec - time_SYNACK_sent.tv_sec > 2 * RTT))
+			|| (time_current.tv_sec - time_SYNACK_sent.tv_sec >= 2 * RTT))
         {
-			printf("Recieved ACK for SYN+ACK\n");
 			if (addToClientList(list, initConnectionInfo(receivedDatagram, recvAddr, clientSock)))
 			{
 				printf("\nConnection established with client %s, port %d\n\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
@@ -589,7 +556,7 @@ ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in 
 {
 	ConnectionInfo tempInfo;
 	memset(&tempInfo, 0, sizeof(tempInfo));
-	if (receivedDatagram->flag == ACK) tempInfo.baseSeqNum = STARTSEQ;
+	if (receivedDatagram->flag == ACK || receivedDatagram->flag == SYN) tempInfo.baseSeqNum = STARTSEQ;
 	else if (receivedDatagram->flag == SYN + ACK) tempInfo.baseSeqNum = receivedDatagram->ackNum;
 	else
 	{
