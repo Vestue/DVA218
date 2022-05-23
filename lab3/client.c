@@ -165,10 +165,13 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 {
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
+	time_t currTime;
+	time(&currTime);
 	
 	if(*currentSeq > (server->baseSeqNum + WINDOWSIZE) % MAXSEQNUM) return 0;
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
-    printf("Sending package: %sSequence(%d)\n", toSend->message, *currentSeq);
+    printf("Message sent at: %s", ctime(&currTime));
+	printf("-with SEQ(%d)\n", toSend->sequence);
 
 	strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
 	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[*currentSeq].timeStamp);
@@ -179,10 +182,13 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
  
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, int currentSeq)
 {
+	time_t currTime;
+	time(&currTime);
 	int isCorrupt = corrupt(receivedDatagram);
 	if((receivedDatagram->flag == ACK) && !isCorrupt)
 	{
-		printf("Received ACK(%d)\n", receivedDatagram->ackNum);
+		printf("Received Datagram at: %s", ctime(&currTime));
+		printf("-With ACK(%d)\n", receivedDatagram->ackNum);
 		server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
 		server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
 		for (int i = 0; i < MESSAGELENGTH; i++)

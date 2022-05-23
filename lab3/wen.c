@@ -466,23 +466,20 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 //!Abstract
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
-    
-	
+
         if(packet->sequence == client->baseSeqNum || (!corrupt(packet)))
         {
-			printf("Received datagram, Sequence(%d)\n", packet->sequence);
+			time_t currTime;
+			time(&currTime);
+			printf("Received Datagram at: %s", ctime(&currTime));
+			printf("-With Sequence(%d)\n", packet->sequence);
             Datagram toSend = initDatagram();
 			//TODO: Check if function is used correctly
             setHeader(toSend, ACK, 0, packet->sequence);
 			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
             sendMessage(sock, toSend, client->addr);
 			printf("Sending ACK(%d)\n", toSend->ackNum);
-            
         }
-
-        
-
-    
 }
 
 
