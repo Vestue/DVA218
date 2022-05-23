@@ -185,11 +185,10 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 		printf("Received ACK(%d)\n", receivedDatagram->ackNum);
 		for (int i = 0; i < MESSAGELENGTH; i++)
 			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
-		server->baseSeqNum++;
+		server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
 		printf("New baseSeq(%d)\n", server->baseSeqNum);
-
 	}
-	else if (isCorrupt) printf("Received corrupt message!");
+	else if (isCorrupt) printf("Received corrupt message!\n");
 }
 
 void resendTimedOutPacks(ConnectionInfo *server, int *currentSeq)
