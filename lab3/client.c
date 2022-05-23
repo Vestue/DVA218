@@ -267,13 +267,8 @@ void checkTimeout_SR(ConnectionInfo *server, int *currentSeq)
 {
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
-	if(currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
-	{
-		printf("\nSending timed out packet\n");
-		writeMessageSR(server, server->buffer[server->baseSeqNum].message, &server->baseSeqNum);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[server->baseSeqNum].timeStamp);
-	}
-	for (int seq = (server->baseSeqNum+1) % MAXSEQNUM; seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
+
+	for (int seq = (server->baseSeqNum); seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
 	{
 		if(currTime.tv_sec - server->buffer[seq].timeStamp.tv_sec > 2 * RTT)
 		{
