@@ -230,6 +230,11 @@ void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest)
     }
 }
 
+void timeoutServerConnection(int signal)
+{
+	printf("Timed out.\n");
+}
+
 ConnectionInfo connectToServer(int sock, char* hostName)
 {
     // Setup destination adress.
@@ -306,7 +311,7 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
             setHeader(messageToSend, ACK, 0, messageToReceive->sequence);
 			// strncpy(messageToSend->message, "LINE:285!\0", strlen("LINE:285!\0")); //! Test message, remove later
 			messageToSend->checksum = calcChecksum(messageToSend, sizeof(*messageToSend));
-
+			sleep(100);
 			printf("Responding with ACK\n");
 			if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
 			{
@@ -352,8 +357,16 @@ int acceptClientConnection(int serverSock, ClientList* list)
 		if the SYN+ACK gets lost.
 	*/
 	int clientSock = createClientSpecificSocket(recvAddr);
+	fd_set activeFdSet, readFdSet;
+	FD_ZERO(&activeFdSet);
+	FD_ZERO(&readFdSet);
+	FD_SET(serverSock, &activeFdSet);
+	struct timeval selectTime;
+	selectTime.tv_sec = 2 * RTT;
+	selectTime.tv_usec = 0;
 	while(1)
 	{		
+		readFdSet = activeFdSet;
 		if (receivedDatagram->flag == SYN)
 		{
 			printf("Received SYN\n");
@@ -391,7 +404,15 @@ int acceptClientConnection(int serverSock, ClientList* list)
             SYN could arrive here if the SYN+ACK got lost,
             if so then the server will resend SYN+ACK and then wait here again.
         */
-        recvMessage(serverSock, receivedDatagram, &ACKaddr);
+		
+	   	if ((select(FD_SETSIZE, &readFdSet, NULL, NULL, &selectTime) < 0))
+		{
+			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
+			FD_ZERO(&readFdSet);
+		}
+		if (FD_ISSET(serverSock, &readFdSet))
+        	recvMessage(serverSock, receivedDatagram, &ACKaddr);
+
 		clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
         //* Make sure that ACK is coming from expected adress
     	if((receivedDatagram->flag == ACK 
