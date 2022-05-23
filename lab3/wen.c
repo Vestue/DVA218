@@ -567,7 +567,7 @@ int removeFromClientList(ClientList *list, struct sockaddr_in addr)
             ConnectionInfo* tempArr = (ConnectionInfo*)calloc(list->size, sizeof(ConnectionInfo));
             if (tempArr == NULL)
             {
-                perror("Failed to allocate memory for client list");F
+                perror("Failed to allocate memory for client list");
                 exit(EXIT_FAILURE);
             }
             // Copy everything before the index
