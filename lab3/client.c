@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 			*/
 			if (currSock == serverInfo.sock && FD_ISSET(currSock, &readFdSet))
 			{
-				interpretPack_sender(&serverInfo, &currentSeq);
+				interpretPack_sender(&serverInfo, currentSeq);
 				printCursorThingy();
 			}
 			else if (currSock == STDIN_FILENO && FD_ISSET(currSock, &readFdSet))
@@ -134,14 +134,14 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
 	return 1;
 }
 
-void interpretPack_sender(ConnectionInfo *server, int *currentSeq)
+void interpretPack_sender(ConnectionInfo *server, int currentSeq)
 {
 	Datagram receivedDatagram = initDatagram();
 	recvMessage(server->sock, receivedDatagram, &server->addr);
 
 	//* Send to GBN or SR to handle DATA in package
 	if (SWMETHOD == GBN) interpretPack_sender_GBN(receivedDatagram, server);
-	else interpretPack_sender_SR(receivedDatagram, server);
+	else interpretPack_sender_SR(receivedDatagram, server, currentSeq);
 }
 
 void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
@@ -176,8 +176,8 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
         
 	return 1;
 }
-
-void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
+ 
+void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, int currentSeq)
 {
 	int isCorrupt = corrupt(receivedDatagram);
 	if((receivedDatagram->flag == ACK) && !isCorrupt)
@@ -187,7 +187,16 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 		server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
 		for (int i = 0; i < MESSAGELENGTH; i++)
 			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
-		server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
+
+		if (receivedDatagram->ackNum == server->baseSeqNum)
+		{
+			for (int i = server->baseSeqNum; i < currentSeq; i= (i+1 % MAXSEQNUM))
+			{
+				if (server->buffer[i].timeStamp.tv_sec == 0) 
+					server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
+			}
+		}
+			
 		printf("New baseSeq(%d)\n", server->baseSeqNum);
 	}
 	else if (isCorrupt) printf("Received corrupt message!\n");
