@@ -369,7 +369,9 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 			if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
 			{
 				printf("Could not send message to server\n");
+
 				free(messageToReceive);
+
 				return ERRORCODE;
 			}
 			
