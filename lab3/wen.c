@@ -642,6 +642,7 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 		Datagram toSend = initDatagram();
 		//TODO: Check if function is used correctly
     	setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->sequence);
+		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 		if (sendMessage(client->sock, toSend, client->addr) < 0)
 		{
 			printf("Failed to disconnect client\n");
@@ -669,6 +670,7 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 		Datagram toSend = initDatagram();
 		//TODO: Check if function is used correctly
 		setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->sequence);
+		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 		if (sendMessage(client->sock, toSend, client->addr) < 0)
 		{
 			printf("Failed to disconnect client\n");
@@ -681,14 +683,15 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 
 int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 {
-	Datagram sendTo = initDatagram();
+	Datagram toSend = initDatagram();
     Datagram messageReceived = initDatagram();
     struct sockaddr_in tempAddr;
 	
     printf("In disconnect clientside\n");
 	//TODO: Check if function is used correctly
 
-	setHeader(sendTo, FIN, nextSeq, nextSeq);
+	setHeader(toSend, FIN, nextSeq, nextSeq);
+	toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 	struct timespec time_current, time_FIN_sent, time_FIN_received;
 	time_FIN_received.tv_sec = 0;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &time_FIN_sent);
@@ -698,7 +701,7 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 		if (time_current.tv_sec - time_FIN_sent.tv_sec > 2 * RTT)
 		{
 			printf("Sending FIN..\n");
-			if(sendMessage(server.sock, sendTo, server.addr) < 0)
+			if(sendMessage(server.sock, toSend, server.addr) < 0)
 			{
 				printf("Failed to disconnect from server");
 				exit(EXIT_FAILURE);
@@ -715,8 +718,9 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 		{
 			printf("Received FIN\n");
 			//TODO: Check if function is used correctly
-			setHeader(sendTo, ACK, 0, messageReceived->sequence);
-			sendMessage(server.sock, sendTo, server.addr);
+			setHeader(toSend, ACK, 0, messageReceived->sequence);
+			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
+			sendMessage(server.sock, toSend, server.addr);
 			clock_gettime(CLOCK_MONOTONIC_RAW, &time_FIN_received);
 		}
 
