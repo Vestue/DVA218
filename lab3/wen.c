@@ -440,25 +440,20 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 //!Abstract
 void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
 {	
-	/* Check if any timer has run out
-	struct timespec currTime;
-	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
-	for (int i = 0; i < MAXSEQNUM; i++)
-	{
-		if (client->buffer[i].timeStamp.tv_sec - currTime.tv_sec > RTT)
-		{
-			//! Timer is not needed here, WTF you doin?
-		}
-	}*/
-
 	if ((receivedDatagram->sequence == client->baseSeqNum) || (!corrupt(receivedDatagram)))
 	{
 		Datagram toSend = initDatagram();
 		//TODO: Check if function is used correctly
-		setHeader(toSend, ACK, 0, receivedDatagram->sequence);
-		client->baseSeqNum++;
+		setHeader(toSend, ACK, 0, client->baseSeqNum);
+		if (sendMessage(client->sock, toSend, client->addr))
+		{
+			printf("Responding with ACK(%d)\n", client->baseSeqNum);
+			if (receivedDatagram->sequence == client->baseSeqNum)
+				client->baseSeqNum++;
+		}
+		else 
+			printf("Failecd to send ACK(%d)!\n", client->baseSeqNum);
 	}
-	// else discard
 }
 
 //!Abstract
