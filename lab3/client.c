@@ -50,6 +50,8 @@ int main(int argc, char *argv[])
 	int retval = 0;
 	printCursorThingy();
 	fflush(stdout);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &serverInfo.buffer[currentSeq].timeStamp);
+	
 	while(1)
 	{
 		serverInfo.baseSeqNum = serverInfo.baseSeqNum % MAXSEQNUM;
@@ -93,8 +95,6 @@ int main(int argc, char *argv[])
 		}
 		fflush(stdout);
 	}
-
-    //setupClientDisconnect(sock, hostName, &destAddr);
     return 0;
 }
 
@@ -173,7 +173,9 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 		
         if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
         printf("Sending package: %sSequence(%d)\n", toSend->message, *currentSeq);
+
 		strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
+		clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[*currentSeq].timeStamp);
         //* Start TIMER
         printf("Implement later\n");
 		    
@@ -186,7 +188,7 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 {
 	
-	if(receivedDatagram->flag == ACK && !corrupt(receivedDatagram));
+	if((receivedDatagram->flag == ACK) && (!corrupt(receivedDatagram)))
 	{
 		printf("Received ACK(%d)\n", receivedDatagram->ackNum);
 		for (int i = 0; i < MESSAGELENGTH; i++)
@@ -213,9 +215,9 @@ void resendTimedOutPacks_GBN(ConnectionInfo *server, int *currentSeq)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
 	if (currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
 	{
-		printf("Sending timed out packages!\n");
 		for (int seq = server->baseSeqNum; seq < *currentSeq; seq++)
 		{
+			printf("\nSending timed out package\n");
 			writeMessageGBN(server, server->buffer[seq].message, seq);
 		}
 	}
@@ -223,5 +225,8 @@ void resendTimedOutPacks_GBN(ConnectionInfo *server, int *currentSeq)
 
 void resendTimedOutPacks_SR(ConnectionInfo *server, int *currentSeq)
 {
-
+	struct timespec currTime;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
+	if(currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
+		writeMessageSR(server, server->buffer[server->baseSeqNum].message, currentSeq);	
 }
