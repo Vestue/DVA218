@@ -567,7 +567,7 @@ int removeFromClientList(ClientList *list, struct sockaddr_in addr)
             ConnectionInfo* tempArr = (ConnectionInfo*)calloc(list->size, sizeof(ConnectionInfo));
             if (tempArr == NULL)
             {
-                perror("Failed to allocate memory for client list");
+                perror("Failed to allocate memory for client list");F
                 exit(EXIT_FAILURE);
             }
             // Copy everything before the index
@@ -802,11 +802,4 @@ void packMessage(Datagram datagram, char* message, int currentSeq)
 	if(message != NULL)
     	strncpy(datagram->message, message, strlen(message));
 	datagram->checksum = calcChecksum(datagram, sizeof(*datagram));
-	srand(time(0));
-	int rng = rand()%100;
-	if (rng < 10)
-	{
-		printf("cowsay this packet is corrupt\t\n");
-		datagram->checksum=rng;
-	}
 }
