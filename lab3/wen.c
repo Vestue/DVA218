@@ -804,19 +804,19 @@ void packMessage(Datagram datagram, char* message, int currentSeq)
 int writeMessage(ConnectionInfo *server, char* message, int *currentSeq)
 {
 	Datagram toSend = initDatagram();
-	packMessage(toSend, message, currentSeq);
+	packMessage(toSend, message, *currentSeq);
 	time_t currTime;
 	time(&currTime);
 
-	for(int i = server->baseSeqNum, count = 0; i != currentSeq; i = (i+1) % MAXSEQNUM, count++)
+	for(int i = server->baseSeqNum, count = 0; i != *currentSeq; i = (i+1) % MAXSEQNUM, count++)
 		if (count >= WINDOWSIZE) return 0;
 
 	printf("Message sent at: %s", ctime(&currTime));
 	printf("-with SEQ(%d)\n", toSend->sequence);
+
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
-
-	strncpy(server->buffer[currentSeq].message, message, strlen(message));
-	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[currentSeq].timeStamp);
-
+	
+	strncpy(server->buffer[*currentSeq].message, message, strlen(message));
+	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[*currentSeq].timeStamp);
 	return 1;
 }
