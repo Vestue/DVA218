@@ -211,6 +211,8 @@ void resendTimedOutPacks_GBN(ConnectionInfo *server, int *currentSeq)
 		{
 			printf("\nSending timed out package\n");
 			writeMessageGBN(server, server->buffer[seq].message, seq);
+			//! Delete this if things go wrong
+			clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[seq].timeStamp);
 		}
 	}
 }
@@ -223,5 +225,6 @@ void resendTimedOutPacks_SR(ConnectionInfo *server, int *currentSeq)
 	{
 		printf("\nSending timed out package\n");
 		writeMessageSR(server, server->buffer[server->baseSeqNum].message, currentSeq);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[server->baseSeqNum].timeStamp);
 	}
 }
