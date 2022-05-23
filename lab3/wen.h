@@ -21,16 +21,17 @@
 #define MAXSEQNUM 10
 #define STARTSEQ 0
 #define ERRORCODE -1
+#define LOSTPACKET -2
 #define MESSAGELENGTH 256
 
 // RTT is assumed to be 3 seconds
 #define RTT 3
 
 /*
-	Set if Go-Back-N or Selective Repeat should
-	be used as the method for sliding windows.
-	Go-Back-N = 0
-	Selective Repeat = 1
+	*Set if Go-Back-N or Selective Repeat should
+	*be used as the method for sliding windows.
+	*Go-Back-N = 0
+	*Selective Repeat = 1
 */
 #define SWMETHOD 1
 

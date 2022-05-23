@@ -443,7 +443,8 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 //!Abstract
 void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
 {	
-	if ((receivedDatagram->sequence == client->baseSeqNum) || (!corrupt(receivedDatagram)))
+	int isCorrupt = corrupt(receivedDatagram);
+	if ((receivedDatagram->sequence == client->baseSeqNum) && (!isCorrupt))
 	{
 		printf("Received message: %s\n\n", receivedDatagram->message);
 		Datagram toSend = initDatagram();
@@ -461,6 +462,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 		else 
 			printf("Failed to send ACK(%d)!\n", client->baseSeqNum);
 	}
+	else if (isCorrupt) printf("Received corrupt packet!\n");
 }
 
 //!Abstract
@@ -468,7 +470,7 @@ void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client
 {
 	int isCorrupt = corrupt(packet);
 
-	if(packet->sequence == client->baseSeqNum || (!isCorrupt))
+	if(packet->sequence == client->baseSeqNum && (!isCorrupt))
 	{
 		time_t currTime;
 		time(&currTime);
