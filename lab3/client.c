@@ -163,32 +163,24 @@ void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 
 int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 {
-    
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, *currentSeq);
+	
+	if(*currentSeq > (server->baseSeqNum + WINDOWSIZE) % MAXSEQNUM) return 0;
+	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
+    printf("Sending package: %sSequence(%d)\n", toSend->message, *currentSeq);
 
-    
-        if(*currentSeq > (server->baseSeqNum + WINDOWSIZE) % MAXSEQNUM) return 0;
-
-		
-        if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
-        printf("Sending package: %sSequence(%d)\n", toSend->message, *currentSeq);
-
-		strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
-		clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[*currentSeq].timeStamp);
-        //* Start TIMER
-        printf("Implement later\n");
-		    
+	strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
+	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[*currentSeq].timeStamp);
+    //* Start TIMER
         
 	return 1;
-        
-    
-    
 }
+
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 {
-	
-	if((receivedDatagram->flag == ACK) && (!corrupt(receivedDatagram)))
+	int isCorrupt = corrupt(receivedDatagram);
+	if((receivedDatagram->flag == ACK) && !isCorrupt)
 	{
 		printf("Received ACK(%d)\n", receivedDatagram->ackNum);
 		for (int i = 0; i < MESSAGELENGTH; i++)
@@ -197,6 +189,7 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 		printf("New baseSeq(%d)\n", server->baseSeqNum);
 
 	}
+	else if (isCorrupt) printf("Received corrupt message!");
 }
 
 void resendTimedOutPacks(ConnectionInfo *server, int *currentSeq)
@@ -228,5 +221,8 @@ void resendTimedOutPacks_SR(ConnectionInfo *server, int *currentSeq)
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
 	if(currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
-		writeMessageSR(server, server->buffer[server->baseSeqNum].message, currentSeq);	
+	{
+		printf("\nSending timed out package\n");
+		writeMessageSR(server, server->buffer[server->baseSeqNum].message, currentSeq);
+	}
 }
