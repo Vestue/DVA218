@@ -332,12 +332,12 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 			// sleep(100);
 			printf("Responding with ACK\n");
 
-			// if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
-			// {
-			// 	printf("Could not send message to server\n");
-			// 	free(messageToReceive);
-			// 	return ERRORCODE;
-			// }
+			if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
+			{
+				printf("Could not send message to server\n");
+			 	free(messageToReceive);
+				return ERRORCODE;
+			}
 			
 			if (addToClientList(list, initConnectionInfo(messageToReceive, recvAddr, sock)))
 			{
