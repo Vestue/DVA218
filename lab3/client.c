@@ -213,6 +213,7 @@ void resendTimedOutPacks_GBN(ConnectionInfo *server, int *currentSeq)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
 	if (currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
 	{
+		printf("Sending timed out packages!\n");
 		for (int seq = server->baseSeqNum; seq < *currentSeq; seq++)
 		{
 			writeMessageGBN(server, server->buffer[seq].message, seq);
