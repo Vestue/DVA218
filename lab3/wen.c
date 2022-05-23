@@ -422,11 +422,17 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 
 	int retval;
 	retval = recvMessage(client->sock, receivedDatagram, &client->addr);
-	if (retval == 1) printf("Reading package..\n");
-	else if (retval == 0) printf("No data to read.\n");
-	else if (retval == ERRORCODE) printf("Package corrupted!");
-
-
+	if (retval == 0)
+	{
+		printf("No data to read.\n");
+		return;
+	}
+	else if (retval == ERRORCODE) 
+	{
+		printf("Package corrupted!");
+		return;
+	}
+	printf("Receiving data..\n");
 	//* Start disconnect process
 	if (receivedDatagram->flag == FIN || (receivedDatagram->flag == ACK && isFINSet(*client))
 		|| (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)) 
@@ -443,8 +449,8 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 //!Abstract
 void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
 {	
-	int isCorrupt = corrupt(receivedDatagram);
-	if ((receivedDatagram->sequence == client->baseSeqNum) && (!isCorrupt))
+	printf("seq: %d | base: %d\n", receivedDatagram->sequence, client->baseSeqNum);
+	if ((receivedDatagram->sequence == client->baseSeqNum))
 	{
 		printf("Received message: %s\n\n", receivedDatagram->message);
 		Datagram toSend = initDatagram();
@@ -462,15 +468,13 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 		else 
 			printf("Failed to send ACK(%d)!\n", client->baseSeqNum);
 	}
-	else if (isCorrupt) printf("Received corrupt packet!\n");
 }
 
 //!Abstract
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
-	int isCorrupt = corrupt(packet);
-
-	if(packet->sequence == client->baseSeqNum && (!isCorrupt))
+	
+	if(packet->sequence == client->baseSeqNum)
 	{
 		time_t currTime;
 		time(&currTime);
@@ -483,7 +487,7 @@ void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client
 		sendMessage(sock, toSend, client->addr);
 		printf("Sending ACK(%d)\n", toSend->ackNum);
 	}
-	else if(isCorrupt) printf("Received corrupt packet!\n");
+	
 }
 
 
