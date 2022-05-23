@@ -35,6 +35,9 @@
 #define FIN 4
 int SRwindow = 0;
 
+//TODO: Check all functions references and remove unused functions
+//TODO: Check all prints to see if there is any debug code left
+//TODO: Give every function a comment on how it works
 
 /*
 	Calculates checksum for datagram
@@ -462,8 +465,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 			time(&currTime);
 			printf("Responding with ACK(%d)\n%s", client->baseSeqNum, ctime(&currTime));
 
-			if (receivedDatagram->sequence == client->baseSeqNum)
-				client->baseSeqNum++;
+			client->baseSeqNum = (client-> baseSeqNum+1)%MAXSEQNUM;
 		}
 		else 
 			printf("Failed to send ACK(%d)!\n", client->baseSeqNum);

@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 	char message[MESSAGELENGTH] = { '\0' };
 
 	//todo: currentSeq will probably need to be renamed to nextSeqNum
-	//todo: to match with our labb 3a report. 
+	//todo: to match with our labb 3a report.
 	int currentSeq = serverInfo.baseSeqNum;
 	int retval = 0;
 	printCursorThingy();
@@ -268,5 +268,4 @@ void checkTimeout_SR(ConnectionInfo *server, int *currentSeq)
 			clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[seq].timeStamp);
 		}
 	}
-	
 }
