@@ -133,6 +133,40 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
+	srand(time(0));
+	int rng = rand()%100;
+	char flag[15];
+	switch (messageToSend->flag)
+	{
+	case DATA:
+		strncpy(flag, "DATA", 12);
+		break;
+	case SYN:
+		strncpy(flag, "SYN", 12);
+		break;
+	case ACK:
+		strncpy(flag, "ACK", 12);
+		break;
+	case SYN+ACK:
+		strncpy(flag, "SYN+ACK", 12);
+		break;
+	case FIN:
+		strncpy(flag, "FIN", 12);
+		break;
+	default:
+		break;
+	}
+	if (rng < 10)
+	{
+		printf("----- Oh nooo, ye packet is corrupt! -----\n");
+		messageToSend->checksum=rng;
+	}
+	else if(rng < 20) // Error for lost packet;
+	{
+		printf("----- Oh nooo, %s is lost at seaa! -----\n", flag);
+		return 1;
+	}
+
 	if (sendto(sock, (Datagram)messageToSend, sizeof(Header),
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
@@ -476,7 +510,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 	printf("seq: %d | base: %d\n", receivedDatagram->sequence, client->baseSeqNum);
 	if ((receivedDatagram->sequence == client->baseSeqNum))
 	{
-		printf("Received message: %s\n\n", receivedDatagram->message);
+		printf("Received message: \n%s\n", receivedDatagram->message);
 		Datagram toSend = initDatagram();
 		setHeader(toSend, ACK, 0, receivedDatagram->sequence);
 		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
@@ -512,7 +546,7 @@ void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client
 		strncpy(client->buffer[packet->sequence].message, packet->message, strlen(packet->message));
 		char message[MESSAGELENGTH*WINDOWSIZE+1];
 		emptyBuffer(client, packet, message);
-		printf("Received message: %s\n", message);
+		printf("Received message: \n%s\n", message);
 	}
 	else
 	{
@@ -824,15 +858,6 @@ int isFINSet(ConnectionInfo connection)
 	return 0;
 }
 
-/*
-    * Functions to set neccessary information in header depending on flag.
-*/
-
-
-
-
-
-//! Change to use setHeader when brain starts working again
 void packMessage(Datagram datagram, char* message, int currentSeq)
 {
 	setHeader(datagram, DATA, currentSeq, 0);
