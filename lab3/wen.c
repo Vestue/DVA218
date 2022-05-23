@@ -449,7 +449,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 	{
 		Datagram toSend = initDatagram();
 		setHeader(toSend, ACK, 0, client->baseSeqNum);
-		toSend->checksum = calcChecksum(toSend->message, sizeof(toSend->message));
+		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 		if (sendMessage(client->sock, toSend, client->addr))
 		{	
 			time_t currTime;
