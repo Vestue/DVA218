@@ -447,6 +447,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 {	
 	if ((receivedDatagram->sequence == client->baseSeqNum) || (!corrupt(receivedDatagram)))
 	{
+		printf("Received message: %s\n\n", receivedDatagram->message);
 		Datagram toSend = initDatagram();
 		setHeader(toSend, ACK, 0, client->baseSeqNum);
 		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
