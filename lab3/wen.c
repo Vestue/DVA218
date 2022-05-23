@@ -246,7 +246,7 @@ void timeoutExit(int signum)
 {
 	if (signum == SIGALRM)
 	{
-		printf("\nTimeout reached!\nDisconnecting...\n\n");
+		printf("\nTimeout reached\nDisconnected!\n\n");
 		exit(EXIT_SUCCESS);
 	}
 } 
@@ -347,12 +347,12 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 			// sleep(100);
 			printf("Responding with ACK\n");
 
-			// if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
-			// {
-			// 	printf("Could not send message to server\n");
-			// 	free(messageToReceive);
-			// 	return ERRORCODE;
-			// }
+			if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
+			{
+				printf("Could not send message to server\n");
+				free(messageToReceive);
+				return ERRORCODE;
+			}
 			
 			if (addToClientList(list, initConnectionInfo(messageToReceive, recvAddr, sock)))
 			{
@@ -788,7 +788,7 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 	{
 		if(messageReceived->flag == FIN)
 		{
-			printf("Disconnected.\n");
+			printf("Disconnecting...\n");
 			setHeader(toSend, ACK, 0, messageReceived->sequence);
 			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 			sendMessage(server.sock, toSend, server.addr);
