@@ -133,6 +133,40 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
+
+	srand(time(0));
+	int rng = rand()%100;
+	char flag[15];
+	switch (messageToSend->flag)
+	{
+	case DATA:
+		strncpy(flag, "DATA", 12);
+		break;
+	case SYN:
+		strncpy(flag, "SYN", 12);
+		break;
+	case ACK:
+		strncpy(flag, "ACK", 12);
+		break;
+	case SYN+ACK:
+		strncpy(flag, "SYN+ACK", 12);
+		break;
+	case FIN:
+		strncpy(flag, "FIN", 12);
+		break;
+	default:
+		break;
+	}
+	if (rng < 10)
+	{
+		printf("----- Oh nooo, ye packet is corrupt! -----\n");
+		messageToSend->checksum=rng;
+	}
+	else if(rng < 20) // Error for lost packet;
+	{
+		printf("----- Oh nooo, %s is lost at seaa! -----\n", flag);
+		return 1;
+	}
 	if (sendto(sock, (Datagram)messageToSend, sizeof(Header),
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
@@ -213,7 +247,7 @@ void timeoutExit(int signum)
 {
 	if (signum == SIGALRM)
 	{
-		printf("\nTimeout reached!\nDisconnecting...\n\n");
+		printf("\nTimeout reached\nDisconnected!\n\n");
 		exit(EXIT_SUCCESS);
 	}
 } 
@@ -335,7 +369,9 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 			if(sendMessage(sock, messageToSend, dest) == ERRORCODE)
 			{
 				printf("Could not send message to server\n");
-			 	free(messageToReceive);
+
+				free(messageToReceive);
+
 				return ERRORCODE;
 			}
 			
@@ -773,7 +809,7 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 	{
 		if(messageReceived->flag == FIN)
 		{
-			printf("Disconnected.\n");
+			printf("Disconnecting...\n");
 			setHeader(toSend, ACK, 0, messageReceived->sequence);
 			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 			sendMessage(server.sock, toSend, server.addr);
