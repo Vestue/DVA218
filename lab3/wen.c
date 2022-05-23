@@ -157,7 +157,7 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 	default:
 		break;
 	}
-	if (rng < 10)
+	if (rng < 10 && messageToSend->flag != SYN)
 	{
 		printf("----- Oh nooo, ye packet is corrupt! -----\n");
 		messageToSend->checksum=rng;

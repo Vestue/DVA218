@@ -61,11 +61,11 @@ int main()
 			}
 			// * Receiving from connected client
 			else if (FD_ISSET(currSock, &readFdSet))
-			{
+			{			  
 				printf("------------------------\n");
 				printf("Reading from socket %d\n", currSock);
 				interpretPack_receiver(currSock, &clients, &activeFdSet);
-				printf("------------------------\n");
+				printf("------------------------\n\n");
 				// sleep(2);
 			}
 		}
