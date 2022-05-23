@@ -171,7 +171,7 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 
 		
         if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
-        printf("Sending package: %s Sequence(%d)\n", toSend->message, *currentSeq);
+        printf("Sending package: %sSequence(%d)\n", toSend->message, *currentSeq);
 		strncpy(server->buffer[*currentSeq].message, message, sizeof(*message));
         //* Start TIMER
         printf("Implement later\n");
@@ -184,15 +184,14 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 }
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 {
-	printf("In sender SR\n");
-	if(receivedDatagram->flag == ACK)
+	
+	if(receivedDatagram->flag == ACK && !corrupt(receivedDatagram));
 	{
-		printf("Received ACK, baseSeq is %d\n", server->baseSeqNum);
-		printf("Ack Number is: %d\n", receivedDatagram->ackNum);
+		printf("Received ACK(%d)\n", receivedDatagram->ackNum);
 		for (int i = 0; i < MESSAGELENGTH; i++)
 			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
 		server->baseSeqNum++;
-		printf("New baseSeq is %d\n", server->baseSeqNum);
+		printf("New baseSeq(%d)\n", server->baseSeqNum);
 
 	}
 }

@@ -471,11 +471,13 @@ void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client
 	
         if(packet->sequence == client->baseSeqNum || (!corrupt(packet)))
         {
+			printf("Received datagram, Sequence(%d)\n", packet->sequence);
             Datagram toSend = initDatagram();
 			//TODO: Check if function is used correctly
             setHeader(toSend, ACK, 0, packet->sequence);
+			toSend->checksum = calcChecksum(toSend->message, sizeof(toSend->message));
             sendMessage(sock, toSend, client->addr);
-			printf("received packet, sending back ACK\n");
+			printf("Sending ACK(%d)\n", toSend->ackNum);
             
         }
 
