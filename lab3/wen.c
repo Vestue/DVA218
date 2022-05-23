@@ -620,31 +620,11 @@ ConnectionInfo* findClientFromSock(ClientList *list, int sock)
 	return NULL;
 }
 
-//!Abstract
-//! What is the point of this function? We already know the host info.
-/*
-int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr)
-{
-    struct hostent* hostInfo;
-    hostInfo = gethostbyname(hostName);
-    destAddr->sin_family = AF_INET;
-    destAddr->sin_port = htons(SERVERPORT);
-    destAddr->sin_addr = *(struct in_addr *)hostInfo->h_addr;
-    Datagram datagramToSend = initDatagram();
-
-    if(DisconnectClientSide(sock, datagramToSend, *destAddr, 0) != 1)
-    {
-        perror("Failed disconnect handshake");
-        exit(EXIT_FAILURE);
-
-    }
-    return datagramToSend->sequence;
-}*/
-
 int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet)
 {
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
+	time_t finTime;
 
 	if ((receivedDatagram->flag == FIN)) 
 	{
@@ -667,7 +647,9 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 	else if ((receivedDatagram->flag == ACK && isFINSet(*client))
 		|| (isFINSet(*client) && (currTime.tv_sec - client->FIN_SET_time.tv_sec) > 4 * RTT))
 	{
+		time(&finTime);
         printf("\nDisconnected client %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
+		printf("%s", ctime(&finTime));
 		close(client->sock);
 		FD_CLR(client->sock, activeFdSet);
 		removeFromClientList(clientList, client->addr);
@@ -698,14 +680,13 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
     Datagram messageReceived = initDatagram();
     struct sockaddr_in tempAddr;
 	
-    printf("In disconnect clientside\n");
 	//TODO: Check if function is used correctly
 
 	setHeader(toSend, FIN, nextSeq, nextSeq);
 	toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 	struct timespec time_current, time_FIN_sent;
 	time_FIN_sent.tv_sec = 0;
-
+	time_t finTime;
 
 	while(1)
 	{
@@ -714,10 +695,11 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 		{
 			if(sendMessage(server.sock, toSend, server.addr) < 0)
 			{
-				printf("Failed to disconnect from server");
+				printf("Failed to disconnect from server\n");
 				exit(EXIT_FAILURE);
 			}
-			printf("Sending FIN..\n");
+			time(&finTime);
+			printf("Sending FIN..\n %s", ctime(&finTime));
 			clock_gettime(CLOCK_MONOTONIC_RAW, &time_FIN_sent);
 		}
 		if (recvMessage(server.sock, messageReceived, &tempAddr) == ERRORCODE)
@@ -734,8 +716,7 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 	{
 		if(messageReceived->flag == FIN)
 		{
-			printf("Received FIN\n");
-			//TODO: Check if function is used correctly
+			printf("Disconnected.\n");
 			setHeader(toSend, ACK, 0, messageReceived->sequence);
 			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 			sendMessage(server.sock, toSend, server.addr);
