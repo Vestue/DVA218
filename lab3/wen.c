@@ -133,6 +133,39 @@ int recvMessage(int sock, Datagram receivedMessage, struct sockaddr_in* received
 
 int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 {
+	srand(time(0));
+	int rng = rand()%100;
+	char flag[15];
+	switch (messageToSend->flag)
+	{
+	case DATA:
+		strncpy(flag, "DATA", 12);
+		break;
+	case SYN:
+		strncpy(flag, "SYN", 12);
+		break;
+	case ACK:
+		strncpy(flag, "ACK", 12);
+		break;
+	case SYN+ACK:
+		strncpy(flag, "SYN+ACK", 12);
+		break;
+	case FIN:
+		strncpy(flag, "FIN", 12);
+		break;
+	default:
+		break;
+	}
+	if (rng < 10)
+	{
+		printf("----- Oh nooo, ye packet is corrupt! -----\n");
+		messageToSend->checksum=rng;
+	}
+	else if(rng < 20) // Error for lost packet;
+	{
+		printf("----- Oh nooo, %s is lost at seaa! -----\n", flag);
+		return 1;
+	}
 	if (sendto(sock, (Datagram)messageToSend, sizeof(Header),
 	    0, (struct sockaddr *)&destAddr, sizeof(destAddr)) < 0)
     {
