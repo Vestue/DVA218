@@ -52,10 +52,8 @@ int main(int argc, char *argv[])
 	fflush(stdout);
 	while(1)
 	{
-		//! Move this into the part where window gets moved
 		serverInfo.baseSeqNum = serverInfo.baseSeqNum % MAXSEQNUM;
 		readFdSet = activeFdSet;
-
 		resendTimedOutPacks(&serverInfo, &currentSeq);
 
 		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
@@ -149,6 +147,8 @@ void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 {
 	if (receivedDatagram->flag == ACK && !corrupt(receivedDatagram))
 	{
+		printf("Received ACK(%d)\n\n", receivedDatagram->ackNum);
+
 		//* Reset data on buffer-spot and move window
 		server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
 		server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;

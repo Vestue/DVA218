@@ -62,19 +62,12 @@ int main()
 			// * Receiving from connected client
 			else if (FD_ISSET(currSock, &readFdSet))
 			{
-				printf("\nI'm working on it!\n");
-				printf(">Reading from socket %d\n", currSock);
+				printf("------------------------\n");
+				printf("Reading from socket %d\n", currSock);
 				interpretPack_receiver(currSock, &clients, &activeFdSet);
-				
-				//close(currSock);
-				//FD_CLR(currSock, &activeFdSet);
+				printf("------------------------\n");
 			}
 		}
-
-		/* Move this
-		if (sequenceNumber >= MAXSEQNUM)
-			sequenceNumber = 0;
-		*/
 	}
 	return 0;
 }

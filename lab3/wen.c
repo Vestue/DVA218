@@ -414,12 +414,10 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 {
 	Datagram receivedDatagram = initDatagram();
 	ConnectionInfo *client = findClientFromSock(clientList, sock);
-	printf("I got into interpret!\n");
-	printf("clientSoc %d, sock %d\n",client->sock, sock);
 
 	int retval;
 	retval = recvMessage(client->sock, receivedDatagram, &client->addr);
-	if (retval == 1) printf("Read new package\n");
+	if (retval == 1) printf("Reading package..\n");
 	else if (retval == 0) printf("No data to read.\n");
 	else if (retval == ERRORCODE) printf("Package corrupted!");
 
@@ -443,7 +441,6 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 	if ((receivedDatagram->sequence == client->baseSeqNum) || (!corrupt(receivedDatagram)))
 	{
 		Datagram toSend = initDatagram();
-		//TODO: Check if function is used correctly
 		setHeader(toSend, ACK, 0, client->baseSeqNum);
 		if (sendMessage(client->sock, toSend, client->addr))
 		{
@@ -452,7 +449,7 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 				client->baseSeqNum++;
 		}
 		else 
-			printf("Failecd to send ACK(%d)!\n", client->baseSeqNum);
+			printf("Failed to send ACK(%d)!\n", client->baseSeqNum);
 	}
 }
 

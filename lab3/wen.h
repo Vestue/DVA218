@@ -19,7 +19,7 @@
 // Receiver sets window size and maximum sequence number
 #define WINDOWSIZE 64
 #define MAXSEQNUM 128
-#define STARTSEQ 42
+#define STARTSEQ 0
 #define ERRORCODE -1
 #define MESSAGELENGTH 256
 
