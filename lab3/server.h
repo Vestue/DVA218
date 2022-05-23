@@ -10,9 +10,4 @@
 /*Declared functions here*/
 
 
-/*
-    Disconnect client and remove from the list.
-*/
-void closeConnection(ClientList *list, struct sockaddr_in addr);
-
 #endif

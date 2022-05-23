@@ -7,6 +7,22 @@
  * - Ragnar Winblad von Walter
  ****************************************************************/ 
 
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/times.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <signal.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
+
 #ifndef WEN_H
 #define WEN_H
 
@@ -142,149 +158,6 @@ ConnectionInfo connectToServer(int sock, char* hostName);
 */
 int acceptClientConnection(int serverSock, ClientList* list);
 
-
-//  !Everything below should be abstracted out
-/*
-    Tries to connect to the server.
-    Returns 1 if successful, ERRORCODE if not.
-	Put server information into the ConnectionInfo in the ClientList upon connection.
-*/
-int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list);
-
-/**
- *
- *  Not sure it works might get removed
- *	Executes when a timeout has occured
- */
-void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
-
-int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr);
-
-int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet);
-
-int DisconnectClientSide(ConnectionInfo server, int nextSeq);
-
-
-/*
-	Set a timer for a certain sequence number.
-Todo: The timer needs to be able to be connected to a certain 
-Todo: package from a certain sockaddr.
-Todo: It also needs to be able to call diffrent functions as handles
-Todo: depending on the need upon time.
-Todo: For example, resend a timed out package or close connection.
-?   These parameters will have to be changed as i have no idea
-?   what parameters need to be used.
-*/
-void startTimer(int sock, Datagram timedConnection);
-
-/*
-	Use provided adress to stop timer for certain sequence number.
-*/
-void stopTimer(Datagram timedConnection, int seqNum);
-
-/*
-	Use provided adress to restart timer for certain sequence number.
-*/
-void restartTimer(Datagram timedConnection, int seqNum);
-
-//!  Feeling cute might delete later :3
-void timeout(int signum);
-
-
-/*
-	Return the expected sequence number from a certain sockaddr.
-    Return ERRORCODE if client can't be found.
-    ? These are only needed for ClientList as the client has instant
-    ? access to information about server.
-*/
-int getExpectedSeq(struct sockaddr_in addr, ClientList* list);
-
-/*
-	Set base sequense number of chosen connection to 
-	sequence number sent as argument.
-    Return 1 if successfully changed.
-    Return ERRORCODE if client can't be found.
-*/
-int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list);
-
-/*
-	Set that FIN has been received from connection.
-	FIN_SET = 1
-    Return 1 if sucessfully changed.
-    Return ERRORCODE if client can't be found.
-*/
-int setFIN(struct sockaddr_in addr, ClientList* list);
-
-/*
-	Read FIN_SET in chosen connection.
-	Return 1 if the FIN state is set,
-	0 if it isn't.
-*/
-int isFINSet(ConnectionInfo connection);
-
-
-/*
-    ! Remove setDefaultHeader once current functions start using setHeader instead.
-	Fill datagram with default information about
-	window size, sequence number.
-	Set flag to DATA and set message to '\0'.;
-*/
-void setDefaultHeader(Datagram messageToSend);
-
-/*
-    Pack message into datagram and set correct information for a data packet.
-*/
-void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
-
-/*
-	Resolve which client initiated the connection and send the
-	forward into GBN or SR depending on which method is to be used.
-	Also check if FIN is set in the received message. 
-	If that is the case: trigger disconnect process.
-*/
-void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSet);
-
-/*
-*   GO BACK N Functions
-*/
-
-/*
-	Main function of GBN, this takes the data and then does different
-	things depending on what flag is in the datagram.
-*/
-void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList);
-//         switch (receivedMessage->header.flag)
-            //{
-            //	case SYN:
-            //		// Send flag SYN+ACK
-            //		messageToSend->header.flag = SYN + ACK;
-            //                 //sendMessageToClient(sock, messageToSend);
-            //		// TODO Start timer
-            //                 break;
-            //	//! Can recieve ACKs, FINs, or data
-            //	//! before connection even has been attempted
-            //	//? Check if client_addr is in client addr
-            //             case ACK:
-            //		// TODO Chill timer
-            //		break;
-            //	case FIN:
-            //		/*kill*/
-            //		break;
-            //	default:
-            //		/*Destroy and ACK old packages*/
-            //		/*Normal packet*/
-            //		messageToSend->header.flag = ACK;
-            //		messageToSend->header.sequence = receivedMessage->header.sequence + 1;
-            //		break;
-            //}
-            // TODO: if SYN_timer_timeouts
-
-/*
-*   Selective repeat functions
-*/
-
-void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients);
-
 /*
 	Allocate memory to a list used for client connection info.
 	(malloc)
@@ -299,12 +172,89 @@ ClientList initClientList();
 ConnectionInfo initConnectionInfo(Datagram receivedDatagram, struct sockaddr_in recvAddr, int sock);
 
 /*
+	Resolve which client initiated the connection and send the
+	forward into GBN or SR depending on which method is to be used.
+	Also check if FIN is set in the received message. 
+	If that is the case: trigger disconnect process.
+*/
+void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSet);
+
+int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet);
+
+int DisconnectClientSide(ConnectionInfo server, int nextSeq);
+
+
+
+
+//  !Everything below should be abstracted out
+//  !Everything below should be abstracted out
+//  !Everything below should be abstracted out
+//  !Everything below should be abstracted out
+
+/*
+    Tries to connect to the server.
+    Returns 1 if successful, ERRORCODE if not.
+	Put server information into the ConnectionInfo in the ClientList upon connection.
+*/
+int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list);
+
+/**
+ *
+ *  Not sure it works might get removed
+ *	Executes when a timeout has occured
+ */
+// void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
+
+
+
+
+/*
+	Set that FIN has been received from connection.
+	FIN_SET = 1
+    Return 1 if sucessfully changed.
+    Return ERRORCODE if client can't be found.
+*/
+// int setFIN(struct sockaddr_in addr, ClientList* list);
+
+/*
+	Read FIN_SET in chosen connection.
+	Return 1 if the FIN state is set,
+	0 if it isn't.
+*/
+// int isFINSet(ConnectionInfo connection);
+
+/*
+    Pack message into datagram and set correct information for a data packet.
+*/
+// void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
+
+/*
+*   GO BACK N Functions
+*/
+
+/*
+	Main function of GBN, this takes the data and then does different
+	things depending on what flag is in the datagram.
+*/
+// void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList);
+
+/*
+*   Selective repeat functions
+*/
+
+// void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients);
+
+
+
+
+
+/*
     Begin by checking if client is in list.
 	Reallocate memory to make room for new client and then
 	add client info to the dynamic array.
 	Return 1 if successful, 0 if not.
 */
-int addToClientList(ClientList *list, ConnectionInfo info);
+// int addToClientList(ClientList *list, ConnectionInfo info);
 
 /*
     Attempt to remove client from list.
@@ -312,25 +262,13 @@ int addToClientList(ClientList *list, ConnectionInfo info);
     
     Return 1 if successful, 0 if not.
 */
-int removeFromClientList(ClientList *list, struct sockaddr_in addr);
-
-/*
-	Check if the sockaddr exists in the list.
-	Return 1 if it does, 0 if it doesn't.
-*/
-int isInClientList(ClientList *list, struct sockaddr_in addr);
-
-/*
-    Search the list for the client and add the client.
-    Return NULL if it can't be found. 
-*/
-ConnectionInfo* findClient(ClientList *list, struct sockaddr_in addr);
+// int removeFromClientList(ClientList *list, struct sockaddr_in addr);
 
 /*
 	Find the client that matches given sock.
 	Return pointer to ConnectionInfo if found.
 	Return NULL if not.
 */
-ConnectionInfo* findClientFromSock(ClientList *list, int sock);
+// ConnectionInfo* findClientFromSock(ClientList *list, int sock);
 
 #endif
