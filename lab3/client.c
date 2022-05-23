@@ -197,19 +197,18 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, 
 		for (int i = 0; i < MESSAGELENGTH; i++)
 			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
 
+		printf("ackNum %d| baseSeq %d", receivedDatagram->ackNum, server->baseSeqNum);
 		if (receivedDatagram->ackNum == server->baseSeqNum)
 		{
-			printf("Hello there i am in the if now!!\n");
 			for (int i = server->baseSeqNum; i < currentSeq; i= ((i+1) % MAXSEQNUM))
 			{
-				printf("At i %d\ttimestamp is:%ld", i, server->buffer[i].timeStamp.tv_sec);
 				if (server->buffer[i].timeStamp.tv_sec == 0) 
 				{
 					server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
-					printf("Test %d", server->baseSeqNum);
 				}
 			}
 		}
+		else if (receivedDatagram->ackNum == 0) server->baseSeqNum = receivedDatagram->ackNum;
 			
 		printf("New baseSeq(%d)\n", server->baseSeqNum);
 	}
