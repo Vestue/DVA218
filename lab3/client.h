@@ -19,6 +19,6 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server, 
 void checkTimedOutPacks(ConnectionInfo *server, int *currentSeq);
 void checkTimeout_GBN(ConnectionInfo *server, int *currentSeq);
 void checkTimeout_SR(ConnectionInfo *server, int *currentSeq);
-
+void selectTimeout(int signal);
 
 #endif

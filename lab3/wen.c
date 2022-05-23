@@ -432,7 +432,7 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	}
 	else if (retval == ERRORCODE)
 	{
-		printf("Package corrupted!");
+		printf("Package corrupted!\n");
 		return;
 	}
 	printf("Receiving data..\n");
@@ -504,7 +504,7 @@ void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client
 	setHeader(toSend, ACK, 0, packet->sequence);
 	toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 	sendMessage(sock, toSend, client->addr);
-	printf("Responding with ACK(%d)\n%s", client->baseSeqNum, ctime(&currTime));
+	printf("Responding with ACK(%d)\n%s", packet->sequence, ctime(&currTime));
 	
 }
 
