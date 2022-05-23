@@ -430,7 +430,7 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 		printf("No data to read.\n");
 		return;
 	}
-	else if (retval == ERRORCODE) 
+	else if (retval == ERRORCODE)
 	{
 		printf("Package corrupted!");
 		return;
@@ -472,23 +472,39 @@ void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *clien
 	}
 }
 
+void emptyBuffer(ConnectionInfo *client, Datagram datagram, char* message)
+{
+	if (message == NULL) printf("I am fucked\n");
+	for (int i = client->baseSeqNum; client->buffer[i].message[0] != '\0'; i = ((i+1) % MAXSEQNUM))
+	{
+		strncat(message, client->buffer[i].message, strlen(client->buffer[i].message));
+		memset(client->buffer[i].message, 0, strlen(client->buffer[i].message));
+		client->baseSeqNum = (client->baseSeqNum + 1) % MAXSEQNUM;
+	}
+}
+
 //!Abstract
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
 	if(packet->sequence == client->baseSeqNum)
 	{
-		time_t currTime;
-		time(&currTime);
-		printf("Received message: %s\n\n", packet->message);
-		Datagram toSend = initDatagram();
-		//TODO: Check if function is used correctly
-		setHeader(toSend, ACK, 0, packet->sequence);
-		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
-		sendMessage(sock, toSend, client->addr);
-		printf("Responding with ACK(%d)\n%s", client->baseSeqNum, ctime(&currTime));
-
-		client->baseSeqNum = (client->baseSeqNum + 1) % MAXSEQNUM;
+		strncpy(client->buffer[packet->sequence].message, packet->message, strlen(packet->message));
+		char message[MESSAGELENGTH*WINDOWSIZE+1];
+		emptyBuffer(client, packet, message);
+		printf("Received message: %s\n", message);
 	}
+	else
+	{
+		strncpy(client->buffer[packet->sequence].message, packet->message, strlen(packet->message));
+	}
+	time_t currTime;
+	time(&currTime);
+	Datagram toSend = initDatagram();
+	//TODO: Check if function is used correctly
+	setHeader(toSend, ACK, 0, packet->sequence);
+	toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
+	sendMessage(sock, toSend, client->addr);
+	printf("Responding with ACK(%d)\n%s", client->baseSeqNum, ctime(&currTime));
 	
 }
 
