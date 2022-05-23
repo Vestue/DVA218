@@ -16,9 +16,9 @@ void interpretPack_sender(ConnectionInfo *server, int *currentSeq);
 void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server);
 void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server);
 
-void resendTimedOutPacks(ConnectionInfo *server, int *currentSeq);
-void resendTimedOutPacks_GBN(ConnectionInfo *server, int *currentSeq);
-void resendTimedOutPacks_SR(ConnectionInfo *server, int *currentSeq);
+void checkTimedOutPacks(ConnectionInfo *server, int *currentSeq);
+void checkTimeout_GBN(ConnectionInfo *server, int *currentSeq);
+void checkTimeout_SR(ConnectionInfo *server, int *currentSeq);
 
 
 #endif

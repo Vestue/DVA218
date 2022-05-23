@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	{
 		serverInfo.baseSeqNum = serverInfo.baseSeqNum % MAXSEQNUM;
 		readFdSet = activeFdSet;
-		resendTimedOutPacks(&serverInfo, &currentSeq);
+		checkTimedOutPacks(&serverInfo, &currentSeq);
 
 		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL) < 0)
 		{
@@ -183,6 +183,8 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 	if((receivedDatagram->flag == ACK) && !isCorrupt)
 	{
 		printf("Received ACK(%d)\n", receivedDatagram->ackNum);
+		server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
+		server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
 		for (int i = 0; i < MESSAGELENGTH; i++)
 			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
 		server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
@@ -191,17 +193,17 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo *server)
 	else if (isCorrupt) printf("Received corrupt message!\n");
 }
 
-void resendTimedOutPacks(ConnectionInfo *server, int *currentSeq)
+void checkTimedOutPacks(ConnectionInfo *server, int *currentSeq)
 {
 	/*
 		Simple redirecting switch as they are handled different depending
 		on which sliding window is to be used.
 	*/
-	if (SWMETHOD == GBN) resendTimedOutPacks_GBN(server, currentSeq);
-	else resendTimedOutPacks_SR(server, currentSeq);
+	if (SWMETHOD == GBN) checkTimeout_GBN(server, currentSeq);
+	else checkTimeout_SR(server, currentSeq);
 }
 
-void resendTimedOutPacks_GBN(ConnectionInfo *server, int *currentSeq)
+void checkTimeout_GBN(ConnectionInfo *server, int *currentSeq)
 {
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
@@ -217,14 +219,19 @@ void resendTimedOutPacks_GBN(ConnectionInfo *server, int *currentSeq)
 	}
 }
 
-void resendTimedOutPacks_SR(ConnectionInfo *server, int *currentSeq)
+void checkTimeout_SR(ConnectionInfo *server, int *currentSeq)
 {
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
-	if(currTime.tv_sec - server->buffer[server->baseSeqNum].timeStamp.tv_sec > 2 * RTT)
+
+	for (int seq = server->baseSeqNum; seq < *currentSeq; seq++)
 	{
-		printf("\nSending timed out package\n");
-		writeMessageSR(server, server->buffer[server->baseSeqNum].message, currentSeq);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[server->baseSeqNum].timeStamp);
+		if(currTime.tv_sec - server->buffer[seq].timeStamp.tv_sec > 2 * RTT)
+		{
+			printf("\nSending timed out package\n");
+			writeMessageSR(server, server->buffer[seq].message, &seq);
+			clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[seq].timeStamp);
+		}
 	}
+	
 }
