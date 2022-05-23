@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
 			if (currSock == serverInfo.sock && FD_ISSET(currSock, &readFdSet))
 			{
 				interpretPack_sender(&serverInfo, &currentSeq);
+				printCursorThingy();
 			}
 			else if (currSock == STDIN_FILENO && FD_ISSET(currSock, &readFdSet))
 			{
@@ -123,7 +124,7 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
 
 	// Add message to buffer and move window
 	strncpy(server->buffer[currentSeq].message, message, strlen(message));
-	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer->timeStamp);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[currentSeq].timeStamp);
 
 	// Print timestamp
 	time_t currTime;
@@ -147,7 +148,7 @@ void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 {
 	if (receivedDatagram->flag == ACK && !corrupt(receivedDatagram))
 	{
-		printf("Received ACK(%d)\n\n", receivedDatagram->ackNum);
+		printf("\nReceived ACK(%d)\n\n", receivedDatagram->ackNum);
 
 		//* Reset data on buffer-spot and move window
 		server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
@@ -156,7 +157,7 @@ void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
 		server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
 	}
-	else printf("Received a corrupt packet!\n");
+	else printf("\nReceived a corrupt packet!\n");
 }
 
 
