@@ -116,7 +116,8 @@ int writeMessage(ConnectionInfo *server, char* message, int *currentSeq)
 int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
 {
 	// Don't send if window full
-	if(currentSeq > (server->baseSeqNum + WINDOWSIZE) % MAXSEQNUM) return 0;
+	for(int i = server->baseSeqNum, count = 0; i < currentSeq; i = (i+1 % MAXSEQNUM), count++)
+		if (count > WINDOWSIZE) return 0;
 
 	Datagram toSend = initDatagram();
 	packMessage(toSend, message, currentSeq);
@@ -168,7 +169,9 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 	time_t currTime;
 	time(&currTime);
 	
-	if(*currentSeq > (server->baseSeqNum + WINDOWSIZE) % MAXSEQNUM) return 0;
+	for(int i = server->baseSeqNum, count = 0; i < *currentSeq; i = (i+1 % MAXSEQNUM), count++)
+		if (count > WINDOWSIZE) return 0;
+
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
     printf("Message sent at: %s", ctime(&currTime));
 	printf("-with SEQ(%d)\n", toSend->sequence);
