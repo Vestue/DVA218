@@ -66,7 +66,7 @@ int main()
 				printf("Reading from socket %d\n", currSock);
 				interpretPack_receiver(currSock, &clients, &activeFdSet);
 				printf("------------------------\n");
-				sleep(2);
+				// sleep(2);
 			}
 		}
 	}
