@@ -33,7 +33,7 @@
 	*Go-Back-N = 0
 	*Selective Repeat = 1
 */
-#define SWMETHOD 0
+#define SWMETHOD 1
 
 /* Enums */
 enum slidingWindowMethods { GBN = 0, SR = 1 };
