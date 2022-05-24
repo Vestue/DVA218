@@ -71,7 +71,7 @@ typedef enum
 typedef struct
 {
 	uint16_t windowSize;
-	uint32_t sequence;
+	uint32_t seqNum;
     uint32_t ackNum;
 	uint8_t flag;
 	uint32_t checksum;
@@ -183,46 +183,21 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 
 int DisconnectClientSide(ConnectionInfo server, int nextSeq);
 
-
-
 int writeMessage(ConnectionInfo *server, char* message, int *currentSeq);
 
-int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq);
-
-int writeMessageSR(ConnectionInfo *server, char* message, int *currentSeq);
-
 //  !Everything below should be abstracted out
 //  !Everything below should be abstracted out
 //  !Everything below should be abstracted out
 //  !Everything below should be abstracted out
 
-/*
-    Tries to connect to the server.
-    Returns 1 if successful, ERRORCODE if not.
-	Put server information into the ConnectionInfo in the ClientList upon connection.
-*/
-int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list);
 
-/**
- *
- *  Not sure it works might get removed
- *	Executes when a timeout has occured
- */
-void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
-/*
-    Pack message into datagram and set correct information for a data packet.
-*/
-void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
 
 /*
 *   GO BACK N Functions
 */
 
-/*
-	Main function of GBN, this takes the data and then does different
-	things depending on what flag is in the datagram.
-*/
+
 // void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList);
 
 /*
