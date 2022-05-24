@@ -850,9 +850,9 @@ int isFINSet(ConnectionInfo connection)
 	return 0;
 }
 
-void packMessage(Datagram datagram, char* message, int currentSeq)
+void packMessage(Datagram datagram, char* message, int nextSeq)
 {
-	setHeader(datagram, DATA, currentSeq, 0);
+	setHeader(datagram, DATA, nextSeq, 0);
 	if(message != NULL)
     	strncpy(datagram->message, message, strlen(message));
 	datagram->checksum = calcChecksum(datagram, sizeof(*datagram));
