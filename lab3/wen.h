@@ -185,7 +185,6 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq);
 
 
 
-/**/
 int writeMessage(ConnectionInfo *server, char* message, int *currentSeq);
 
 int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq);
