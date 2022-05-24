@@ -486,9 +486,8 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	//* Start disconnect process
 	if (receivedDatagram->flag == FIN) 
 	{
-		retval = DisconnectServerSide(client, receivedDatagram, clientList, activeFdSet);
-		// Retry disconnection if server failed to send messages in the process.
-		if (retval == ERRORCODE) DisconnectServerSide(client, receivedDatagram, clientList, activeFdSet);
+		if (DisconnectServerSide(client, receivedDatagram, clientList, activeFdSet) == ERRORCODE) 
+			printf("Could not reach client!\n");
 	}
 	else if (receivedDatagram->flag == ACK) return; // What is the client ACKing?
 
