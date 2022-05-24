@@ -724,7 +724,7 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 			printf("Failed to disconnect client\n");
 			return ERRORCODE;
 		}
-
+		selectTime.tv_sec = 2 * RTT;
 		if ((select(FD_SETSIZE, &readFdSet, NULL, NULL, &selectTime) < 0))
 			FD_ZERO(&readFdSet);
 		if (FD_ISSET(client->sock, &readFdSet))
