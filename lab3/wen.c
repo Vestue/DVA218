@@ -738,7 +738,7 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 	// Fully disconnect client by removing and closing socket.
 	// This timeout is used if all ACKs gets lost from the client
 	else if ((receivedDatagram->flag == ACK && isFINSet(*client))
-		|| (isFINSet(*client) && (currTime.tv_sec - client->FIN_SET_time.tv_sec) > 4 * RTT))
+		|| (isFINSet(*client) && (currTime.tv_sec - client->FIN_SET_time.tv_sec) > 2 * RTT))
 	{
 		time(&finTime);
         printf("\nDisconnected client %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
