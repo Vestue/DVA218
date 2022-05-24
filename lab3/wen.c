@@ -481,17 +481,19 @@ int acceptClientConnection(int serverSock, ClientList* list)
             && ACKaddr.sin_port == recvAddr.sin_port)
 			|| (time_current.tv_sec - time_SYNACK_sent.tv_sec >= 2 * RTT))
         {
+			if (receivedDatagram->flag == ACK) printf("\nReceived ACK\n");
+			else printf ("\nReached ACK timeout\n");
 			if (addToClientList(list, initConnectionInfo(receivedDatagram, recvAddr, clientSock)))
 			{
-				printf("\nConnection established with client %s, port %d\n\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+				printf("Connection established with client %s, port %d\n\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
 				free(receivedDatagram);
 				free(toSend);
-            	return clientSock;
+            			return clientSock;
 			}
 			free(toSend);
 			free(receivedDatagram);
 			close(clientSock);
-            printf("\nLINE 389: Refused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
+          		printf("\nLINE 389: Refused connection from client %s, port %d\n", inet_ntoa(recvAddr.sin_addr), ntohs(recvAddr.sin_port));
 			return ERRORCODE;
         }
 		recvAddr = ACKaddr;
