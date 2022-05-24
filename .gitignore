@@ -57,3 +57,5 @@ lab3/.vscode/tasks.json
 lab3/server
 lab3/.idea/
 lab3/.vscode/
+.vscode/targets.log
+.vscode/dryrun.log
