@@ -39,6 +39,10 @@ int SRwindow = 0;
 //TODO: Check all prints to see if there is any debug code left
 //TODO: Give every function a comment on how it works
 
+//TODO: Change currentSeq to nextSeqNum throughout entire client.c
+//TODO: Change name of datagram
+//TODO: Change sendMessage to sendDatagram and recvMessage to recvDatagram
+
 /*
 	Calculates checksum for datagram
 	returns the result of calculation
