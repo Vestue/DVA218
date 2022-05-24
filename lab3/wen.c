@@ -808,7 +808,6 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 				}
 				else if (messageReceived->flag == FIN)
 				{
-					printf("Received FIN\n");
 					break;
 				}
 			}
@@ -819,6 +818,7 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 	{
 		if(messageReceived->flag == FIN)
 		{
+			printf("Received FIN\n");
 			printf("Sending ACK\n");
 			printf("Disconnecting...\n");
 			setHeader(toSend, ACK, 0, messageReceived->seqNum);
