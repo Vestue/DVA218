@@ -484,10 +484,11 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 	}
 	printf("Receiving data..\n");
 	//* Start disconnect process
-	if (receivedDatagram->flag == FIN || (receivedDatagram->flag == ACK && isFINSet(*client))
-		|| (isFINSet(*client) && client->FIN_SET_time.tv_sec > 2 * RTT)) 
+	if (receivedDatagram->flag == FIN) 
 	{
-		DisconnectServerSide(client, receivedDatagram, clientList, activeFdSet);
+		retval = DisconnectServerSide(client, receivedDatagram, clientList, activeFdSet);
+		// Retry disconnection if server failed to send messages in the process.
+		if (retval == ERRORCODE) DisconnectServerSide(client, receivedDatagram, clientList, activeFdSet);
 	}
 	else if (receivedDatagram->flag == ACK) return; // What is the client ACKing?
 
@@ -685,55 +686,71 @@ ConnectionInfo* findClientFromSock(ClientList *list, int sock)
 
 int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, ClientList* clientList, fd_set* activeFdSet)
 {
-	struct timespec currTime;
-	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
-	time_t finTime;
+	printf("Received FIN!\n");
+	Datagram toSend = initDatagram();
 
-	if ((receivedDatagram->flag == FIN)) 
+	setHeader(toSend, ACK, 0, receivedDatagram->seqNum);
+	toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
+	if (sendMessage(client->sock, toSend, client->addr) < 0)
 	{
-		printf("Received FIN!\n");
-		Datagram toSend = initDatagram();
-		//TODO: Check if function is used correctly
-    	setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->seqNum);
-		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
+		printf("Failed to disconnect client\n");
+		return ERRORCODE;
+	}
+	printf("Responding with ACK\n");
+
+	// The fd-set is to be able to do a select and then time out
+	// this select if it gets no ACK.
+	fd_set clientFdSet, readFdSet;
+	FD_ZERO(&clientFdSet);
+	FD_ZERO(&readFdSet);
+	FD_SET(client->sock, &clientFdSet);
+	struct timeval selectTime;
+	selectTime.tv_sec = 2 * RTT;
+	selectTime.tv_usec = 0;
+
+	setHeader(toSend, FIN, receivedDatagram->seqNum, receivedDatagram->seqNum + 1);
+	toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
+	struct timespec time_current, time_first_FIN_sent;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &time_first_FIN_sent);
+
+	while(1)
+	{
+		readFdSet = clientFdSet;
+		printf("\nSending FIN..\n");
 		if (sendMessage(client->sock, toSend, client->addr) < 0)
 		{
 			printf("Failed to disconnect client\n");
 			return ERRORCODE;
 		}
-		printf("Responding with FIN\n");
-		clock_gettime(CLOCK_MONOTONIC_RAW, &client->FIN_SET_time);
-	}
 
-	// Fully disconnect client by removing and closing socket.
-	// This timeout is used if all ACKs gets lost from the client
-	else if ((receivedDatagram->flag == ACK && isFINSet(*client))
-		|| (isFINSet(*client) && (currTime.tv_sec - client->FIN_SET_time.tv_sec) > 4 * RTT))
-	{
-		time(&finTime);
-        printf("\nDisconnected client %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
-		printf("%s", ctime(&finTime));
-		close(client->sock);
-		FD_CLR(client->sock, activeFdSet);
-		removeFromClientList(clientList, client->addr);
-	}
+		if ((select(FD_SETSIZE, &readFdSet, NULL, NULL, &selectTime) < 0))
+			FD_ZERO(&readFdSet);
+		if (FD_ISSET(client->sock, &readFdSet))
+			recvMessage(client->sock, receivedDatagram, &client->addr);
 
-	// Resend FIN
-	//? Needs to be last if-state as this checks for a shorter elapsed time
-	//? than previous one
-	else if (isFINSet(*client) && (currTime.tv_sec - client->FIN_SET_time.tv_sec) > 2 * RTT)
-	{
-		Datagram toSend = initDatagram();
-		//TODO: Check if function is used correctly
-		setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->seqNum);
-		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
-		if (sendMessage(client->sock, toSend, client->addr) < 0)
+		clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
+
+		// Successfully disconnect upon ACK or long timeout (this timeout needs to be longer than select-timeout)
+		if (receivedDatagram->flag == ACK)
 		{
-			printf("Failed to disconnect client\n");
-			return ERRORCODE;
+			printf("Received ACK\n");
+			break;
+		} 
+		else if ((time_current.tv_sec - time_first_FIN_sent.tv_sec) >= 4 * RTT)
+		{
+			printf("Reached timeout while waiting for ACK\n");
+			break;
 		}
+		// Otherwise resend SYN and repeat select-timer
 	}
-
+	time_t disconnectTime;
+	time(&disconnectTime);
+	printf("\nDisconnected client %s, port %d\n", inet_ntoa(client->addr.sin_addr), ntohs(client->addr.sin_port));
+	printf("%s", ctime(&disconnectTime));
+	close(client->sock);
+	FD_CLR(client->sock, activeFdSet);
+	removeFromClientList(clientList, client->addr);
 	return 1;
 }
 
@@ -743,18 +760,27 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
     Datagram messageReceived = initDatagram();
     struct sockaddr_in tempAddr;
 	
-	//TODO: Check if function is used correctly
-
-	setHeader(toSend, FIN, nextSeq, nextSeq);
+	setHeader(toSend, FIN, nextSeq, nextSeq + 1);
 	toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 	struct timespec time_current, time_FIN_sent;
 	time_FIN_sent.tv_sec = 0;
 	time_t finTime;
 
+	// The fd-set is to be able to do a select and then time out
+	// this select if it gets no ACK or FIN response.
+	fd_set activeFdSet, readFdSet;
+	FD_ZERO(&activeFdSet);
+	FD_ZERO(&readFdSet);
+	FD_SET(server.sock, &activeFdSet);
+	struct timeval selectTime;
+	selectTime.tv_sec = 2 * RTT;
+	selectTime.tv_usec = 0;
+
 	while(1)
 	{
+		readFdSet = activeFdSet;
 		clock_gettime(CLOCK_MONOTONIC_RAW, &time_current);
-		if (time_current.tv_sec - time_FIN_sent.tv_sec > 2 * RTT)
+		if (time_current.tv_sec - time_FIN_sent.tv_sec >= 2 * RTT)
 		{
 			if(sendMessage(server.sock, toSend, server.addr) < 0)
 			{
@@ -762,23 +788,37 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 				exit(EXIT_FAILURE);
 			}
 			time(&finTime);
-			printf("Sending FIN..\n %s", ctime(&finTime));
+			printf("Sending FIN..\n%s\n", ctime(&finTime));
 			clock_gettime(CLOCK_MONOTONIC_RAW, &time_FIN_sent);
 		}
-		if (recvMessage(server.sock, messageReceived, &tempAddr) == ERRORCODE)
-			printf("Received corrupt packet!\n"); 
-		if (messageReceived->flag == ACK)
+
+		if ((select(FD_SETSIZE, &readFdSet, NULL, NULL, &selectTime) < 0))
+			FD_ZERO(&readFdSet);
+		if (FD_ISSET(server.sock, &readFdSet))
 		{
-			printf("Received ACK\n");
-			break;
+			if (recvMessage(server.sock, messageReceived, &tempAddr) == ERRORCODE)
+				printf("Received corrupt packet!\n"); 
+			else
+			{
+				if (messageReceived->flag == ACK)
+				{
+					printf("Received ACK\n");
+					break;
+				}
+				else if (messageReceived->flag == FIN)
+				{
+					printf("Received FIN\n");
+					break;
+				}
+			}
 		}
-		else if (messageReceived->flag == FIN) break;
 	}
 	signal(SIGALRM, timeoutExit);
 	while(1)
 	{
 		if(messageReceived->flag == FIN)
 		{
+			printf("Sending ACK\n");
 			printf("Disconnecting...\n");
 			setHeader(toSend, ACK, 0, messageReceived->seqNum);
 			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
