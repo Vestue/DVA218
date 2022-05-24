@@ -83,7 +83,7 @@ int corrupt(Datagram toCheck)
 
 void setSeqNum(Datagram datagram, int seqNum)
 {
-	datagram->sequence = seqNum % MAXSEQNUM;
+	datagram->seqNum = seqNum % MAXSEQNUM;
 }
 void setAckNum(Datagram datagram, int ackNum)
 {
@@ -150,7 +150,7 @@ int sendMessage(int sock, Datagram messageToSend, struct sockaddr_in destAddr)
 void setDefaultHeader(Datagram messageToSend)
 {
 	messageToSend->windowSize = WINDOWSIZE;
-	messageToSend->sequence = 1;
+	messageToSend->seqNum = 1;
 	messageToSend->flag = DATA;
 	messageToSend->message[0] = '\0';
 }
@@ -330,7 +330,7 @@ int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list)
 			printf("Received SYN+ACK\n");
 
 			//TODO: Check if function is used correctly
-            setHeader(messageToSend, ACK, 0, messageToReceive->sequence);
+            setHeader(messageToSend, ACK, 0, messageToReceive->seqNum);
 			// strncpy(messageToSend->message, "LINE:285!\0", strlen("LINE:285!\0")); //! Test message, remove later
 			messageToSend->checksum = calcChecksum(messageToSend, sizeof(*messageToSend));
 			// sleep(100);
@@ -397,7 +397,7 @@ int acceptClientConnection(int serverSock, ClientList* list)
 		{
 			printf("Received SYN\n");
 			//TODO: Check if function is used correctly
-			setHeader(toSend, SYN + ACK, STARTSEQ, receivedDatagram->sequence);
+			setHeader(toSend, SYN + ACK, STARTSEQ, receivedDatagram->seqNum);
 			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 			printf("Sending SYN+ACK..\n");
 
@@ -499,12 +499,12 @@ void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSe
 //!Abstract
 void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList)
 {	
-	printf("seq: %d | base: %d\n", receivedDatagram->sequence, client->baseSeqNum);
-	if ((receivedDatagram->sequence == client->baseSeqNum))
+	printf("seq: %d | base: %d\n", receivedDatagram->seqNum, client->baseSeqNum);
+	if ((receivedDatagram->seqNum == client->baseSeqNum))
 	{
 		printf("Received message: \n%s\n", receivedDatagram->message);
 		Datagram toSend = initDatagram();
-		setHeader(toSend, ACK, 0, receivedDatagram->sequence);
+		setHeader(toSend, ACK, 0, receivedDatagram->seqNum);
 		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 		if (sendMessage(client->sock, toSend, client->addr))
 		{	
@@ -533,25 +533,25 @@ void emptyBuffer(ConnectionInfo *client, Datagram datagram, char* message)
 //!Abstract
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients)
 {
-	if(packet->sequence == client->baseSeqNum)
+	if(packet->seqNum == client->baseSeqNum)
 	{
-		strncpy(client->buffer[packet->sequence].message, packet->message, strlen(packet->message));
+		strncpy(client->buffer[packet->seqNum].message, packet->message, strlen(packet->message));
 		char message[MESSAGELENGTH*WINDOWSIZE+1];
 		emptyBuffer(client, packet, message);
 		printf("Received message: \n%s\n", message);
 	}
 	else
 	{
-		strncpy(client->buffer[packet->sequence].message, packet->message, strlen(packet->message));
+		strncpy(client->buffer[packet->seqNum].message, packet->message, strlen(packet->message));
 	}
 	time_t currTime;
 	time(&currTime);
 	Datagram toSend = initDatagram();
 	//TODO: Check if function is used correctly
-	setHeader(toSend, ACK, 0, packet->sequence);
+	setHeader(toSend, ACK, 0, packet->seqNum);
 	toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 	sendMessage(sock, toSend, client->addr);
-	printf("Responding with ACK(%d)\n%s", packet->sequence, ctime(&currTime));
+	printf("Responding with ACK(%d)\n%s", packet->seqNum, ctime(&currTime));
 	
 }
 
@@ -694,7 +694,7 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 		printf("Received FIN!\n");
 		Datagram toSend = initDatagram();
 		//TODO: Check if function is used correctly
-    	setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->sequence);
+    	setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->seqNum);
 		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 		if (sendMessage(client->sock, toSend, client->addr) < 0)
 		{
@@ -725,7 +725,7 @@ int DisconnectServerSide(ConnectionInfo* client, Datagram receivedDatagram, Clie
 	{
 		Datagram toSend = initDatagram();
 		//TODO: Check if function is used correctly
-		setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->sequence);
+		setHeader(toSend, FIN, receivedDatagram->ackNum, receivedDatagram->seqNum);
 		toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 		if (sendMessage(client->sock, toSend, client->addr) < 0)
 		{
@@ -780,7 +780,7 @@ int DisconnectClientSide(ConnectionInfo server, int nextSeq)
 		if(messageReceived->flag == FIN)
 		{
 			printf("Disconnecting...\n");
-			setHeader(toSend, ACK, 0, messageReceived->sequence);
+			setHeader(toSend, ACK, 0, messageReceived->seqNum);
 			toSend->checksum = calcChecksum(toSend, sizeof(*toSend));
 			sendMessage(server.sock, toSend, server.addr);
 			alarm(2 * RTT);

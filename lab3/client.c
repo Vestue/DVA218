@@ -132,7 +132,7 @@ int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
 	time_t currTime;
 	time(&currTime);
 	printf("Message sent at: %s", ctime(&currTime));
-	printf("-with SEQ(%d)\n", toSend->sequence);
+	printf("-with SEQ(%d)\n", toSend->seqNum);
 	return 1;
 }
 
@@ -157,7 +157,7 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 	
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
     printf("Message sent at: %s", ctime(&currTime));
-	printf("-with SEQ(%d)\n", toSend->sequence);
+	printf("-with SEQ(%d)\n", toSend->seqNum);
 
 	strncpy(server->buffer[*currentSeq].message, message, strlen(message));
 	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[*currentSeq].timeStamp);
