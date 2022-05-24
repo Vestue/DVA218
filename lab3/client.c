@@ -44,20 +44,19 @@ int main(int argc, char *argv[])
 
 	char message[MESSAGELENGTH] = { '\0' };
 
-	//todo: currentSeq will probably need to be renamed to nextSeqNum
 	//todo: to match with our labb 3a report.
-	int currentSeq = serverInfo.baseSeqNum;
+	int nextSeq = serverInfo.baseSeqNum;
 	int retval = 0;
 	printCursorThingy();
 	fflush(stdout);
-	clock_gettime(CLOCK_MONOTONIC_RAW, &serverInfo.buffer[currentSeq].timeStamp);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &serverInfo.buffer[nextSeq].timeStamp);
 	struct timeval t;
 	t.tv_sec = 1;
 	t.tv_usec = 0;
 	while(1)
 	{
 		readFdSet = activeFdSet;
-		checkTimedOutPacks(&serverInfo, &currentSeq);
+		checkTimedOutPacks(&serverInfo, &nextSeq);
 		
 		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, &t) < 0)
 		{
@@ -76,7 +75,7 @@ int main(int argc, char *argv[])
 			*/
 			if (currSock == serverInfo.sock && FD_ISSET(currSock, &readFdSet))
 			{
-				interpretPack_sender(&serverInfo, currentSeq);
+				interpretPack_sender(&serverInfo, nextSeq);
 				printCursorThingy();
 			}
 			else if (currSock == STDIN_FILENO && FD_ISSET(currSock, &readFdSet))
@@ -85,12 +84,12 @@ int main(int argc, char *argv[])
 				message[MESSAGELENGTH - 1] = '\0';
 
 				if (strncmp(message, "EXIT\n", MESSAGELENGTH) == 0)
-					DisconnectClientSide(serverInfo, currentSeq);
+					DisconnectClientSide(serverInfo, nextSeq);
 
-				retval = writeMessage(&serverInfo, message, &currentSeq);
+				retval = writeMessage(&serverInfo, message, &nextSeq);
 				if (retval == ERRORCODE) printf("Could not send message!\n");
 				else if (retval == 0) printf("Window is full!\n");
-				else currentSeq = (currentSeq + 1) % MAXSEQNUM;
+				else nextSeq = (nextSeq + 1) % MAXSEQNUM;
 				printCursorThingy();
 			}
 		}
@@ -106,40 +105,40 @@ void printCursorThingy()
 }
 
 //? Move this when testing is done
-int writeMessage(ConnectionInfo *server, char* message, int *currentSeq)
+int writeMessage(ConnectionInfo *server, char* message, int *nextSeq)
 {
 	int retval;
-	if (SWMETHOD == GBN) retval = writeMessageGBN(server, message, *currentSeq);
-	else retval = writeMessageSR(server, message, currentSeq);
+	if (SWMETHOD == GBN) retval = writeMessageGBN(server, message, *nextSeq);
+	else retval = writeMessageSR(server, message, nextSeq);
 	return retval;
 }
 
-int writeMessageGBN(ConnectionInfo *server, char* message, int currentSeq)
+int writeMessageGBN(ConnectionInfo *server, char* message, int nextSeq)
 {
 	// Don't send if window full
-	for(int i = server->baseSeqNum, count = 0; i != currentSeq; i = (i+1) % MAXSEQNUM, count++)
+	for(int i = server->baseSeqNum, count = 0; i != nextSeq; i = (i+1) % MAXSEQNUM, count++)
 		if (count >= WINDOWSIZE) return 0;
 
 	Datagram toSend = initDatagram();
-	packMessage(toSend, message, currentSeq);
+	packMessage(toSend, message, nextSeq);
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
 
 	// Add message to buffer and move window
-	strncpy(server->buffer[currentSeq].message, message, strlen(message));
-	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[currentSeq].timeStamp);
+	strncpy(server->buffer[nextSeq].message, message, strlen(message));
+	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[nextSeq].timeStamp);
 
 	// Print timestamp
 	time_t currTime;
 	time(&currTime);
 	printf("Message sent at: %s", ctime(&currTime));
-	printf("-with SEQ(%d)\n", toSend->sequence);
+	printf("-with SEQ(%d)\n", toSend->seqNum);
 	return 1;
 }
 
-int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
+int writeMessageSR(ConnectionInfo *server, char* message, int* nextSeq)
 {
 	Datagram toSend = initDatagram();
-	packMessage(toSend, message, *currentSeq);
+	packMessage(toSend, message, *nextSeq);
 	time_t currTime;
 	time(&currTime);
 	
@@ -151,29 +150,29 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* currentSeq)
 		if (count > WINDOWSIZE) return 0;
 	}*/
 
-	for(int i = server->baseSeqNum, count = 0; i != *currentSeq; i = (i+1) % MAXSEQNUM, count++)
+	for(int i = server->baseSeqNum, count = 0; i != *nextSeq; i = (i+1) % MAXSEQNUM, count++)
 		if (count >= WINDOWSIZE) return 0;
 		
 	
 	if (sendMessage(server->sock, toSend, server->addr) < 0) return ERRORCODE;
     printf("Message sent at: %s", ctime(&currTime));
-	printf("-with SEQ(%d)\n", toSend->sequence);
+	printf("-with SEQ(%d)\n", toSend->seqNum);
 
-	strncpy(server->buffer[*currentSeq].message, message, strlen(message));
-	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[*currentSeq].timeStamp);
+	strncpy(server->buffer[*nextSeq].message, message, strlen(message));
+	clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[*nextSeq].timeStamp);
     //* Start TIMER
         
 	return 1;
 }
 
-void interpretPack_sender(ConnectionInfo *server, int currentSeq)
+void interpretPack_sender(ConnectionInfo *server, int nextSeq)
 {
 	Datagram receivedDatagram = initDatagram();
 	recvMessage(server->sock, receivedDatagram, &server->addr);
 
 	//* Send to GBN or SR to handle DATA in package
 	if (SWMETHOD == GBN) interpretPack_sender_GBN(receivedDatagram, server);
-	else interpretPack_sender_SR(receivedDatagram, server, currentSeq);
+	else interpretPack_sender_SR(receivedDatagram, server, nextSeq);
 }
 
 void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
@@ -194,7 +193,7 @@ void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 	else printf("\nReceived a corrupt packet!\n");
 }
 
-void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, int currentSeq)
+void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, int nextSeq)
 {
 	time_t currTime;
 	time(&currTime);
@@ -209,10 +208,10 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, 
 		// for (int i = 0; i < MESSAGELENGTH; i++)
 		// 	server->buffer[receivedDatagram->ackNum].message[i] = '\0';
 
-		printf("ackNum %d| baseSeq %d", receivedDatagram->ackNum, server->baseSeqNum);
+		printf("ackNum %d| baseSeq %d\n", receivedDatagram->ackNum, server->baseSeqNum);
 		if (receivedDatagram->ackNum == server->baseSeqNum)
 		{
-			for (int i = server->baseSeqNum; i != currentSeq; i= ((i+1) % MAXSEQNUM))
+			for (int i = server->baseSeqNum; i != nextSeq; i= ((i+1) % MAXSEQNUM))
 			{
 				if (server->buffer[i].timeStamp.tv_sec == 0) 
 				{
@@ -222,7 +221,7 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, 
 		}
 		else if (receivedDatagram->ackNum == 0) server->baseSeqNum = receivedDatagram->ackNum;
 			
-		printf("New baseSeq(%d)\n", server->baseSeqNum);
+		
 	}
 	else if (isCorrupt)
 	{
@@ -230,17 +229,17 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, 
 	} 
 }
 
-void checkTimedOutPacks(ConnectionInfo *server, int *currentSeq)
+void checkTimedOutPacks(ConnectionInfo *server, int *nextSeq)
 {
 	/*
 		Simple redirecting switch as they are handled different depending
 		on which sliding window is to be used.
 	*/
-	if (SWMETHOD == GBN) checkTimeout_GBN(server, currentSeq);
-	else checkTimeout_SR(server, currentSeq);
+	if (SWMETHOD == GBN) checkTimeout_GBN(server, nextSeq);
+	else checkTimeout_SR(server, nextSeq);
 }
 
-void checkTimeout_GBN(ConnectionInfo *server, int *currentSeq)
+void checkTimeout_GBN(ConnectionInfo *server, int *nextSeq)
 {
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
@@ -251,7 +250,7 @@ void checkTimeout_GBN(ConnectionInfo *server, int *currentSeq)
 		// writeMessageGBN(server, server->buffer[server->baseSeqNum].message, server->baseSeqNum);
 		// clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[server->baseSeqNum].timeStamp);
 	
-		for (int seq = (server->baseSeqNum); seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
+		for (int seq = (server->baseSeqNum); seq != *nextSeq; seq = (seq+1) % MAXSEQNUM)
 		{
 			printf("\nSending timed out packet\n");
 			writeMessageGBN(server, server->buffer[seq].message, seq);
@@ -261,12 +260,12 @@ void checkTimeout_GBN(ConnectionInfo *server, int *currentSeq)
 	}
 }
 
-void checkTimeout_SR(ConnectionInfo *server, int *currentSeq)
+void checkTimeout_SR(ConnectionInfo *server, int *nextSeq)
 {
 	struct timespec currTime;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &currTime);
 
-	for (int seq = (server->baseSeqNum); seq != *currentSeq; seq = (seq+1) % MAXSEQNUM)
+	for (int seq = (server->baseSeqNum); seq != *nextSeq; seq = (seq+1) % MAXSEQNUM)
 	{
 		if(currTime.tv_sec - server->buffer[seq].timeStamp.tv_sec > 2 * RTT)
 		{

@@ -33,7 +33,7 @@
 	*Go-Back-N = 0
 	*Selective Repeat = 1
 */
-#define SWMETHOD 0
+#define SWMETHOD 1
 
 /* Enums */
 enum slidingWindowMethods { GBN = 0, SR = 1 };
@@ -55,7 +55,7 @@ typedef enum
 typedef struct
 {
 	uint16_t windowSize;
-	uint32_t sequence;
+	uint32_t seqNum;
     uint32_t ackNum;
 	uint8_t flag;
 	uint32_t checksum;
