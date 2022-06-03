@@ -38,8 +38,6 @@
 /* Enums */
 enum slidingWindowMethods { GBN = 0, SR = 1 };
 
-//! Enum itself can't be used as variable.
-//! Remove comment when everyone has read.
 typedef enum 
 { 
 	DATA=0,
@@ -143,7 +141,6 @@ ConnectionInfo connectToServer(int sock, char* hostName);
 int acceptClientConnection(int serverSock, ClientList* list);
 
 
-//  !Everything below should be abstracted out
 /*
     Tries to connect to the server.
     Returns 1 if successful, ERRORCODE if not.
@@ -151,11 +148,6 @@ int acceptClientConnection(int serverSock, ClientList* list);
 */
 int initHandshakeWithServer(int sock, struct sockaddr_in dest, ClientList* list);
 
-/**
- *
- *  Not sure it works might get removed
- *	Executes when a timeout has occured
- */
 void timeoutConnection(int sock, Datagram connRequest, struct sockaddr_in dest);
 
 int setupClientDisconnect(int sock, char* hostName, struct sockaddr_in* destAddr);
@@ -187,25 +179,14 @@ void stopTimer(Datagram timedConnection, int seqNum);
 */
 void restartTimer(Datagram timedConnection, int seqNum);
 
-//!  Feeling cute might delete later :3
 void timeout(int signum);
 
 
 /*
 	Return the expected sequence number from a certain sockaddr.
     Return ERRORCODE if client can't be found.
-    ? These are only needed for ClientList as the client has instant
-    ? access to information about server.
 */
 int getExpectedSeq(struct sockaddr_in addr, ClientList* list);
-
-/*
-	Set base sequense number of chosen connection to 
-	sequence number sent as argument.
-    Return 1 if successfully changed.
-    Return ERRORCODE if client can't be found.
-*/
-int setBaseSeq(int seqToSet, struct sockaddr_in addr, ClientList* list);
 
 /*
 	Set that FIN has been received from connection.
@@ -222,15 +203,6 @@ int setFIN(struct sockaddr_in addr, ClientList* list);
 */
 int isFINSet(ConnectionInfo connection);
 
-
-/*
-    ! Remove setDefaultHeader once current functions start using setHeader instead.
-	Fill datagram with default information about
-	window size, sequence number.
-	Set flag to DATA and set message to '\0'.;
-*/
-void setDefaultHeader(Datagram messageToSend);
-
 /*
     Pack message into datagram and set correct information for a data packet.
 */
@@ -244,44 +216,7 @@ void packMessage(Datagram datagramToSend, char* messageToSend, int currentSeq);
 */
 void interpretPack_receiver(int sock, ClientList *clientList, fd_set* activeFdSet);
 
-/*
-*   GO BACK N Functions
-*/
-
-/*
-	Main function of GBN, this takes the data and then does different
-	things depending on what flag is in the datagram.
-*/
 void interpretWith_GBN_receiver(Datagram receivedDatagram, ConnectionInfo *client, ClientList *clientList);
-//         switch (receivedMessage->header.flag)
-            //{
-            //	case SYN:
-            //		// Send flag SYN+ACK
-            //		messageToSend->header.flag = SYN + ACK;
-            //                 //sendMessageToClient(sock, messageToSend);
-            //		// TODO Start timer
-            //                 break;
-            //	//! Can recieve ACKs, FINs, or data
-            //	//! before connection even has been attempted
-            //	//? Check if client_addr is in client addr
-            //             case ACK:
-            //		// TODO Chill timer
-            //		break;
-            //	case FIN:
-            //		/*kill*/
-            //		break;
-            //	default:
-            //		/*Destroy and ACK old packages*/
-            //		/*Normal packet*/
-            //		messageToSend->header.flag = ACK;
-            //		messageToSend->header.sequence = receivedMessage->header.sequence + 1;
-            //		break;
-            //}
-            // TODO: if SYN_timer_timeouts
-
-/*
-*   Selective repeat functions
-*/
 
 void interpretWith_SR_receiver(int sock, Datagram packet, ConnectionInfo *client, ClientList *clients);
 

@@ -72,10 +72,3 @@ int main()
 	}
 	return 0;
 }
-
-void closeConnection(ClientList *list, struct sockaddr_in addr)
-{
-    //Disconnect client
-	//DisconnectServerSide(serverSock, receivedMessage, &receivedAdress);
-    removeFromClientList(list, addr);
-}

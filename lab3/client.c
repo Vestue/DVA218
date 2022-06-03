@@ -44,7 +44,6 @@ int main(int argc, char *argv[])
 
 	char message[MESSAGELENGTH] = { '\0' };
 
-	//todo: to match with our labb 3a report.
 	int nextSeq = serverInfo.baseSeqNum;
 	int retval = 0;
 	printCursorThingy();
@@ -60,11 +59,8 @@ int main(int argc, char *argv[])
 		
 		if (select(FD_SETSIZE, &readFdSet, NULL, NULL, &t) < 0)
 		{
-			//perror("\nFailed to monitor set");
 			//* FD_ZERO prevents reusing old set if select gets interrupted by timer
 			FD_ZERO(&readFdSet);
-			//printCursorThingy();
-			//exit(EXIT_FAILURE);
 		}
 
 		for (int currSock = 0; currSock < FD_SETSIZE; currSock++)
@@ -104,7 +100,6 @@ void printCursorThingy()
 	printf("\n(Type \"EXIT\" to disconnect)\n\n\n>");
 }
 
-//? Move this when testing is done
 int writeMessage(ConnectionInfo *server, char* message, int *nextSeq)
 {
 	int retval;
@@ -142,14 +137,6 @@ int writeMessageSR(ConnectionInfo *server, char* message, int* nextSeq)
 	time_t currTime;
 	time(&currTime);
 	
-	/*
-	for (int i = server->baseSeqNum, count = 0;  == 0; i = ((i+1) % MAXSEQNUM), count++)
-	{
-		if (server->buffer[i+1].message[0] == '\0')
-			printf("Count is: %d", count);
-		if (count > WINDOWSIZE) return 0;
-	}*/
-
 	for(int i = server->baseSeqNum, count = 0; i != *nextSeq; i = (i+1) % MAXSEQNUM, count++)
 		if (count >= WINDOWSIZE) return 0;
 		
@@ -187,7 +174,6 @@ void interpretPack_sender_GBN(Datagram receivedDatagram, ConnectionInfo *server)
 		server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
 		for (int i = 0; i < MESSAGELENGTH; i++)
 			server->buffer[receivedDatagram->ackNum].message[i] = '\0';
-		// server->baseSeqNum = receivedDatagram->ackNum;
 		server->baseSeqNum = (server->baseSeqNum + 1) % MAXSEQNUM;
 	}
 	else printf("\nReceived a corrupt packet!\n");
@@ -203,10 +189,6 @@ void interpretPack_sender_SR(Datagram receivedDatagram, ConnectionInfo* server, 
 		printf("Received Datagram at: %s", ctime(&currTime));
 		printf("-With ACK(%d)\n", receivedDatagram->ackNum);
 		memset(&server->buffer[receivedDatagram->ackNum], 0, sizeof(server->buffer[receivedDatagram->ackNum]));
-		// server->buffer[receivedDatagram->ackNum].timeStamp.tv_sec = 0;
-		// server->buffer[receivedDatagram->ackNum].timeStamp.tv_nsec = 0;
-		// for (int i = 0; i < MESSAGELENGTH; i++)
-		// 	server->buffer[receivedDatagram->ackNum].message[i] = '\0';
 
 		printf("ackNum %d| baseSeq %d\n", receivedDatagram->ackNum, server->baseSeqNum);
 		if (receivedDatagram->ackNum == server->baseSeqNum)
@@ -275,9 +257,4 @@ void checkTimeout_SR(ConnectionInfo *server, int *nextSeq)
 			clock_gettime(CLOCK_MONOTONIC_RAW, &server->buffer[seq].timeStamp);
 		}
 	}
-}
-
-void selectTimeout(int signal)
-{
-	return;
 }

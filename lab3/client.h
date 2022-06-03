@@ -3,8 +3,6 @@
 
 #include "wen.c"
 
-/*Defined values here*/
-
 /* Declarations here */
 void printCursorThingy(void);
 
